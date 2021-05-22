@@ -29,6 +29,7 @@ Attributes are returned for:
 
 A minimal configuration. Latitude and Longitude are defaulted to your Home Assistant location
 ```yaml
+sensor:
   - platform: openweathermaphistory
     name: 'rainfactor'
     api_key: 'open weather map api key'
@@ -36,6 +37,7 @@ A minimal configuration. Latitude and Longitude are defaulted to your Home Assis
 
 A fully specified configuration.
 ```yaml
+sensor:
   - platform: openweathermaphistory
     name: 'rainfactor'
     latitude: -33.8302547
