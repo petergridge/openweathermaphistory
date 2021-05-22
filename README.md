@@ -61,7 +61,7 @@ Attributes are returned for:
 *(latitude)(Optional)* the location to obtain weather information for, defaults to the home assistant configured Latitude and Longitude
 >#### longitude
 *(longitude)(Optional)* the location to obtain weather information for, defaults to the home assistant configured Latitude and Longitude
->#### longitude
+>#### num_days
 *(integer)(Optional)* the number of days to collect data for, deafaults to 5, 0 will return today's data only
 >#### fine_icon
 *(icon)(Optional)* the icon to use when the factor = 1, defaults to 'mdi:weather-sunny'
