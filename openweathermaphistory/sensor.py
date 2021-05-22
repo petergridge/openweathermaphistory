@@ -42,14 +42,14 @@ from .const import (
     )
 import homeassistant.helpers.config_validation as cv
 
-DEFAULT_NAME = "RainFactor"
+DEFAULT_NAME = "rainfactor"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Required(CONF_API_KEY): cv.string,
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
-        vol.Required(CONF_API_KEY): cv.string,
         vol.Optional(ATTR_DAYS, default=5):vol.All(vol.Coerce(int), vol.Range(min=0, max=5)),
         vol.Optional(ATTR_0_MIN, default=1): cv.positive_int,
         vol.Optional(ATTR_0_MAX, default=5): cv.positive_int,
@@ -184,7 +184,7 @@ class RainFactor(SensorEntity):
         n = 0
         minfac = 1
         ATTRS = {}
-        cummulative = 0
+        cumulative = 0
         for rest in self._weather:
             data = json.loads(rest.data)
             total = 0
@@ -196,11 +196,11 @@ class RainFactor(SensorEntity):
                         rain["1h"] = 0
                     else:
                         total += rain["1h"]
-            cummulative = cummulative + total
-            ATTRS ["day_%d_cummulative"%(n)] = round(cummulative,2)
+            cumulative = cumulative + total
+            ATTRS ["day_%d_cumulative"%(n)] = round(cumulative,2)
             ATTRS ["day_%d_rain"%(n)] = round(total,2)
             try:
-                dayfac = 1 - ( cummulative - self._daymin[n])/(self._daymax[n]-self._daymin[n])
+                dayfac = 1 - ( cumulative - self._daymin[n])/(self._daymax[n]-self._daymin[n])
                 if dayfac < minfac:
                     minfac = dayfac
             except:
@@ -229,7 +229,7 @@ class RainFactor(SensorEntity):
         n = 0
         minfac = 1
         ATTRS = {}
-        cummulative = 0
+        cumulative = 0
         for  rest in self._weather:
             await rest.async_update(log_errors=False)
             data = json.loads(rest.data)
@@ -242,10 +242,10 @@ class RainFactor(SensorEntity):
                         rain["1h"] = 0
                     else:
                         total += rain["1h"]
-            cummulative = cummulative + total
-            ATTRS ["day_%d_cummulative"%(n)] = round(cummulative,2)
+            cumulative = cumulative + total
+            ATTRS ["day_%d_cumulative"%(n)] = round(cumulative,2)
             try:
-                dayfac = 1 - (cummulative - self._daymin[n])/(self._daymax[n]-self._daymin[n])
+                dayfac = 1 - (cumulative - self._daymin[n])/(self._daymax[n]-self._daymin[n])
                 if dayfac < minfac:
                     minfac = dayfac
             except:

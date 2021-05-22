@@ -2,7 +2,6 @@ DOMAIN                  = 'openweathermaphistory'
 SENSOR_ID_FORMAT        = 'sensor' + '.{}'
 CONST_ENTITY            = 'entity_id'
 CONST_SENSOR            = 'sensor'
-#ATTR_FRIENDLY_NAME      = 'friendly_name'
 
 ATTR_DAYS               = 'num_days' #limit the number of days/API calls
 ATTR_0_MAX              = 'day0max'  #Day 0 - today max rainfall test threshold
