@@ -1,11 +1,11 @@
 # openweathremaphistory
-A home assistant sensor that uses the OpenWeatherMap API to get the last 5 days rainfall.
+A home assistant sensor that uses the OpenWeatherMap API to get the last 5 days rainfall. A call is made for each day so the scan_interval is set at 3600 seconds (1 hour) as the free tier allows only 1000 calls per day.
 
 This information is used to calculate a factor that can be used to reduce the watering time of the Irrigation Program custom component.
 
-A OpenWeatherMap API Key is required see the OpenWeatherMap custom component for more information:
+A OpenWeatherMap API Key is required see the [OpenWeatherMap](https://www.home-assistant.io/integrations/openweathermap/) custom component for more information.
 
-https://www.home-assistant.io/integrations/openweathermap/
+You need an API key, which is free, but requires a [registration](https://home.openweathermap.org/users/sign_up).
 
 ## Calculation
 
@@ -14,7 +14,8 @@ The adjustment factor is calculated based on the the cummulative rain fall for e
 The lowest factor of the up to five days of rainfall is return as the state of the sensor.
 
 factor = 1 - ((cummulative rainfall - daymin)/(daymax - daymin))
-if the factor is less than 0 the factor is set to 0.
+
+If the factor is less than 0 the factor is set to 0.
 
 ## Attributes
 
@@ -22,12 +23,9 @@ Attributes are also returned for:
 * daily rainfall
 * daily cummulative rainfall
 
-
 ## Installation
 
-### To create a working sample
 * Copy the openweathermaphistory folder to the ‘config/custom components/’ directory 
-
 
 ```yaml
   - platform: openweathermaphistory
@@ -35,7 +33,7 @@ Attributes are also returned for:
     latitude: 0
     longitude: 0
     api_key: 'open weather map api key'
-    num_days: 1
+    num_days: 5
     day0min: 1
     day0max: 5
     day1min: 6
@@ -53,11 +51,11 @@ Attributes are also returned for:
     rain_icon: 'mdi:weather-pouring'
 ```
 
-## program
-*(string)(Required)* the sensor entity.
+## platform
+*(string)(Required)* the sensor entityopenweathermaphistory.
 >#### name
 *(string)(Optional)* display name for the sensor, defaults to 'rainfactor'
->#### latitude
+>#### api_key
 *(string)(Required)* the OpenWeatherMap API key.
 >#### latitude
 *(latitude)(Optional)* the location to obtain weather information for, defaults to the home assistant configured Latitude and Longitude
@@ -95,7 +93,3 @@ Attributes are also returned for:
 *(integer)(Optional)* the lower limit for the calculation of Day 5 factor, default 26
 >#### day4max
 *(integer)(Optional)* the upper limit for the calculation of Day 5 factor, default 30
-
-
-
-
