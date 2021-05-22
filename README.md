@@ -27,11 +27,19 @@ Attributes are returned for:
 
 * Copy the openweathermaphistory folder to the ‘config/custom components/’ directory 
 
+A minimal configuration. Latitude and Longitude are defaulted to your Home Assistant location
 ```yaml
   - platform: openweathermaphistory
     name: 'rainfactor'
-    latitude: 0
-    longitude: 0
+    api_key: 'open weather map api key'
+```
+
+A fully specified configuration.
+```yaml
+  - platform: openweathermaphistory
+    name: 'rainfactor'
+    latitude: -33.8302547
+    longitude: 151.1516128
     api_key: 'open weather map api key'
     num_days: 5
     day0min: 1
@@ -54,7 +62,7 @@ Attributes are returned for:
 ## platform
 *(string)(Required)* the sensor entityopenweathermaphistory.
 >#### name
-*(string)(Optional)* display name for the sensor, defaults to 'rainfactor'
+*(string)(Required)* display name for the sensor, defaults to 'rainfactor'
 >#### api_key
 *(string)(Required)* the OpenWeatherMap API key.
 >#### latitude
