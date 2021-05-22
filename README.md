@@ -103,3 +103,8 @@ sensor:
 *(integer)(Optional)* the lower limit for the calculation of Day 5 factor, default 26
 >#### day4max
 *(integer)(Optional)* the upper limit for the calculation of Day 5 factor, default 30
+
+## REVISION HISTORY
+
+### 1.0.0
+* Initial Release.
