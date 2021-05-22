@@ -9,11 +9,11 @@ You need an API key, which is free, but requires a [registration](https://home.o
 
 ## Calculation
 
-The adjustment factor is calculated based on the the cummulative rainfall for each day. For yesterday the cummulative value is today's (day 0) rainfall + yesterday's (day 1) rainfall.
+The adjustment factor is calculated based on the the cumulative rainfall for each day. For yesterday the cumulative value is today's (day 0) rainfall + yesterday's (day 1) rainfall.
 
 The lowest factor of the up to five days of rainfall is return as the state of the sensor.
 
-factor = 1 - ((cummulative rainfall - daymin)/(daymax - daymin))
+factor = 1 - ((cumulative rainfall - daymin)/(daymax - daymin))
 
 If the factor is less than 0 the factor is set to 0.
 
@@ -21,7 +21,7 @@ If the factor is less than 0 the factor is set to 0.
 
 Attributes are returned for:
 * daily rainfall
-* daily cummulative rainfall
+* daily cumulative rainfall
 
 ## Installation
 
