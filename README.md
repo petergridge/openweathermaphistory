@@ -1,7 +1,7 @@
 # openweathremaphistory
 A home assistant sensor that uses the OpenWeatherMap API to get the last 5 days rainfall. A call is made for each day so the scan_interval is set at 3600 seconds (1 hour) as the free tier allows only 1000 calls per day.
 
-This information is used to calculate a factor that can be used to reduce the watering time of the Irrigation Program custom component.
+This information is used to calculate a factor that can be used to reduce the watering time of the [Irrigation Program](https://github.com/petergridge/irrigation_component_V3) custom component.
 
 A OpenWeatherMap API Key is required see the [OpenWeatherMap](https://www.home-assistant.io/integrations/openweathermap/) custom component for more information.
 
