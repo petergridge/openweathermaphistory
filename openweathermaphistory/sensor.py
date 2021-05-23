@@ -244,6 +244,7 @@ class RainFactor(SensorEntity):
                         total += rain["1h"]
             cumulative = cumulative + total
             ATTRS ["day_%d_cumulative"%(n)] = round(cumulative,2)
+            ATTRS ["day_%d_rain"%(n)] = round(total,2)
             try:
                 dayfac = 1 - (cumulative - self._daymin[n])/(self._daymax[n]-self._daymin[n])
                 if dayfac < minfac:
