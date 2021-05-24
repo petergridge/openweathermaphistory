@@ -99,9 +99,9 @@ sensor:
 *(integer)(Optional)* the lower limit for the calculation of Day 4 factor, default 21
 >#### day4max
 *(integer)(Optional)* the upper limit for the calculation of Day 4 factor, default 25
->#### day4min
+>#### day5min
 *(integer)(Optional)* the lower limit for the calculation of Day 5 factor, default 26
->#### day4max
+>#### day5max
 *(integer)(Optional)* the upper limit for the calculation of Day 5 factor, default 30
 
 ## REVISION HISTORY
