@@ -156,6 +156,7 @@ class RainFactor(SensorEntity):
         self._icon_fine = icon_fine
         self._icon_lightrain = icon_lightrain
         self._icon_rain = icon_rain
+        self._ran_today = datetime.today().strftime('%Y-%m-%d')
 
     @property
     def name(self):
@@ -226,12 +227,28 @@ class RainFactor(SensorEntity):
         await super().async_added_to_hass()
 
     async def async_update(self):
+        #first time today reload the weather for all days        
+        justloaded = False
+        if self._ran_today != datetime.today().strftime('%Y-%m-%d'):
+            #reload the weather
+            self._ran_today = datetime.today().strftime('%Y-%m-%d')
+            weather = []
+            days    = config[ATTR_DAYS]
+            justloaded = True
+            for n in range(days + 1):
+                rest = create_rest_data_from_config(hass, config, n)
+                await rest.async_update(log_errors=False)
+                weather.append (rest)
+
         n = 0
         minfac = 1
         ATTRS = {}
         cumulative = 0
         for  rest in self._weather:
-            await rest.async_update(log_errors=False)
+            #only update today's weather previous days won't change
+            if n == 0 and not justloaded:
+                await rest.async_update(log_errors=False)
+
             data = json.loads(rest.data)
             total = 0
             hourly = data["hourly"]

@@ -2,11 +2,11 @@ import logging
 from datetime import datetime, timezone, timedelta 
 from .data import RestData
 
-from .const import (
-    DOMAIN,
+#from .const import (
+#    DOMAIN,
 #    SENSOR_ID_FORMAT,
 #    CONST_SENSOR,
-    )
+#    )
 
 
 from homeassistant.const import (
