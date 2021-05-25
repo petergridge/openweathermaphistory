@@ -147,6 +147,7 @@ class RainFactor(SensorEntity):
         """Initialize the sensor."""
         self._name = name
         self.hass = hass
+        self._days = days
         self._config = config
         self._weather = weather
         self._state = 1
@@ -233,7 +234,7 @@ class RainFactor(SensorEntity):
             #reload the weather
             self._ran_today = datetime.today().strftime('%Y-%m-%d')
             weather = []
-            days    = config[ATTR_DAYS]
+            days    = self._days
             justloaded = True
             for n in range(days + 1):
                 rest = create_rest_data_from_config(hass, config, n)
