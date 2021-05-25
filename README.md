@@ -20,8 +20,8 @@ If the factor is less than 0 the factor is set to 0.
 ## Attributes
 
 Attributes are returned for:
-* daily rainfall
-* daily cumulative rainfall
+* daily rainfall - day_0_rainfall
+* daily cumulative rainfall - day_1_cumilative
 
 ## Installation
 
