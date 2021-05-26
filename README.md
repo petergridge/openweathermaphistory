@@ -111,3 +111,6 @@ sensor:
 
 ### 1.0.1
 * fix refresh issues, reduce API calls
+
+### 1.0.2
+* fix remaining bug
