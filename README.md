@@ -9,16 +9,6 @@ A OpenWeatherMap API Key is required see the [OpenWeatherMap](https://www.home-a
 
 You need an API key, which is free, but requires a [registration](https://home.openweathermap.org/users/sign_up).
 
-## Factor Calculation
-
-The adjustment factor is calculated based on the the cumulative rainfall for each day. For yesterday the cumulative value is today's (day 0) rainfall + yesterday's (day 1) rainfall.
-
-The lowest factor of the up to five days of rainfall is return as the state of the sensor.
-
-factor = 1 - ((cumulative rainfall - daymin)/(daymax - daymin))
-
-If the factor is less than 0 the factor is set to 0.
-
 ## Attributes
 
 Attributes are returned for:
@@ -109,6 +99,16 @@ sensor:
 *(integer)(Optional)* the lower limit for the calculation of Day 5 factor, default 26
 >#### day5max
 *(integer)(Optional)* the upper limit for the calculation of Day 5 factor, default 30
+
+## Factor Calculation
+
+The adjustment factor is calculated based on the the cumulative rainfall for each day. For yesterday the cumulative value is today's (day 0) rainfall + yesterday's (day 1) rainfall.
+
+The lowest factor of the up to five days of rainfall is return as the state of the sensor.
+
+factor = 1 - ((cumulative rainfall - daymin)/(daymax - daymin))
+
+If the factor is less than 0 the factor is set to 0.
 
 ## REVISION HISTORY
 
