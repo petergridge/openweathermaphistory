@@ -1,10 +1,13 @@
 """Platform for historical rain factor Sensor integration."""
+from .weatherhistory import WeatherHist
+from .data import RestData
+
 import logging
 import voluptuous as vol
 import json
 import math
-from datetime import datetime, timedelta
-from . import create_rest_data_from_config
+from datetime import datetime, timedelta, timezone
+#from . import create_rest_data_from_config , create_weatherhist
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA,
     SensorEntity,
@@ -15,9 +18,12 @@ from homeassistant.const import (
     CONF_LATITUDE,
     CONF_LONGITUDE,
     CONF_NAME,
+    CONF_UNIT_SYSTEM,
+    CONF_UNIT_SYSTEM_METRIC
     )
 from .const import (
     DOMAIN,
+    CONST_API_CALL,
     ATTR_DAYS,
     ATTR_0_MAX,
     ATTR_0_MIN,
@@ -48,6 +54,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_API_KEY): cv.string,
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
+        vol.Optional(CONF_UNIT_SYSTEM, default=CONF_UNIT_SYSTEM_METRIC): cv.unit_system,
         vol.Optional(ATTR_DAYS, default=5):vol.All(vol.Coerce(int), vol.Range(min=0, max=5)),
         vol.Optional(ATTR_0_MIN, default=1): cv.positive_int,
         vol.Optional(ATTR_0_MAX, default=5): cv.positive_int,
@@ -89,9 +96,6 @@ async def _async_create_entities(hass, config, weather):
     day4min   = config[ATTR_4_MIN]
     day5max   = config[ATTR_5_MAX]
     day5min   = config[ATTR_5_MIN]
-    icon_fine = config[ATTR_ICON_FINE]
-    icon_lightrain = config[ATTR_ICON_LIGHTRAIN]
-    icon_rain = config[ATTR_ICON_RAIN]
 
     daymax = [day0max,day1max,day2max,day3max,day4max,day5max]
     daymin = [day0min,day1min,day2min,day3min,day4min,day5min]
@@ -103,9 +107,6 @@ async def _async_create_entities(hass, config, weather):
             weather,
             name,
             days,
-            icon_fine,
-            icon_lightrain,
-            icon_rain,
             daymin,
             daymax,
         )
@@ -118,16 +119,20 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Set up the sensors."""
     weather = []
     days    = config[ATTR_DAYS]
-    key = config[CONF_API_KEY]
+    key     = config[CONF_API_KEY]
+    units   = config[CONF_UNIT_SYSTEM]
     try:
-        lat  = config[CONF_LATITUDE]
-        lon  = config[CONF_LONGITUDE]
+        lat = config[CONF_LATITUDE]
+        lon = config[CONF_LONGITUDE]
     except:
         lat = hass.config.latitude
         lon = hass.config.longitude
 
     for n in range(days + 1):
-        rest = create_rest_data_from_config(hass, key, lat, lon, n)
+        rest = RestData()
+        dt = int((datetime.now(tz=timezone.utc)- timedelta(days=n)).timestamp())
+        url = CONST_API_CALL % (lat, lon, dt, key, units)
+        await rest.set_resource(hass, url)
         await rest.async_update(log_errors=False)
         weather.append (rest)
 
@@ -144,9 +149,6 @@ class RainFactor(SensorEntity):
         weather,
         name: str,
         days: float,
-        icon_fine,
-        icon_lightrain,
-        icon_rain,
         daymin: list,
         daymax: list,
     ):
@@ -160,11 +162,12 @@ class RainFactor(SensorEntity):
         self._daymin             = daymin
         self._daymax             = daymax
         self._state_attributes   = None
-        self._icon_fine          = icon_fine
-        self._icon_lightrain     = icon_lightrain
-        self._icon_rain          = icon_rain
-        self._ran_today = datetime.today().strftime('%Y-%m-%d')
-        self._key       = config[CONF_API_KEY]
+        self._icon_fine          = config[ATTR_ICON_FINE]
+        self._icon_lightrain     = config[ATTR_ICON_LIGHTRAIN]
+        self._icon_rain          = config[ATTR_ICON_RAIN]
+        self._ran_today          = datetime.utcnow().date().strftime('%Y-%m-%d')
+        self._key                = config[CONF_API_KEY]
+        self._units              = config[CONF_UNIT_SYSTEM]
         try:
             self._lat = config[CONF_LATITUDE]
             self._lon = config[CONF_LONGITUDE]
@@ -196,109 +199,62 @@ class RainFactor(SensorEntity):
 
 
     async def async_added_to_hass(self):
+
+        self._weatherhist = WeatherHist()
+        await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax)
+        await self._weatherhist.async_update()        
         
-        n = 0
-        minfac = 1
-        ATTRS = {}
-        cumulative = 0
-        for rest in self._weather:
-            data = json.loads(rest.data)
-            total = 0
-            hourly = data["hourly"]
-            for hour in hourly:
-                if 'rain' in hour:
-                    rain = hour["rain"]
-                    if math.isnan(rain["1h"]):
-                        rain["1h"] = 0
-                    else:
-                        total += rain["1h"]
-            cumulative = cumulative + total
-            ATTRS ["day_%d_cumulative"%(n)] = round(cumulative,2)
-            ATTRS ["day_%d_rain"%(n)] = round(total,2)
-            try:
-                dayfac = 1 - ( cumulative - self._daymin[n])/(self._daymax[n]-self._daymin[n])
-                if dayfac < minfac:
-                    minfac = dayfac
-            except:
-                dayfac = 1
+        setattr(self, '_state_attributes', self._weatherhist.attrs)
 
-            n += 1
+        self._state = self._weatherhist.factor
 
-        if minfac < 0:
-            minfac = 0
-
-        self._state = minfac
-        if minfac == 0:
-            self._icon = DFLT_ICON_RAIN
-        elif minfac == 1:
-            self._icon = DFLT_ICON_FINE
+        if self._weatherhist.factor == 0:
+            self._icon = self._icon_rain
+        elif self._weatherhist.factor == 1:
+            self._icon = self._icon_fine
         else:
-            self._icon = DFLT_ICON_LIGHTRAIN
-
-        setattr(self, '_state_attributes', ATTRS)
+            self._icon = self._icon_lightrain
 
         self.async_write_ha_state()
-
         await super().async_added_to_hass()
         _LOGGER.debug('added to hass has run successfully')
 
 
     async def async_update(self):
-        #first time today reload the weather for all days        
-        justloaded = False
-        if self._ran_today != datetime.today().strftime('%Y-%m-%d'):
-            #reload the weather
-            self._ran_today = datetime.today().strftime('%Y-%m-%d')
-            weather = []
-            days    = self._days
-            justloaded = True
-            for n in range(days + 1):
-                rest = create_rest_data_from_config(self._hass, self._key, self._lat, self._lon, n)
+        #first time today reload the weather for all days
+        if self._ran_today != datetime.utcnow().date().strftime('%Y-%m-%d'):
+            #reload all weather on a new day
+            self._ran_today = datetime.utcnow().date().strftime('%Y-%m-%d')
+            n = 0
+            for rest in self._weather:
+                dt = int((datetime.now(tz=timezone.utc)- timedelta(days=n)).timestamp())
+                url = CONST_API_CALL % (self._lat,self._lon,dt,self._key,self._units)
+                await rest.set_resource(self._hass,url)
                 await rest.async_update(log_errors=False)
-                weather.append (rest)
+                n += 1
             _LOGGER.debug('new day update has run successfully')
-
-        n = 0
-        minfac = 1
-        ATTRS = {}
-        cumulative = 0
-        for  rest in self._weather:
-            #only update today's weather previous days won't change
-            if n == 0 and not justloaded:
-                await rest.async_update(log_errors=False)
-
-            data = json.loads(rest.data)
-            total = 0
-            hourly = data["hourly"]
-            for hour in hourly:
-                if 'rain' in hour:
-                    rain = hour["rain"]
-                    if math.isnan(rain["1h"]):
-                        rain["1h"] = 0
-                    else:
-                        total += rain["1h"]
-            cumulative = cumulative + total
-            ATTRS ["day_%d_cumulative"%(n)] = round(cumulative,2)
-            ATTRS ["day_%d_rain"%(n)] = round(total,2)
-            try:
-                dayfac = 1 - (cumulative - self._daymin[n])/(self._daymax[n]-self._daymin[n])
-                if dayfac < minfac:
-                    minfac = dayfac
-            except:
-                dayfac = 1
-            n += 1
-
-        if minfac < 0:
-            minfac = 0
-        if minfac == 0:
-            self._icon = "mdi:weather-pouring"
-        elif minfac == 1:
-            self._icon = "mdi:weather-sunny"
         else:
-            self._icon = "mdi:weather-rainy"
+            #only reload today's weather
+            _LOGGER.debug("weather 0 before")
+            _LOGGER.debug(self._weather[0].data)
+            await self._weather[0].async_update(log_errors=False)
+            _LOGGER.debug("weather 0 after")
+            _LOGGER.debug(self._weather[0].data)
 
-        self._state = minfac
+        await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax) 
+        await self._weatherhist.async_update()        
+        
+        setattr(self, '_state_attributes', self._weatherhist.attrs)
 
-        setattr(self, '_state_attributes', ATTRS)
+        self._state = self._weatherhist.factor
+
+        if self._weatherhist.factor == 0:
+            self._icon = self._icon_rain
+        elif self._weatherhist.factor == 1:
+            self._icon = self._icon_fine
+        else:
+            self._icon = self._icon_lightrain
 
         self.async_write_ha_state()
+        _LOGGER.debug('sensor update successful')
+

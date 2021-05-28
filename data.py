@@ -9,28 +9,24 @@ DEFAULT_TIMEOUT = 10
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class RestData:
     """Class for handling the data retrieval."""
 
-    def __init__(
-        self,
-        hass,
-        resource,
-        timeout=DEFAULT_TIMEOUT
-    ):
+    def __init__(self):
         """Initialize the data object."""
-        self._hass = hass
-        self._resource = resource
-        self._timeout = timeout
+        self._hass = None
+        self._resource = None
+        self._timeout = None
         self._verify_ssl = True
         self._async_client = None
         self.data = None
         self.last_exception = None
 
-    def set_url(self, url):
+    async def set_resource(self, hass, url, timeout=DEFAULT_TIMEOUT):
         """Set url."""
+        self._hass     = hass
         self._resource = url
+        self._timeout  = timeout
 
     async def async_update(self, log_errors=True):
         """Get the latest data from REST service with provided method."""
@@ -58,3 +54,4 @@ class RestData:
                 )
             self.last_exception = ex
             self.data = None
+
