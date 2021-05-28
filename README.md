@@ -67,6 +67,8 @@ sensor:
 *(string)(Required)* display name for the sensor, defaults to 'rainfactor'
 >#### api_key
 *(string)(Required)* the OpenWeatherMap API key.
+>#### unit_system
+*(string)(Optional)* metric or imperial, defaults to metric.
 >#### latitude
 *(latitude)(Optional)* the location to obtain weather information for, defaults to the home assistant configured Latitude and Longitude
 >#### longitude
@@ -114,3 +116,9 @@ sensor:
 
 ### 1.0.2
 * fix remaining bug
+
+### 1.0.3
+* Refactored the logic into a class
+* Fixed issue with daily refresh - changed to UTC time
+* expanded attributes to include min and max temperature
+* unit system (metric, imperial) config option
