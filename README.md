@@ -125,9 +125,9 @@ If the factor is less than 0 the factor is set to 0.
 ### 1.0.3
 * Refactored the logic into a class
 * Fixed issue with daily refresh - changed to UTC time
-* expanded attributes to include min and max temperature
-* unit system (metric, imperial) config option
+* Expanded attributes to include min and max temperature
+* Unit system (metric, imperial) config option
 
 ### 1.0.4
 * Reduce refresh time to 30 minutes
-* remove cummulatice rain from the attributes
+* Remove cumulative rain from the attributes
