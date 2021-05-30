@@ -5,7 +5,7 @@ import httpx
 
 from homeassistant.helpers.httpx_client import get_async_client
 
-DEFAULT_TIMEOUT = 10
+DEFAULT_TIMEOUT = 15
 
 _LOGGER = logging.getLogger(__name__)
 

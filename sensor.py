@@ -74,7 +74,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-SCAN_INTERVAL = timedelta(seconds=3600) #default to one hour intervals
+SCAN_INTERVAL = timedelta(seconds=1800) #default to 30 minute intervals
 
 _LOGGER = logging.getLogger(__name__)
 

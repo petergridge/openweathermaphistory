@@ -79,4 +79,4 @@ class WeatherHist:
             minfac = 0
 
         self.factor = minfac
-        self.attrs = {**ATTRS, **ATTRSRAIN, **ATTRSCUM, **ATTRMIN, **ATTRMAX}
+        self.attrs = {**ATTRS, **ATTRSRAIN, **ATTRMIN, **ATTRMAX}
