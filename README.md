@@ -1,7 +1,9 @@
 # openweathremaphistory
 A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, min and max temperatures as attributes. 
 
-The scan_interval is set at 3600 seconds (1 hour) as OpenWeatherMap data only refreshes every hour.
+The day is based on UTC so if your in Syndey, Australia GMT +10 your day will refresh at 10am.
+
+The scan_interval is set at 30 minutes as OpenWeatherMap data only refreshes every hour.
 
 This information is used to calculate a factor that can be used to reduce the watering time of the [Irrigation Program](https://github.com/petergridge/irrigation_component_V3) custom component.
 
@@ -13,7 +15,6 @@ You need an API key, which is free, but requires a [registration](https://home.o
 
 Attributes are returned for:
 * daily rainfall - day_0_rainfall
-* daily cumulative rainfall - day_1_cumilative
 * daily minimum temperature - day_2_min
 * daily maximum temperaturev - day_2_max
 
@@ -126,3 +127,7 @@ If the factor is less than 0 the factor is set to 0.
 * Fixed issue with daily refresh - changed to UTC time
 * expanded attributes to include min and max temperature
 * unit system (metric, imperial) config option
+
+### 1.0.4
+* Reduce refresh time to 30 minutes
+* remove cummulatice rain from the attributes
