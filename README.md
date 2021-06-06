@@ -131,3 +131,7 @@ If the factor is less than 0 the factor is set to 0.
 ### 1.0.4
 * Reduce refresh time to 30 minutes
 * Remove cumulative rain from the attributes
+
+### 1.0.5
+* Add unique id
+* round factor to 2 decimal places
