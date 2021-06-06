@@ -16,7 +16,7 @@ You need an API key, which is free, but requires a [registration](https://home.o
 Attributes are returned for:
 * daily rainfall - day_0_rainfall
 * daily minimum temperature - day_2_min
-* daily maximum temperaturev - day_2_max
+* daily maximum temperature - day_2_max
 
 ## Installation
 
