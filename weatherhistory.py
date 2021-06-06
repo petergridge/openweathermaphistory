@@ -78,5 +78,5 @@ class WeatherHist:
         if minfac < 0:
             minfac = 0
 
-        self.factor = minfac
+        self.factor = round(minfac,2)
         self.attrs = {**ATTRS, **ATTRSRAIN, **ATTRMIN, **ATTRMAX}

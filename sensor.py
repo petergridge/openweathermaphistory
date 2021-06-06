@@ -162,6 +162,7 @@ class RainFactor(SensorEntity):
         self._daymin             = daymin
         self._daymax             = daymax
         self._state_attributes   = None
+        self._icon               = config[ATTR_ICON_FINE]
         self._icon_fine          = config[ATTR_ICON_FINE]
         self._icon_lightrain     = config[ATTR_ICON_LIGHTRAIN]
         self._icon_rain          = config[ATTR_ICON_RAIN]
@@ -179,6 +180,11 @@ class RainFactor(SensorEntity):
     def name(self):
         """Return the name of the sensor."""
         return self._name
+
+    @property
+    def unique_id(self):
+        """Return a unique_id for this entity."""
+        return f"{self._name}-{self._lat}-{self._lon}"
 
     @property
     def state(self):
