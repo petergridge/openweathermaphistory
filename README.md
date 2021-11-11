@@ -5,7 +5,7 @@ The day is based on UTC so if your in Syndey, Australia GMT +10 your day will re
 
 The scan_interval is set at 30 minutes as OpenWeatherMap data only refreshes every hour.
 
-This information is used to calculate a factor that can be used to reduce the watering time of the [Irrigation Program](https://github.com/petergridge/irrigation_component_V3) custom component.
+This information is used to calculate a factor that can be used to reduce the watering time of the [Irrigation Program](https://github.com/petergridge/irrigation_component_V4) custom component.
 
 A OpenWeatherMap API Key is required see the [OpenWeatherMap](https://www.home-assistant.io/integrations/openweathermap/) custom component for more information.
 
