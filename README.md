@@ -14,9 +14,9 @@ You need an API key, which is free, but requires a [registration](https://home.o
 ## Attributes
 
 Attributes are returned for:
-* daily rainfall - day_0_rainfall
-* daily minimum temperature - day_2_min
-* daily maximum temperature - day_2_max
+* daily rainfall - day_0_rainfall ... day_5_rainfall
+* daily minimum temperature - day_0_min ... day_5_min
+* daily maximum temperature - day_0_max ... day_5_max
 
 ## Installation
 
@@ -56,52 +56,32 @@ sensor:
     rain_icon: 'mdi:weather-pouring'
 ```
 
-## platform
-*(string)(Required)* the sensor entityopenweathermaphistory.
->#### name
-*(string)(Required)* display name for the sensor, defaults to 'rainfactor'
->#### api_key
-*(string)(Required)* the OpenWeatherMap API key.
->#### unit_system
-*(string)(Optional)* metric or imperial, defaults to metric.
->#### latitude
-*(latitude)(Optional)* the location to obtain weather information for, defaults to the home assistant configured Latitude and Longitude
->#### longitude
-*(longitude)(Optional)* the location to obtain weather information for, defaults to the home assistant configured Latitude and Longitude
->#### num_days
-*(integer)(Optional)* the number of days to collect data for, deafaults to 5, 0 will return today's data only
->#### fine_icon
-*(icon)(Optional)* the icon to use when the factor = 1, defaults to 'mdi:weather-sunny'
->#### lightrain_icon
-*(icon)(Optional)* the icon to use when the factor somewhere between 0 and 1, defaults to 'mdi:weather-rainy'
->#### rain_icon
-*(icon)(Optional)* the icon to use when the factor = 0, defaults to 'mdi:weather-pouring'
->#### day0min
-*(integer)(Optional)* the lower limit for the calculation of Day 0 (today's) factor, default 1
->#### day0max
-*(integer)(Optional)* the upper limit for the calculation of Day 0 (today's) factor, default 5
->#### day1min
-*(integer)(Optional)* the lower limit for the calculation of Day 1 (yesterday's) factor, default 6
->#### day1max
-*(integer)(Optional)* the upper limit for the calculation of Day 1 (yesterday's) factor, default 10
->#### day2min
-*(integer)(Optional)* the lower limit for the calculation of Day 2 factor, default 11
->#### day2max
-*(integer)(Optional)* the upper limit for the calculation of Day 2 factor, default 15
->#### day3min
-*(integer)(Optional)* the lower limit for the calculation of Day 3 factor, default 16
->#### day3max
-*(integer)(Optional)* the upper limit for the calculation of Day 3 factor, default 20
->#### day4min
-*(integer)(Optional)* the lower limit for the calculation of Day 4 factor, default 21
->#### day4max
-*(integer)(Optional)* the upper limit for the calculation of Day 4 factor, default 25
->#### day5min
-*(integer)(Optional)* the lower limit for the calculation of Day 5 factor, default 26
->#### day5max
-*(integer)(Optional)* the upper limit for the calculation of Day 5 factor, default 30
+|Key |Type|Optional|Description|Default|
+|---|---|---|---|---|
+|platform|string|Required|the sensor entityopenweathermaphistory|
+|name|string|Required|display name for the sensor|'rainfactor'|
+|api_key|string|Required|the OpenWeatherMap API key|
+|unit_system|string|Optional|metric or imperial|metric|
+|latitude|latitude|Optional|the location to obtain weather information for|home assistant configured Latitude and Longitude|
+|longitude|longitude|Optional|the location to obtain weather information for|home assistant configured Latitude and Longitude|
+|num_days|integer|Optional|the number of days to collect data for|5, 0 will return today's data only|
+|fine_icon|icon|Optional|the icon to use when the factor = 1|'mdi:weather-sunny'|
+|lightrain_icon|icon|Optional|the icon to use when the factor somewhere between 0 and 1|'mdi:weather-rainy'|
+|rain_icon|icon|Optional|the icon to use when the factor = 0|'mdi:weather-pouring'|
+|day0min|integer|Optional|the lower limit for the calculation of Day 0 (today's) factor|1|
+|day0max|integer|Optional|the upper limit for the calculation of Day 0 (today's) factor|5|
+|day1min|integer|Optional|the lower limit for the calculation of Day 1 (yesterday's) factor|6|
+|day1max|integer|Optional|the upper limit for the calculation of Day 1 (yesterday's) factor|10|
+|day2min|integer|Optional|the lower limit for the calculation of Day 2 factor|11|
+|day2max|integer|Optional|the upper limit for the calculation of Day 2 factor|15|
+|day3min|integer|Optional|the lower limit for the calculation of Day 3 factor|16|
+|day3max|integer|Optional|the upper limit for the calculation of Day 3 factor|20|
+|day4min|integer|Optional|the lower limit for the calculation of Day 4 factor|21|
+|day4max|integer|Optional|the upper limit for the calculation of Day 4 factor|25|
+|day5min|integer|Optional|the lower limit for the calculation of Day 5 factor|26|
+|day5max|integer|Optional|the upper limit for the calculation of Day 5 factor|30|
 
-## Factor Calculation
+## State Calculation
 
 The adjustment factor is calculated based on the the cumulative rainfall for each day. For yesterday the cumulative value is today's (day 0) rainfall + yesterday's (day 1) rainfall.
 
