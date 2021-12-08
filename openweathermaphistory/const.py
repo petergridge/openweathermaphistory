@@ -2,6 +2,8 @@ DOMAIN                  = 'openweathermaphistory'
 SENSOR_ID_FORMAT        = 'sensor' + '.{}'
 CONST_ENTITY            = 'entity_id'
 CONST_SENSOR            = 'sensor'
+CONST_API_CALL          = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s'
+
 
 ATTR_DAYS               = 'num_days' #limit the number of days/API calls
 ATTR_0_MAX              = 'day0max'  #Day 0 - today max rainfall test threshold
