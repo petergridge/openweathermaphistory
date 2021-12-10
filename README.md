@@ -14,9 +14,9 @@ You need an API key, which is free, but requires a [registration](https://home.o
 ## Attributes
 
 Attributes are returned for:
-* daily rainfall - day_0_rainfall ... day_5_rainfall
-* daily minimum temperature - day_0_min ... day_5_min
-* daily maximum temperature - day_0_max ... day_5_max
+* daily rainfall - day_0_rainfall ... day_4_rainfall
+* daily minimum temperature - day_0_min ... day_4_min
+* daily maximum temperature - day_0_max ... day_4_max
 
 ## Installation
 
@@ -49,8 +49,6 @@ sensor:
     day3max: 20  
     day4min: 21
     day4max: 25  
-    day5min: 26
-    day5max: 30
     fine_icon: 'mdi:weather-sunny'
     lightrain_icon: 'mdi:weather-rainy'
     rain_icon: 'mdi:weather-pouring'
@@ -64,7 +62,7 @@ sensor:
 |unit_system|string|Optional|metric or imperial|metric|
 |latitude|latitude|Optional|the location to obtain weather information for|home assistant configured Latitude and Longitude|
 |longitude|longitude|Optional|the location to obtain weather information for|home assistant configured Latitude and Longitude|
-|num_days|integer|Optional|the number of days to collect data for|5, 0 will return today's data only|
+|num_days|integer|Optional|the number of days to collect data for|4, 0 will return the lat 24 hours data only|
 |fine_icon|icon|Optional|the icon to use when the factor = 1|'mdi:weather-sunny'|
 |lightrain_icon|icon|Optional|the icon to use when the factor somewhere between 0 and 1|'mdi:weather-rainy'|
 |rain_icon|icon|Optional|the icon to use when the factor = 0|'mdi:weather-pouring'|
@@ -78,8 +76,6 @@ sensor:
 |day3max|integer|Optional|the upper limit for the calculation of Day 3 factor|20|
 |day4min|integer|Optional|the lower limit for the calculation of Day 4 factor|21|
 |day4max|integer|Optional|the upper limit for the calculation of Day 4 factor|25|
-|day5min|integer|Optional|the lower limit for the calculation of Day 5 factor|26|
-|day5max|integer|Optional|the upper limit for the calculation of Day 5 factor|30|
 
 ## State Calculation
 
@@ -115,3 +111,6 @@ If the factor is less than 0 the factor is set to 0.
 ### 1.0.5
 * Add unique id
 * round factor to 2 decimal places
+
+### 1.0.6
+* refactor to present data based on the last 24 hours
