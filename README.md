@@ -1,7 +1,5 @@
 # openweathremaphistory
-A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, min and max temperatures as attributes. 
-
-The day is based on UTC so if your in Syndey, Australia GMT +10 your day will refresh at 10am.
+A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, min and max temperatures as attributes. The data is in 24 hout time slots not date based but data for the preceeding 24hrs.
 
 The scan_interval is set at 30 minutes as OpenWeatherMap data only refreshes every hour.
 
