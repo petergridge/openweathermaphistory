@@ -114,3 +114,4 @@ If the factor is less than 0 the factor is set to 0.
 
 ### 1.0.6
 * refactor to present data based on the last 24 hours
+* Added custom card
