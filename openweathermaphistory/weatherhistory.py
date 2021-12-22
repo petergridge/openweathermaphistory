@@ -82,7 +82,7 @@ class WeatherHist:
             
             cumulative += ATTRSRAIN ["day_%d_rain"%(x)]
             try:
-                dayfac = 1 - ( cumulative - self._daymin[localdaynum])/(self._daymax[localdaynum]-self._daymin[localdaynum])
+                dayfac = 1 - ( cumulative - self._daymin[x])/(self._daymax[x]-self._daymin[x])
                 if dayfac < minfac:
                     minfac = dayfac
             except:

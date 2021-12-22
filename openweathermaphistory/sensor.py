@@ -53,17 +53,17 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
         vol.Optional(CONF_UNIT_SYSTEM, default=CONF_UNIT_SYSTEM_METRIC): cv.unit_system,
-        vol.Optional(ATTR_DAYS, default=4):vol.All(vol.Coerce(int), vol.Range(min=0, max=4)),
+        vol.Optional(ATTR_DAYS, default=5):vol.All(vol.Coerce(int), vol.Range(min=1, max=5)),
         vol.Optional(ATTR_0_MIN, default=1): cv.positive_int,
-        vol.Optional(ATTR_0_MAX, default=5): cv.positive_int,
-        vol.Optional(ATTR_1_MIN, default=6): cv.positive_int,
-        vol.Optional(ATTR_1_MAX, default=10): cv.positive_int,
-        vol.Optional(ATTR_2_MIN, default=11): cv.positive_int,
-        vol.Optional(ATTR_2_MAX, default=15): cv.positive_int,
-        vol.Optional(ATTR_3_MIN, default=16): cv.positive_int,
-        vol.Optional(ATTR_3_MAX, default=20): cv.positive_int,
-        vol.Optional(ATTR_4_MIN, default=21): cv.positive_int,
-        vol.Optional(ATTR_4_MAX, default=25): cv.positive_int,
+        vol.Optional(ATTR_0_MAX, default=3): cv.positive_int,
+        vol.Optional(ATTR_1_MIN, default=4): cv.positive_int,
+        vol.Optional(ATTR_1_MAX, default=7): cv.positive_int,
+        vol.Optional(ATTR_2_MIN, default=8): cv.positive_int,
+        vol.Optional(ATTR_2_MAX, default=9): cv.positive_int,
+        vol.Optional(ATTR_3_MIN, default=10): cv.positive_int,
+        vol.Optional(ATTR_3_MAX, default=11): cv.positive_int,
+        vol.Optional(ATTR_4_MIN, default=12): cv.positive_int,
+        vol.Optional(ATTR_4_MAX, default=13): cv.positive_int,
         vol.Optional(ATTR_ICON_FINE, default=DFLT_ICON_FINE): cv.icon,
         vol.Optional(ATTR_ICON_LIGHTRAIN, default=DFLT_ICON_LIGHTRAIN): cv.icon,
         vol.Optional(ATTR_ICON_RAIN, default=DFLT_ICON_RAIN): cv.icon,
@@ -121,7 +121,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         lat = hass.config.latitude
         lon = hass.config.longitude
 
-    for n in range(days + 2):
+    for n in range(days + 1):
         rest = RestData()
         dt = int((datetime.now(tz=timezone.utc)- timedelta(days=n)).timestamp())
         url = CONST_API_CALL % (lat, lon, dt, key, units)
@@ -221,9 +221,7 @@ class RainFactor(SensorEntity):
 
     async def async_update(self):
         #first time today reload the weather for all days
-#        if self._ran_today != datetime.utcnow().date().strftime('%Y-%m-%d'):
-        #reload all weather on a new day
-#        self._ran_today = datetime.utcnow().date().strftime('%Y-%m-%d')
+
         n = 0
         for rest in self._weather:
             dt = int((datetime.now(tz=timezone.utc)- timedelta(days=n)).timestamp())
@@ -232,13 +230,6 @@ class RainFactor(SensorEntity):
             await rest.async_update(log_errors=False)
             n += 1
         _LOGGER.debug('new day update has run successfully')
- #       else:
-            #only reload today's weather
-#            _LOGGER.debug("weather 0 before")
-#            _LOGGER.debug(self._weather[0].data)
-#            await self._weather[0].async_update(log_errors=False)
-#            _LOGGER.debug("weather 0 after")
-#            _LOGGER.debug(self._weather[0].data)
 
         await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax) 
         await self._weatherhist.async_update()        
