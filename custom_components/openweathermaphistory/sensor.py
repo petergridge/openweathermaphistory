@@ -200,7 +200,7 @@ class RainFactor(SensorEntity):
     async def async_added_to_hass(self):
 
         self._weatherhist = WeatherHist()
-        await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax)
+        await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax, self._units)
         await self._weatherhist.async_update()        
         
         setattr(self, '_state_attributes', self._weatherhist.attrs)

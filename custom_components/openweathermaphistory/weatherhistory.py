@@ -18,11 +18,12 @@ class WeatherHist:
         self.attrs    = None
         self.factor   = None
 
-    async def set_weather(self, weather, daymin, daymax):
+    async def set_weather(self, weather, daymin, daymax, units):
         """Set url."""
         self._weather = weather
         self._daymin  = daymin
         self._daymax  = daymax
+        self._units   = units
 
     async def async_update(self):
         _LOGGER.debug("updating weatherhistory")
@@ -37,43 +38,48 @@ class WeatherHist:
         TOTAL = {0:0,1:0,2:0,3:0,4:0,5:0}
         cumulative = 0
         for rest in self._weather:
+            try:
+                data = json.loads(rest.data)
+            except:
+                _LOGGER.debug("Open weather map time out")
+            else:
+                localtimezone = pytz.timezone(data["timezone"])
 
-            data = json.loads(rest.data)
-            localtimezone = pytz.timezone(data["timezone"])
+                current = data["current"]
+                if 'dt' in current:
+                    dt = current["dt"]
+                    formatted_dt = datetime.utcfromtimestamp(dt).replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%Y-%m-%d %H:%M:%S')
+                    ATTRS ["As at"] = formatted_dt
 
-            current = data["current"]
-            if 'dt' in current:
-                dt = current["dt"]
-                formatted_dt = datetime.utcfromtimestamp(dt).replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%Y-%m-%d %H:%M:%S')
-                ATTRS ["As at"] = formatted_dt
-#                _LOGGER.warning("AS AT %s",formatted_dt)
+                hourly = data["hourly"]
+                for hour in hourly:
 
-            hourly = data["hourly"]
-            for hour in hourly:
+                    # now determine the local day the last 24hrs = 0 24-48 = 1...
+                    localday = datetime.utcfromtimestamp(hour["dt"]).replace(tzinfo=timezone.utc).astimezone(tz=localtimezone)
+                    localnow = datetime.now(localtimezone)
+                    localdaynum = (localnow - localday).days
 
-                # now determine the local day the last 24hrs = 0 24-48 = 1...
-                localday = datetime.utcfromtimestamp(hour["dt"]).replace(tzinfo=timezone.utc).astimezone(tz=localtimezone)
-                localnow = datetime.now(localtimezone)
-                localdaynum = (localnow - localday).days
+                    if localdaynum >= len(self._daymax):
+                        continue
 
-                if localdaynum >= len(self._daymax):
-                    continue
-
-                if 'rain' in hour:
-                    rain = hour["rain"]
-                    if not math.isnan(rain["1h"]):
-                        TOTAL[localdaynum] += rain["1h"]
-                        ATTRSRAIN ["day_%d_rain"%(localdaynum)] = round(TOTAL[localdaynum],2)
-
-                if 'temp' in hour:
-                    if hour["temp"] < MINTEMP[localdaynum]:
-                        MINTEMP[localdaynum] = hour["temp"]
-                        ATTRMIN["day_%d_min"%(localdaynum)] = hour["temp"]
-                    if hour["temp"] > MAXTEMP[localdaynum]:
-                        MAXTEMP[localdaynum] = hour["temp"]
-                        ATTRMAX["day_%d_max"%(localdaynum)] = hour["temp"]
-            
-            #end hour loop
+                    if 'rain' in hour:
+                        rain = hour["rain"]
+                        if not math.isnan(rain["1h"]):
+                            TOTAL[localdaynum] += rain["1h"]
+                            if self._units == "imperial":
+                                ATTRSRAIN ["day_%d_rain"%(localdaynum)] = round(TOTAL[localdaynum]/25.4,2)
+                            else:
+                                ATTRSRAIN ["day_%d_rain"%(localdaynum)] = round(TOTAL[localdaynum],2)
+                            
+                    if 'temp' in hour:
+                        if hour["temp"] < MINTEMP[localdaynum]:
+                            MINTEMP[localdaynum] = hour["temp"]
+                            ATTRMIN["day_%d_min"%(localdaynum)] = hour["temp"]
+                        if hour["temp"] > MAXTEMP[localdaynum]:
+                            MAXTEMP[localdaynum] = hour["temp"]
+                            ATTRMAX["day_%d_max"%(localdaynum)] = hour["temp"]
+                
+                #end hour loop
 
         #end rest loop
         
@@ -92,5 +98,4 @@ class WeatherHist:
             minfac = 0
 
         self.factor = round(minfac,2)
-#        self.attrs = {**ATTRS, **ATTRSRAIN, **ATTRMIN, **ATTRMAX}
         self.attrs = {**ATTRSRAIN, **ATTRMIN, **ATTRMAX}
