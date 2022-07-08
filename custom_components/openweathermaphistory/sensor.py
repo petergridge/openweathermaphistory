@@ -117,6 +117,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     try:
         lat = config[CONF_LATITUDE]
         lon = config[CONF_LONGITUDE]
+        _LOGGER.debug('setup_platform %s, %s', lat, lon)
     except:
         lat = hass.config.latitude
         lon = hass.config.longitude
@@ -125,10 +126,10 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         rest = RestData()
         dt = int((datetime.now(tz=timezone.utc)- timedelta(days=n)).timestamp())
         url = CONST_API_CALL % (lat, lon, dt, key, units)
+        _LOGGER.debug( url )
         await rest.set_resource(hass, url)
         await rest.async_update(log_errors=False)
         weather.append (rest)
-
     async_add_entities(await _async_create_entities(hass, config, weather))
     _LOGGER.debug('setup_platform has run successfully')
 
@@ -231,7 +232,7 @@ class RainFactor(SensorEntity):
             n += 1
         _LOGGER.debug('new day update has run successfully')
 
-        await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax) 
+        await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax, self._units) 
         await self._weatherhist.async_update()        
         
         setattr(self, '_state_attributes', self._weatherhist.attrs)
