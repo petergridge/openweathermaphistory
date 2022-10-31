@@ -119,4 +119,6 @@ If the factor is less than 0 the factor is set to 0.
 
 ### 1.0.10
 * Minor bug fix
+
+### 1.0.11
 * Deprecate unit_system and derive units from HA config.
