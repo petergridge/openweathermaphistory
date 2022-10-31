@@ -18,9 +18,8 @@ from homeassistant.const import (
     CONF_LATITUDE,
     CONF_LONGITUDE,
     CONF_NAME,
-    CONF_UNIT_SYSTEM,
-    CONF_UNIT_SYSTEM_METRIC
     )
+
 from .const import (
     DOMAIN,
     CONST_API_CALL,
@@ -52,7 +51,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_API_KEY): cv.string,
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
-        vol.Optional(CONF_UNIT_SYSTEM, default=CONF_UNIT_SYSTEM_METRIC): cv.unit_system,
         vol.Optional(ATTR_DAYS, default=5):vol.All(vol.Coerce(int), vol.Range(min=1, max=5)),
         vol.Optional(ATTR_0_MIN, default=1): cv.positive_int,
         vol.Optional(ATTR_0_MAX, default=3): cv.positive_int,
@@ -92,6 +90,9 @@ async def _async_create_entities(hass, config, weather):
     day4min   = config[ATTR_4_MIN]
     daymax = [day0max,day1max,day2max,day3max,day4max]
     daymin = [day0min,day1min,day2min,day3min,day4min]
+    units   = hass.config.units
+    if units != 'metric':
+        units = 'imperial'
 
     sensors.append(
         RainFactor(
@@ -102,6 +103,7 @@ async def _async_create_entities(hass, config, weather):
             days,
             daymin,
             daymax,
+            units,
         )
     )
 
@@ -113,7 +115,10 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     weather = []
     days    = config[ATTR_DAYS]
     key     = config[CONF_API_KEY]
-    units   = config[CONF_UNIT_SYSTEM]
+    units   = hass.config.units
+    if units != 'metric':
+        units = 'imperial'
+    
     try:
         lat = config[CONF_LATITUDE]
         lon = config[CONF_LONGITUDE]
@@ -145,12 +150,13 @@ class RainFactor(SensorEntity):
         days: float,
         daymin: list,
         daymax: list,
+        units
     ):
         """Initialize the sensor."""
         self._name               = name
         self._hass               = hass
-        self._days               = days
-        self._config             = config
+#        self._days               = days
+#        self._config             = config
         self._weather            = weather
         self._state              = 1
         self._daymin             = daymin
@@ -162,7 +168,8 @@ class RainFactor(SensorEntity):
         self._icon_rain          = config[ATTR_ICON_RAIN]
         self._ran_today          = datetime.utcnow().date().strftime('%Y-%m-%d')
         self._key                = config[CONF_API_KEY]
-        self._units              = config[CONF_UNIT_SYSTEM]
+        self._units               = units
+
         try:
             self._lat = config[CONF_LATITUDE]
             self._lon = config[CONF_LONGITUDE]
