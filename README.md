@@ -57,7 +57,6 @@ sensor:
 |platform|string|Required|the sensor entityopenweathermaphistory|
 |name|string|Required|display name for the sensor|'rainfactor'|
 |api_key|string|Required|the OpenWeatherMap API key|
-|unit_system|string|Optional|metric or imperial|metric|
 |latitude|latitude|Optional|the location to obtain weather information for|home assistant configured Latitude and Longitude|
 |longitude|longitude|Optional|the location to obtain weather information for|home assistant configured Latitude and Longitude|
 |num_days|integer|Optional|the number of days to collect data for|4, 0 will return the lat 24 hours data only|
