@@ -32,10 +32,12 @@ class WeatherHist:
         MINTEMP = {0:999,1:999,2:999,3:999,4:999,5:999}
         MAXTEMP = {0:-999,1:-999,2:-999,3:-999,4:-999,5:-999}
         ATTRS = {}
-        ATTRSRAIN = {'day_0_rain':0,'day_1_rain':0,'day_2_rain':0,'day_3_rain':0,'day_4_rain':0,'day_5_rain':0}
+        ATTRSRAIN = {'day_0_rain':0,'day_1_rain':0,'day_2_rain':0,'day_3_rain':0,'day_4_rain':0,'day_5_rain':0, 
+                     'day_0_snow':0,'day_1_snow':0,'day_2_snow':0,'day_3_snow':0,'day_4_snow':0,'day_5_snow':0}
         ATTRMIN = {}
         ATTRMAX = {}
-        TOTAL = {0:0,1:0,2:0,3:0,4:0,5:0}
+        TOTALRAIN = {0:0,1:0,2:0,3:0,4:0,5:0}
+        TOTALSNOW = {0:0,1:0,2:0,3:0,4:0,5:0}
         cumulative = 0
         for rest in self._weather:
             try:
@@ -65,11 +67,20 @@ class WeatherHist:
                     if 'rain' in hour:
                         rain = hour["rain"]
                         if not math.isnan(rain["1h"]):
-                            TOTAL[localdaynum] += rain["1h"]
+                            TOTALRAIN[localdaynum] += rain["1h"]
                             if self._units == "imperial":
-                                ATTRSRAIN ["day_%d_rain"%(localdaynum)] = round(TOTAL[localdaynum]/25.4,2)
+                                ATTRSRAIN ["day_%d_rain"%(localdaynum)] = round(TOTALRAIN[localdaynum]/25.4,2)
                             else:
-                                ATTRSRAIN ["day_%d_rain"%(localdaynum)] = round(TOTAL[localdaynum],2)
+                                ATTRSRAIN ["day_%d_rain"%(localdaynum)] = round(TOTALRAIN[localdaynum],2)
+
+                    if 'snow' in hour:
+                        snow = hour["snow"]
+                        if not math.isnan(snow["1h"]):
+                            TOTALSNOW[localdaynum] += snow["1h"]
+                            if self._units == "imperial":
+                                ATTRSRAIN ["day_%d_snow"%(localdaynum)] = round(TOTALSNOW[localdaynum]/25.4,2)
+                            else:
+                                ATTRSRAIN ["day_%d_snow"%(localdaynum)] = round(TOTALSNOW[localdaynum],2)
                             
                     if 'temp' in hour:
                         if hour["temp"] < MINTEMP[localdaynum]:

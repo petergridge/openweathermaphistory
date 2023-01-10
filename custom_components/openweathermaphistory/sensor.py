@@ -7,6 +7,7 @@ import voluptuous as vol
 import json
 import math
 from datetime import datetime, timedelta, timezone
+from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA,
@@ -90,8 +91,9 @@ async def _async_create_entities(hass, config, weather):
     day4min   = config[ATTR_4_MIN]
     daymax = [day0max,day1max,day2max,day3max,day4max]
     daymin = [day0min,day1min,day2min,day3min,day4min]
-    units   = hass.config.units
-    if units != 'metric':
+    if hass.config.units is METRIC_SYSTEM:
+        units = 'metric'
+    else:
         units = 'imperial'
 
     sensors.append(
@@ -115,8 +117,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     weather = []
     days    = config[ATTR_DAYS]
     key     = config[CONF_API_KEY]
-    units   = hass.config.units
-    if units != 'metric':
+    if hass.config.units is METRIC_SYSTEM:
+        units = 'metric'
+    else:
         units = 'imperial'
     
     try:
