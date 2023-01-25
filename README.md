@@ -1,5 +1,5 @@
 # openweathremaphistory
-A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, min and max temperatures as attributes. The data is in 24 hour time slots not date based but data for the preceeding 24hrs.
+A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, snow, min and max temperatures as attributes. The data is in 24 hour time slots not date based but data for the preceeding 24hrs.
 
 The scan_interval is set at 30 minutes as OpenWeatherMap data only refreshes every hour.
 
@@ -15,6 +15,7 @@ New registration for the API 2.5 cannot not recieve the history data, however @t
 
 Attributes are returned for:
 * daily rainfall - day_0_rainfall ... day_4_rainfall
+* daily snow - day_0_snow ... day_4_snow
 * daily minimum temperature - day_0_min ... day_4_min
 * daily maximum temperature - day_0_max ... day_4_max
 
