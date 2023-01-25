@@ -9,7 +9,7 @@ A OpenWeatherMap API Key is required see the [OpenWeatherMap](https://www.home-a
 
 You need an API key, which is free, but requires a [registration](https://home.openweathermap.org/users/sign_up).
 
-New registration for the API 2.5 cannot not recieve the history data, however @thor0215, https://github.com/petergridge/openweathermaphistory/issues/7#issuecomment-1397489727, has provided information that signing up to the "One Call by Call" subscription you can gain access. Observing the calls to the V2.5 api do not use incur any cost if calls remain below 1000 per day. 
+New registrations for the API 2.5 cannot not recieve the history data, however @thor0215, https://github.com/petergridge/openweathermaphistory/issues/7#issuecomment-1397489727, has provided information that signing up to the "One Call by Call" subscription you can gain access. Observing the calls to the V2.5 api do not use incur any cost if calls remain below 1000 per day. 
 
 ## Attributes
 
