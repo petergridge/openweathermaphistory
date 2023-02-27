@@ -37,8 +37,13 @@ Attributes are returned for:
 
 ## Installation
 
+HACS installation
+Adding the repository using HACS is the simplest approach
+
+Manual Installation
 * Copy the openweathermaphistory folder to the ‘config/custom components/’ directory 
 
+## Configuration
 A minimal configuration. Latitude and Longitude are defaulted to your Home Assistant location
 ```yaml
 sensor:
