@@ -60,7 +60,6 @@ sensor:
     latitude: -33.8302547
     longitude: 151.1516128
     api_key: 'open weather map api key'
-    num_days: 5
     day0sig: 1
     day1sig: 0.5
     day2sig: 0.25
