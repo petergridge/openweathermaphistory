@@ -95,13 +95,14 @@ sensor:
 The adjustment factor is calculated based on the the cumulative rainfall for each day.
 
 Each 24 hrs rain has a lower significance as it ages:
-    - Rain in the last 24 hours has a weighting of 1
-    - rain for the next 24 hours has a weighting of 0.5
-    - rain for the next 24 hours has a weighting of 0.25
-    - rain for the next 24 hours has a weighting of 0.12
-    - rain for the next 24 hours has a weighting of 0.06
+- Rain in the last 24 hours has a weighting of 1
+- rain for the next 24 hours has a weighting of 0.5
+- rain for the next 24 hours has a weighting of 0.25
+- rain for the next 24 hours has a weighting of 0.12
+- rain for the next 24 hours has a weighting of 0.06
+
 The adjusted total rainfall is compared to a target rainfall:
-    - so if the total adjusted rainfall is 2mm and the target rainfall is 10mm a factor of 0.8 will be returned
+- if the total adjusted rainfall is 2mm and the target rainfall is 10mm a factor of 0.8 will be returned
 
 ## REVISION HISTORY
 ### 1.1.0
