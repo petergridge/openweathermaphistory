@@ -3,7 +3,7 @@
 # Breaking Change: V1.0.11 to V1.1.0.
 The following configuration options have been removed, see updated factor calculation below
 |Key |Type|Optional|Description|
-|---|---|---|---|---|
+|---|---|---|---|
 |num_days|integer|Optional|the number of days to collect data for|
 |day0min|integer|Optional|the lower limit for the calculation of Day 0 (today's) factor|
 |day0max|integer|Optional|the upper limit for the calculation of Day 0 (today's) factor|
