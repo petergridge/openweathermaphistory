@@ -1,5 +1,7 @@
 # OpenWeathreMapHistory
 
+[![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
+
 # Breaking Change: V1.0.11 to V1.1.0.
 The following configuration options have been removed, see updated factor calculation below
 |Key |Type|Optional|Description|
