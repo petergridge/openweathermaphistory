@@ -1,20 +1,20 @@
 # OpenWeathreMapHistory
 
 # Breaking Change: V1.0.11 to V1.1.0.
-The following configuration options have been removed
-|Key |Type|Optional|Description|Default|
+The following configuration options have been removed, see updated factor calculation below
+|Key |Type|Optional|Description|
 |---|---|---|---|---|
-|num_days|integer|Optional|the number of days to collect data for|4, 0 will return the lat 24 hours data only|
-|day0min|integer|Optional|the lower limit for the calculation of Day 0 (today's) factor|1|
-|day0max|integer|Optional|the upper limit for the calculation of Day 0 (today's) factor|5|
-|day1min|integer|Optional|the lower limit for the calculation of Day 1 (yesterday's) factor|6|
-|day1max|integer|Optional|the upper limit for the calculation of Day 1 (yesterday's) factor|10|
-|day2min|integer|Optional|the lower limit for the calculation of Day 2 factor|11|
-|day2max|integer|Optional|the upper limit for the calculation of Day 2 factor|15|
-|day3min|integer|Optional|the lower limit for the calculation of Day 3 factor|16|
-|day3max|integer|Optional|the upper limit for the calculation of Day 3 factor|20|
-|day4min|integer|Optional|the lower limit for the calculation of Day 4 factor|21|
-|day4max|integer|Optional|the upper limit for the calculation of Day 4 factor|25|
+|num_days|integer|Optional|the number of days to collect data for|
+|day0min|integer|Optional|the lower limit for the calculation of Day 0 (today's) factor|
+|day0max|integer|Optional|the upper limit for the calculation of Day 0 (today's) factor|
+|day1min|integer|Optional|the lower limit for the calculation of Day 1 (yesterday's) factor|
+|day1max|integer|Optional|the upper limit for the calculation of Day 1 (yesterday's) factor|
+|day2min|integer|Optional|the lower limit for the calculation of Day 2 factor|
+|day2max|integer|Optional|the upper limit for the calculation of Day 2 factor|
+|day3min|integer|Optional|the lower limit for the calculation of Day 3 factor|
+|day3max|integer|Optional|the upper limit for the calculation of Day 3 factor|
+|day4min|integer|Optional|the lower limit for the calculation of Day 4 factor|
+|day4max|integer|Optional|the upper limit for the calculation of Day 4 factor|
 
 # Functionality
 A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, snow, min and max temperatures as attributes. The data is in 24 hour time slots, not date based, but data for the preceeding 24hrs.
