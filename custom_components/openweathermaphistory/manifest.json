@@ -5,7 +5,7 @@
   "documentation": "https://github.com/petergridge/openweathermaphistory",
   "issue_tracker": "https://github.com/petergridge/openweathermaphistory/issues",
   "dependencies": [],
-  "codeowners": ["petergridge"],
+  "codeowners": ["@petergridge"],
   "requirements": [],
   "iot_class": "cloud_polling"
 }
