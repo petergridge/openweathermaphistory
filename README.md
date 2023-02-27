@@ -1,21 +1,31 @@
-# openweathremaphistory
-A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, snow, min and max temperatures as attributes. The data is in 24 hour time slots not date based but data for the preceeding 24hrs.
+# OpenWeathreMapHistory
 
-The scan_interval is set at 30 minutes as OpenWeatherMap data only refreshes every hour.
+# Breaking Change: V1.0.11 to V1.1.0.
+The following configuration options have been removed
+|Key |Type|Optional|Description|Default|
+|---|---|---|---|---|
+|num_days|integer|Optional|the number of days to collect data for|4, 0 will return the lat 24 hours data only|
+|day0min|integer|Optional|the lower limit for the calculation of Day 0 (today's) factor|1|
+|day0max|integer|Optional|the upper limit for the calculation of Day 0 (today's) factor|5|
+|day1min|integer|Optional|the lower limit for the calculation of Day 1 (yesterday's) factor|6|
+|day1max|integer|Optional|the upper limit for the calculation of Day 1 (yesterday's) factor|10|
+|day2min|integer|Optional|the lower limit for the calculation of Day 2 factor|11|
+|day2max|integer|Optional|the upper limit for the calculation of Day 2 factor|15|
+|day3min|integer|Optional|the lower limit for the calculation of Day 3 factor|16|
+|day3max|integer|Optional|the upper limit for the calculation of Day 3 factor|20|
+|day4min|integer|Optional|the lower limit for the calculation of Day 4 factor|21|
+|day4max|integer|Optional|the upper limit for the calculation of Day 4 factor|25|
+
+# Functionality
+A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, snow, min and max temperatures as attributes. The data is in 24 hour time slots, not date based, but data for the preceeding 24hrs.
+
+The scan_interval is set at 30 minutes as OpenWeatherMap data only refreshes every hour. A 24 hour period will make 54 API calls.
 
 This information is used to calculate a factor that can be used to reduce the watering time of the [Irrigation Program](https://github.com/petergridge/irrigation_component_V4) custom component.
 
 A OpenWeatherMap API Key is required see the [OpenWeatherMap](https://www.home-assistant.io/integrations/openweathermap/) custom component for more information.
 
 You need an API key, which is free, but requires a [registration](https://home.openweathermap.org/users/sign_up).
-
-New registrations for the API 2.5 cannot not recieve the history data and will recieve this error:
-```
-File "/config/custom_components/openweathermaphistory/weatherhistory.py", line 46, in async_update
-    localtimezone = pytz.timezone(data["timezone"])
-KeyError: 'timezone'
-```
-@thor0215 in this post https://github.com/petergridge/openweathermaphistory/issues/7#issuecomment-1397489727, has provided information that signing up to the "One Call by Call" subscription you can gain access. Observing the calls to the V2.5 api do not use incur any cost if calls remain below 1000 per day. 
 
 ## Attributes
 
@@ -46,16 +56,12 @@ sensor:
     longitude: 151.1516128
     api_key: 'open weather map api key'
     num_days: 5
-    day0min: 1
-    day0max: 5
-    day1min: 6
-    day1max: 10  
-    day2min: 11
-    day2max: 15  
-    day3min: 16
-    day3max: 20  
-    day4min: 21
-    day4max: 25  
+    day0sig: 1
+    day1sig: 0.5
+    day2sig: 0.25
+    day3sig: 0.12
+    day4sig: 0.06
+    watertarget: 10
     fine_icon: 'mdi:weather-sunny'
     lightrain_icon: 'mdi:weather-rainy'
     rain_icon: 'mdi:weather-pouring'
@@ -72,61 +78,57 @@ sensor:
 |fine_icon|icon|Optional|the icon to use when the factor = 1|'mdi:weather-sunny'|
 |lightrain_icon|icon|Optional|the icon to use when the factor somewhere between 0 and 1|'mdi:weather-rainy'|
 |rain_icon|icon|Optional|the icon to use when the factor = 0|'mdi:weather-pouring'|
-|day0min|integer|Optional|the lower limit for the calculation of Day 0 (today's) factor|1|
-|day0max|integer|Optional|the upper limit for the calculation of Day 0 (today's) factor|5|
-|day1min|integer|Optional|the lower limit for the calculation of Day 1 (yesterday's) factor|6|
-|day1max|integer|Optional|the upper limit for the calculation of Day 1 (yesterday's) factor|10|
-|day2min|integer|Optional|the lower limit for the calculation of Day 2 factor|11|
-|day2max|integer|Optional|the upper limit for the calculation of Day 2 factor|15|
-|day3min|integer|Optional|the lower limit for the calculation of Day 3 factor|16|
-|day3max|integer|Optional|the upper limit for the calculation of Day 3 factor|20|
-|day4min|integer|Optional|the lower limit for the calculation of Day 4 factor|21|
-|day4max|integer|Optional|the upper limit for the calculation of Day 4 factor|25|
+|day0sig|float|Optional|Significance of the days rainfall|1|
+|day1sig|float|Optional|Significance of the days rainfall|0.5|
+|day2sig|float|Optional|Significance of the days rainfall|0.25|
+|day3sig|float|Optional|Significance of the days rainfall|0.12|
+|day4sig|float|Optional|Significance of the days rainfall|0.06|
+|watertarget|float|Optional|The desired watering to be applied|10|
 
 ## State Calculation
 
-The adjustment factor is calculated based on the the cumulative rainfall for each day. For yesterday the cumulative value is today's (day 0) rainfall + yesterday's (day 1) rainfall.
+The adjustment factor is calculated based on the the cumulative rainfall for each day.
 
-The lowest factor of the up to five days of rainfall is return as the state of the sensor.
-
-factor = 1 - ((cumulative rainfall - daymin)/(daymax - daymin))
-
-If the factor is less than 0 the factor is set to 0.
+Each 24 hrs rain has a lower significance as it ages:
+    - Rain in the last 24 hours has a weighting of 1
+    - rain for the next 24 hours has a weighting of 0.5
+    - rain for the next 24 hours has a weighting of 0.25
+    - rain for the next 24 hours has a weighting of 0.12
+    - rain for the next 24 hours has a weighting of 0.06
+The adjusted total rainfall is compared to a target rainfall:
+    - so if the total adjusted rainfall is 2mm and the target rainfall is 10mm a factor of 0.8 will be returned
 
 ## REVISION HISTORY
+### 1.1.0
+- Breaking Change - remove num_days configuration option.
+- Breaking Change - Modify the factor to a simpler model
+- Optimised API calls
+- Handle missing time zone issue for new OpenWeather registrations. Timezone defaults to HomeAssistant configuration value
+- Only return five full 24hr periods
 
-### 1.0.0
-* Initial Release.
-
-### 1.0.1
-* fix refresh issues, reduce API calls
-
-### 1.0.2
-* fix remaining bug
-
+### 1.0.11
+* Deprecate unit_system and derive units from HA config.
+### 1.0.10
+* Minor bug fix
+### 1.0.9
+* present rainfall in inches when imperial unit system selected
+### 1.0.6
+* refactor to present data based on the last 24 hours
+* Added custom card
+### 1.0.5
+* Add unique id
+* round factor to 2 decimal places
+### 1.0.4
+* Reduce refresh time to 30 minutes
+* Remove cumulative rain from the attributes
 ### 1.0.3
 * Refactored the logic into a class
 * Fixed issue with daily refresh - changed to UTC time
 * Expanded attributes to include min and max temperature
 * Unit system (metric, imperial) config option
-
-### 1.0.4
-* Reduce refresh time to 30 minutes
-* Remove cumulative rain from the attributes
-
-### 1.0.5
-* Add unique id
-* round factor to 2 decimal places
-
-### 1.0.6
-* refactor to present data based on the last 24 hours
-* Added custom card
-
-### 1.0.9
-* present rainfall in inches when imperial unit system selected
-
-### 1.0.10
-* Minor bug fix
-
-### 1.0.11
-* Deprecate unit_system and derive units from HA config.
+### 1.0.2
+* fix remaining bug
+### 1.0.1
+* fix refresh issues, reduce API calls
+### 1.0.0
+* Initial Release.
