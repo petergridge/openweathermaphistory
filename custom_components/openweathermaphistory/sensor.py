@@ -4,8 +4,6 @@ from .data import RestData
 
 import logging
 import voluptuous as vol
-import json
-import math
 from datetime import datetime, timedelta, timezone
 from homeassistant.util.unit_system import METRIC_SYSTEM
 
@@ -22,25 +20,19 @@ from homeassistant.const import (
     )
 
 from .const import (
-    DOMAIN,
     CONST_API_CALL,
-    ATTR_DAYS,
-    ATTR_0_MAX,
-    ATTR_0_MIN,
-    ATTR_1_MAX,
-    ATTR_1_MIN,
-    ATTR_2_MAX,
-    ATTR_2_MIN,
-    ATTR_3_MAX,
-    ATTR_3_MIN,
-    ATTR_4_MAX,
-    ATTR_4_MIN,
-    DFLT_ICON_FINE,
-    DFLT_ICON_LIGHTRAIN,
-    DFLT_ICON_RAIN,
+    ATTR_0_SIG,
+    ATTR_1_SIG,
+    ATTR_2_SIG,
+    ATTR_3_SIG,
+    ATTR_4_SIG,
+    ATTR_WATERTARGET,
     ATTR_ICON_FINE,
     ATTR_ICON_LIGHTRAIN,
     ATTR_ICON_RAIN,
+    DFLT_ICON_FINE,
+    DFLT_ICON_LIGHTRAIN,
+    DFLT_ICON_RAIN,
     )
 import homeassistant.helpers.config_validation as cv
 
@@ -52,17 +44,14 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_API_KEY): cv.string,
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
-        vol.Optional(ATTR_DAYS, default=5):vol.All(vol.Coerce(int), vol.Range(min=1, max=5)),
-        vol.Optional(ATTR_0_MIN, default=1): cv.positive_int,
-        vol.Optional(ATTR_0_MAX, default=3): cv.positive_int,
-        vol.Optional(ATTR_1_MIN, default=4): cv.positive_int,
-        vol.Optional(ATTR_1_MAX, default=7): cv.positive_int,
-        vol.Optional(ATTR_2_MIN, default=8): cv.positive_int,
-        vol.Optional(ATTR_2_MAX, default=9): cv.positive_int,
-        vol.Optional(ATTR_3_MIN, default=10): cv.positive_int,
-        vol.Optional(ATTR_3_MAX, default=11): cv.positive_int,
-        vol.Optional(ATTR_4_MIN, default=12): cv.positive_int,
-        vol.Optional(ATTR_4_MAX, default=13): cv.positive_int,
+
+        vol.Optional(ATTR_0_SIG, default=1): cv.positive_float,
+        vol.Optional(ATTR_1_SIG, default=0.5): cv.positive_float,
+        vol.Optional(ATTR_2_SIG, default=0.25): cv.positive_float,
+        vol.Optional(ATTR_3_SIG, default=0.12): cv.positive_float,
+        vol.Optional(ATTR_4_SIG, default=0.06): cv.positive_float,
+        vol.Optional(ATTR_WATERTARGET, default=10): cv.positive_float,
+
         vol.Optional(ATTR_ICON_FINE, default=DFLT_ICON_FINE): cv.icon,
         vol.Optional(ATTR_ICON_LIGHTRAIN, default=DFLT_ICON_LIGHTRAIN): cv.icon,
         vol.Optional(ATTR_ICON_RAIN, default=DFLT_ICON_RAIN): cv.icon,
@@ -78,19 +67,10 @@ async def _async_create_entities(hass, config, weather):
     sensors = []
 
     name      = config[CONF_NAME]
-    days      = config[ATTR_DAYS]
-    day0max   = config[ATTR_0_MAX]
-    day0min   = config[ATTR_0_MIN]
-    day1max   = config[ATTR_1_MAX]
-    day1min   = config[ATTR_1_MIN]
-    day2max   = config[ATTR_2_MAX]
-    day2min   = config[ATTR_2_MIN]
-    day3max   = config[ATTR_3_MAX]
-    day3min   = config[ATTR_3_MIN]
-    day4max   = config[ATTR_4_MAX]
-    day4min   = config[ATTR_4_MIN]
-    daymax = [day0max,day1max,day2max,day3max,day4max]
-    daymin = [day0min,day1min,day2min,day3min,day4min]
+
+    daysig = [config[ATTR_0_SIG],config[ATTR_1_SIG],config[ATTR_2_SIG],config[ATTR_3_SIG],config[ATTR_4_SIG]]
+    watertarget = config[ATTR_WATERTARGET]
+
     if hass.config.units is METRIC_SYSTEM:
         units = 'metric'
     else:
@@ -102,38 +82,31 @@ async def _async_create_entities(hass, config, weather):
             config,
             weather,
             name,
-            days,
-            daymin,
-            daymax,
-            units,
+            daysig,
+            watertarget,
+            units
         )
     )
 
     return sensors
 
-
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the sensors."""
     weather = []
-    days    = config[ATTR_DAYS]
     key     = config[CONF_API_KEY]
     if hass.config.units is METRIC_SYSTEM:
         units = 'metric'
     else:
         units = 'imperial'
-    
-    try:
-        lat = config[CONF_LATITUDE]
-        lon = config[CONF_LONGITUDE]
-        _LOGGER.debug('setup_platform %s, %s', lat, lon)
-    except:
-        lat = hass.config.latitude
-        lon = hass.config.longitude
 
-    for n in range(days + 1):
+    lat = config.get(CONF_LATITUDE,hass.config.latitude)
+    lon = config.get(CONF_LONGITUDE,hass.config.longitude)
+    _LOGGER.debug('setup_platform %s, %s', lat, lon)
+    today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0)
+    for day in range(6):
         rest = RestData()
-        dt = int((datetime.now(tz=timezone.utc)- timedelta(days=n)).timestamp())
-        url = CONST_API_CALL % (lat, lon, dt, key, units)
+        date = int((today- timedelta(days=day)).timestamp())
+        url = CONST_API_CALL % (lat, lon, date, key, units)
         _LOGGER.debug( url )
         await rest.set_resource(hass, url)
         await rest.async_update(log_errors=False)
@@ -141,8 +114,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities(await _async_create_entities(hass, config, weather))
     _LOGGER.debug('setup_platform has run successfully')
 
-
 class RainFactor(SensorEntity):
+    ''' Rain factor class defn'''
+    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -150,35 +124,33 @@ class RainFactor(SensorEntity):
         config,
         weather,
         name: str,
-        days: float,
-        daymin: list,
-        daymax: list,
+        daysig: list,
+        watertarget,
         units
     ):
         """Initialize the sensor."""
         self._name               = name
         self._hass               = hass
-#        self._days               = days
-#        self._config             = config
         self._weather            = weather
         self._state              = 1
-        self._daymin             = daymin
-        self._daymax             = daymax
-        self._state_attributes   = None
+        self._daysig             = daysig
+        self._watertarget        = watertarget
+
+        self._extra_attributes   = None
         self._icon               = config[ATTR_ICON_FINE]
         self._icon_fine          = config[ATTR_ICON_FINE]
         self._icon_lightrain     = config[ATTR_ICON_LIGHTRAIN]
         self._icon_rain          = config[ATTR_ICON_RAIN]
         self._ran_today          = datetime.utcnow().date().strftime('%Y-%m-%d')
         self._key                = config[CONF_API_KEY]
-        self._units               = units
+        self._units              = units
+        self._weatherhist        = None
+        self._call_count         = 6
 
-        try:
-            self._lat = config[CONF_LATITUDE]
-            self._lon = config[CONF_LONGITUDE]
-        except:
-            self._lat = hass.config.latitude
-            self._lon = hass.config.longitude
+        self._lat = config.get(CONF_LATITUDE,hass.config.latitude)
+        self._lon = config.get(CONF_LONGITUDE,hass.config.longitude)
+        self._timezone = config.get(CONF_LONGITUDE,hass.config.time_zone)
+        self._today = None
 
     @property
     def name(self):
@@ -191,8 +163,8 @@ class RainFactor(SensorEntity):
         return f"{self._name}-{self._lat}-{self._lon}"
 
     @property
-    def state(self):
-        """Return the state of the sensor."""
+    def native_value(self):
+        """Return the state."""
         return self._state
 
     @property
@@ -201,22 +173,19 @@ class RainFactor(SensorEntity):
         return self._icon
 
     @property
-    def state_attributes(self):
-        """Return the state attributes.
-        Implemented by component base class.
-        """
-        return self._state_attributes
-
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        return self._extra_attributes
 
     async def async_added_to_hass(self):
 
         self._weatherhist = WeatherHist()
-        await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax, self._units)
-        await self._weatherhist.async_update()        
-        
-        setattr(self, '_state_attributes', self._weatherhist.attrs)
-
+        await self._weatherhist.set_weather(self._weather,self._daysig,self._watertarget, self._units, self._timezone)
+        await self._weatherhist.async_update()
+        self._today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0)
         self._state = self._weatherhist.factor
+        self._extra_attributes = self._weatherhist.attrs
+        self._extra_attributes["call_count"] = self._call_count
 
         if self._weatherhist.factor == 0:
             self._icon = self._icon_rain
@@ -229,24 +198,32 @@ class RainFactor(SensorEntity):
         await super().async_added_to_hass()
         _LOGGER.debug('added to hass has run successfully')
 
-
     async def async_update(self):
-        #first time today reload the weather for all days
+        ''' update the sensor'''
+        if self._today == datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0):
+            #update only today's weather
+            date = int((datetime.now(tz=timezone.utc)- timedelta(days=0)).timestamp())
+            url = CONST_API_CALL % (self._lat,self._lon,date,self._key,self._units)
+            await self._weather[0].set_resource(self._hass,url)
+            await self._weather[0].async_update(log_errors=False)
+            self._call_count += 1
+        else:
+            #first time today reload the weather for all days
+            self._call_count = 0
+            self._today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0)
+            for day, weather in enumerate(self._weather):
+                #reset the url for each day
+                date = int((self._today- timedelta(days=day)).timestamp())
+                url = CONST_API_CALL % (self._lat,self._lon,date,self._key,self._units)
+                await weather.set_resource(self._hass,url)
+                await weather.async_update(log_errors=False)
+                self._call_count += 1
 
-        n = 0
-        for rest in self._weather:
-            dt = int((datetime.now(tz=timezone.utc)- timedelta(days=n)).timestamp())
-            url = CONST_API_CALL % (self._lat,self._lon,dt,self._key,self._units)
-            await rest.set_resource(self._hass,url)
-            await rest.async_update(log_errors=False)
-            n += 1
-        _LOGGER.debug('new day update has run successfully')
+        await self._weatherhist.set_weather(self._weather, self._daysig, self._watertarget, self._units, self._timezone)
+        await self._weatherhist.async_update()
 
-        await self._weatherhist.set_weather(self._weather, self._daymin, self._daymax, self._units) 
-        await self._weatherhist.async_update()        
-        
-        setattr(self, '_state_attributes', self._weatherhist.attrs)
-
+        self._extra_attributes = self._weatherhist.attrs
+#        self._extra_attributes["call_count"] = self._call_count
         self._state = self._weatherhist.factor
 
         if self._weatherhist.factor == 0:
@@ -258,4 +235,3 @@ class RainFactor(SensorEntity):
 
         self.async_write_ha_state()
         _LOGGER.debug('sensor update successful')
-

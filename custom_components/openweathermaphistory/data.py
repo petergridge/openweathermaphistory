@@ -54,4 +54,3 @@ class RestData:
                 )
             self.last_exception = ex
             self.data = None
-
