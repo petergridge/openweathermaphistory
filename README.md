@@ -41,7 +41,7 @@ Attributes are returned for:
 ## Installation
 
 HACS installation
-Adding the repository using HACS is the simplest approach
+Adding as a custom repository using HACS is the simplest approach, will be published soon.
 
 Manual Installation
 * Copy the openweathermaphistory folder to the ‘config/custom components/’ directory 
