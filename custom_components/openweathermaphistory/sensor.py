@@ -5,7 +5,10 @@ from datetime import datetime, timedelta, timezone
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
+from homeassistant.helpers.typing import DiscoveryInfoType, ConfigType
 from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from .const import (
@@ -54,7 +57,9 @@ SCAN_INTERVAL = timedelta(seconds=1800)  # default to 30 minute intervals
 _LOGGER = logging.getLogger(__name__)
 
 
-async def _async_create_entities(hass, config, weather):
+async def _async_create_entities(
+    hass: HomeAssistant, config: ConfigType, weather: list[RestData]
+) -> list[SensorEntity]:
     """Create the Template switches."""
     sensors = []
 
@@ -79,7 +84,13 @@ async def _async_create_entities(hass, config, weather):
     return sensors
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(
+    hass: HomeAssistant,
+    config: ConfigType,
+    async_add_entities: AddEntitiesCallback,
+    discovery_info: DiscoveryInfoType
+    | None = None,  # What is this? do we need it in this func signature?
+) -> None:
     """Set up the sensors."""
     weather = []
     key = config[CONF_API_KEY]
@@ -112,17 +123,24 @@ class RainFactor(SensorEntity):
     _attr_has_entity_name = True
 
     def __init__(
-        self, hass, config, weather, name: str, daysig: list, watertarget, units
+        self,
+        hass: HomeAssistant,
+        config: ConfigType,
+        weather: list[RestData],
+        name: str,
+        daysig: list,
+        watertarget: float,
+        units: str,
     ):
         """Initialize the sensor."""
         self._name = name
         self._hass = hass
         self._weather = weather
-        self._state = 1
+        self._state = 1.0
         self._daysig = daysig
         self._watertarget = watertarget
 
-        self._extra_attributes = None
+        self._extra_attributes: dict[str, float] = {}
         self._icon = config[ATTR_ICON_FINE]
         self._icon_fine = config[ATTR_ICON_FINE]
         self._icon_lightrain = config[ATTR_ICON_LIGHTRAIN]
@@ -130,40 +148,42 @@ class RainFactor(SensorEntity):
         self._ran_today = datetime.utcnow().date().strftime("%Y-%m-%d")
         self._key = config[CONF_API_KEY]
         self._units = units
-        self._weatherhist = None
+        self._weatherhist = WeatherHist()
         self._call_count = 6
 
         self._lat = config.get(CONF_LATITUDE, hass.config.latitude)
         self._lon = config.get(CONF_LONGITUDE, hass.config.longitude)
         self._timezone = config.get(CONF_LONGITUDE, hass.config.time_zone)
-        self._today = None
+        self._today = datetime.now(tz=timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the sensor."""
         return self._name
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique_id for this entity."""
         return f"{self._name}-{self._lat}-{self._lon}"
 
     @property
-    def native_value(self):
+    def native_value(self) -> float:
         """Return the state."""
         return self._state
 
     @property
-    def icon(self):
+    def icon(self) -> str:
         """Return the unit of measurement."""
         return self._icon
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, float]:
         """Return the state attributes."""
         return self._extra_attributes
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         self._weatherhist = WeatherHist()
         await self._weatherhist.set_weather(
             self._weather, self._daysig, self._watertarget, self._units, self._timezone
@@ -186,7 +206,7 @@ class RainFactor(SensorEntity):
         await super().async_added_to_hass()
         _LOGGER.debug("added to hass has run successfully")
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         """update the sensor"""
         if self._today == datetime.now(tz=timezone.utc).replace(
             hour=0, minute=0, second=0, microsecond=0
