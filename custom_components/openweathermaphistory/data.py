@@ -2,12 +2,12 @@
 import logging
 
 import httpx
-
 from homeassistant.helpers.httpx_client import get_async_client
 
 DEFAULT_TIMEOUT = 15
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class RestData:
     """Class for handling the data retrieval."""
@@ -24,9 +24,9 @@ class RestData:
 
     async def set_resource(self, hass, url, timeout=DEFAULT_TIMEOUT):
         """Set url."""
-        self._hass     = hass
+        self._hass = hass
         self._resource = url
-        self._timeout  = timeout
+        self._timeout = timeout
 
     async def async_update(self, log_errors=True):
         """Get the latest data from REST service with provided method."""
