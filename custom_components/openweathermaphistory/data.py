@@ -46,7 +46,19 @@ class RestData:
                 data=None,
                 timeout=self._timeout,
             )
-            self.data = response.text
+
+            if not response.ok():
+                _LOGGER.warn("Response not ok: %s", response)
+                return
+
+            if not response.headers.get("content-type").startswith("application/json"):
+                _LOGGER.warn(
+                    "Response is not json: %s.  Headers: %s", response, response.headers
+                )
+                return
+
+            self.data = response.json()
+
         except httpx.RequestError as ex:
             if log_errors:
                 _LOGGER.error(
