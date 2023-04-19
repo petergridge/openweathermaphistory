@@ -44,13 +44,26 @@ class WeatherHist:
 
         for rest in self._weather:
             data = json.loads(rest.data)
-
             try:
                 localtimezone = pytz.timezone(data["timezone"])
             except KeyError:
                 localtimezone =   pytz.timezone(self._timezone)
 
-            current = data["current"]
+            #check if the call was successful
+            try:
+                code = data["cod"]
+                message = data["message"]
+                _LOGGER.error('OpenWeatherMap call failed code: %s message: %s', code, message)
+                return #just stop processing
+            except KeyError:
+                pass
+            #get the data
+            try:
+                current = data["current"]
+            except KeyError:
+                _LOGGER.error('OpenWeatherMap call failed data: %s', data)
+                return #just stop processing
+
             if 'dt' in current:
                 date = current["dt"]
                 formatted_dt = datetime.utcfromtimestamp(date).replace(tzinfo=timezone.utc).astimezone(tz=None).strftime('%Y-%m-%d %H:%M:%S')

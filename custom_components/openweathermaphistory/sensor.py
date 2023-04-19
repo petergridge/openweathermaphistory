@@ -21,6 +21,7 @@ from homeassistant.const import (
 
 from .const import (
     CONST_API_CALL,
+    ATTR_API_VER,
     ATTR_0_SIG,
     ATTR_1_SIG,
     ATTR_2_SIG,
@@ -42,10 +43,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_API_KEY): cv.string,
+        vol.Optional(ATTR_API_VER, default=1): cv.positive_int,
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
 
-        vol.Optional(ATTR_0_SIG, default=1): cv.positive_float,
+        vol.Optional(ATTR_0_SIG, default=1.0): cv.positive_float,
         vol.Optional(ATTR_1_SIG, default=0.5): cv.positive_float,
         vol.Optional(ATTR_2_SIG, default=0.25): cv.positive_float,
         vol.Optional(ATTR_3_SIG, default=0.12): cv.positive_float,
@@ -145,7 +147,6 @@ class RainFactor(SensorEntity):
         self._key                = config[CONF_API_KEY]
         self._units              = units
         self._weatherhist        = None
-        self._call_count         = 6
 
         self._lat = config.get(CONF_LATITUDE,hass.config.latitude)
         self._lon = config.get(CONF_LONGITUDE,hass.config.longitude)
@@ -185,7 +186,6 @@ class RainFactor(SensorEntity):
         self._today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0)
         self._state = self._weatherhist.factor
         self._extra_attributes = self._weatherhist.attrs
-        self._extra_attributes["call_count"] = self._call_count
 
         if self._weatherhist.factor == 0:
             self._icon = self._icon_rain
@@ -206,10 +206,8 @@ class RainFactor(SensorEntity):
             url = CONST_API_CALL % (self._lat,self._lon,date,self._key,self._units)
             await self._weather[0].set_resource(self._hass,url)
             await self._weather[0].async_update(log_errors=False)
-            self._call_count += 1
         else:
             #first time today reload the weather for all days
-            self._call_count = 0
             self._today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0)
             for day, weather in enumerate(self._weather):
                 #reset the url for each day
@@ -217,13 +215,11 @@ class RainFactor(SensorEntity):
                 url = CONST_API_CALL % (self._lat,self._lon,date,self._key,self._units)
                 await weather.set_resource(self._hass,url)
                 await weather.async_update(log_errors=False)
-                self._call_count += 1
 
         await self._weatherhist.set_weather(self._weather, self._daysig, self._watertarget, self._units, self._timezone)
         await self._weatherhist.async_update()
 
         self._extra_attributes = self._weatherhist.attrs
-#        self._extra_attributes["call_count"] = self._call_count
         self._state = self._weatherhist.factor
 
         if self._weatherhist.factor == 0:
