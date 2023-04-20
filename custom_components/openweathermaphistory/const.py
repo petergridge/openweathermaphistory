@@ -4,6 +4,21 @@ CONST_API_CALL = "https://api.openweathermap.org/data/2.5/onecall/timemachine?la
 CONST_API_CALL_3 = "https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s"
 ATTR_API_VER = "api_ver"
 
+CONF_DATA = "data"
+CONF_FORMULA = "formula"
+CONF_RESOURCES = "resources"
+CONF_TYPE = "type"
+CONF_V3_API = "v3_api"
+CONF_NAME = "name"
+CONF_ALPHA = "alpha"
+
+TYPE_CUSTOM = "custom"
+TYPE_DEFAULT_FACTOR = "default_factor"
+SENSOR_TYPES = [TYPE_CUSTOM, TYPE_DEFAULT_FACTOR]
+
+STORAGE_VERSION = 1
+STORAGE_KEY = "openweathermaphistory.history"
+
 ATTR_ICON_FINE = "fine_icon"  # icon to display when factor is 1
 # icon to display when factor is > 0 and <1
 ATTR_ICON_LIGHTRAIN = "lightrain_icon"

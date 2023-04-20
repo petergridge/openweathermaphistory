@@ -1,54 +1,99 @@
 """Platform for historical rain factor Sensor integration."""
 import logging
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import homeassistant.helpers.config_validation as cv
+import jinja2
 import voluptuous as vol
-from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
-from homeassistant.helpers.typing import DiscoveryInfoType, ConfigType
-from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME
-from homeassistant.core import HomeAssistant
+from homeassistant.components.sensor import (
+    PLATFORM_SCHEMA,
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
+from homeassistant.const import (
+    CONF_API_KEY,
+    CONF_LATITUDE,
+    CONF_LONGITUDE,
+    CONF_NAME,
+    EVENT_HOMEASSISTANT_STOP,
+)
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from .const import (
-    CONST_API_CALL,
-    ATTR_API_VER,
     ATTR_0_SIG,
     ATTR_1_SIG,
     ATTR_2_SIG,
     ATTR_3_SIG,
     ATTR_4_SIG,
+    ATTR_API_VER,
     ATTR_ICON_FINE,
     ATTR_ICON_LIGHTRAIN,
     ATTR_ICON_RAIN,
     ATTR_WATERTARGET,
+    CONF_ALPHA,
+    CONF_DATA,
+    CONF_FORMULA,
+    CONF_RESOURCES,
+    CONF_TYPE,
+    CONF_V3_API,
     CONST_API_CALL,
     DFLT_ICON_FINE,
     DFLT_ICON_LIGHTRAIN,
     DFLT_ICON_RAIN,
+    SENSOR_TYPES,
+    TYPE_CUSTOM,
+    TYPE_DEFAULT_FACTOR,
 )
 from .data import RestData
-from .weatherhistory import WeatherHist
+from .weatherhistory import WeatherHist, WeatherHistoryV3
 
 DEFAULT_NAME = "rainfactor"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
-        vol.Required(CONF_API_KEY): cv.string,
-        vol.Optional(ATTR_API_VER, default=1): cv.positive_int,
-        vol.Optional(CONF_LATITUDE): cv.latitude,
-        vol.Optional(CONF_LONGITUDE): cv.longitude,
-        vol.Optional(ATTR_0_SIG, default=1.0): cv.positive_float,
+        vol.Optional(CONF_RESOURCES, default=[]): [
+            vol.Schema(
+                {
+                    vol.Required(CONF_NAME): cv.string,
+                    vol.Optional(CONF_TYPE): vol.In(SENSOR_TYPES),
+                    vol.Optional(CONF_DATA, default={}): vol.Schema(
+                        {
+                            vol.Optional(ATTR_0_SIG, default=1): cv.positive_float,
+                            vol.Optional(ATTR_1_SIG, default=0.5): cv.positive_float,
+                            vol.Optional(ATTR_2_SIG, default=0.25): cv.positive_float,
+                            vol.Optional(ATTR_3_SIG, default=0.12): cv.positive_float,
+                            vol.Optional(ATTR_4_SIG, default=0.06): cv.positive_float,
+                            vol.Optional(
+                                ATTR_WATERTARGET, default=10
+                            ): cv.positive_float,
+                            vol.Optional(CONF_ALPHA): cv.string,
+                            vol.Optional(CONF_FORMULA): cv.string,
+                        }
+                    ),
+                },
+            )
+        ],
+        vol.Optional(ATTR_0_SIG, default=1): cv.positive_float,
         vol.Optional(ATTR_1_SIG, default=0.5): cv.positive_float,
         vol.Optional(ATTR_2_SIG, default=0.25): cv.positive_float,
         vol.Optional(ATTR_3_SIG, default=0.12): cv.positive_float,
         vol.Optional(ATTR_4_SIG, default=0.06): cv.positive_float,
-        vol.Optional(ATTR_WATERTARGET, default=10): cv.positive_float,
         vol.Optional(ATTR_ICON_FINE, default=DFLT_ICON_FINE): cv.icon,
         vol.Optional(ATTR_ICON_LIGHTRAIN, default=DFLT_ICON_LIGHTRAIN): cv.icon,
         vol.Optional(ATTR_ICON_RAIN, default=DFLT_ICON_RAIN): cv.icon,
+        vol.Optional(ATTR_WATERTARGET, default=10): cv.positive_float,
+        vol.Optional(CONF_LATITUDE): cv.latitude,
+        vol.Optional(CONF_LONGITUDE): cv.longitude,
+        vol.Optional(CONF_V3_API, default=False): cv.boolean,
+        vol.Optional(ATTR_API_VER, default=1): cv.positive_int,
+        vol.Required(CONF_API_KEY): cv.string,
+        vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
     }
 )
 
@@ -87,12 +132,11 @@ async def _async_create_entities(
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    async_add_entities: AddEntitiesCallback,
+    add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType
     | None = None,  # What is this? do we need it in this func signature?
 ) -> None:
     """Set up the sensors."""
-    weather = []
     key = config[CONF_API_KEY]
     if hass.config.units is METRIC_SYSTEM:
         units = "metric"
@@ -101,7 +145,30 @@ async def async_setup_platform(
 
     lat = config.get(CONF_LATITUDE, hass.config.latitude)
     lon = config.get(CONF_LONGITUDE, hass.config.longitude)
-    _LOGGER.debug("setup_platform %s, %s", lat, lon)
+    v3: bool = config.get(CONF_V3_API)
+
+    _LOGGER.debug("setup_platform %s, %s, v3: %s", lat, lon, v3)
+
+    if v3:
+        await _async_setup_v3_entities(key, add_entities, hass, lat, lon, config, units)
+    else:
+        await _async_setup_v2_5_entities(
+            key, add_entities, hass, lat, lon, config, units
+        )
+
+    _LOGGER.debug("setup_platform has run successfully")
+
+
+async def _async_setup_v2_5_entities(
+    key: str,
+    add_entities: AddEntitiesCallback,
+    hass: HomeAssistant,
+    lat: float,
+    lon: float,
+    config: ConfigType,
+    units: str,
+) -> None:
+    weather = []
     today = datetime.now(tz=timezone.utc).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
@@ -113,8 +180,208 @@ async def async_setup_platform(
         await rest.set_resource(hass, url)
         await rest.async_update(log_errors=False)
         weather.append(rest)
-    async_add_entities(await _async_create_entities(hass, config, weather))
-    _LOGGER.debug("setup_platform has run successfully")
+    add_entities(await _async_create_entities(hass, config, weather))
+
+
+async def _async_setup_v3_entities(
+    key: str,
+    add_entities: AddEntitiesCallback,
+    hass: HomeAssistant,
+    lat: float,
+    lon: float,
+    config: ConfigType,
+    units: str,
+) -> None:
+    _LOGGER.debug("Setting up registry")
+    sensor_registry = RainSensorRegistry(
+        config=config,
+        key=key,
+        hass=hass,
+        lat=lat,
+        lon=lon,
+        units=units,
+    )
+
+    # set up registry polling
+    polling_remover = async_track_time_interval(
+        hass, sensor_registry.async_update, SCAN_INTERVAL
+    )
+
+    @callback
+    def _async_stop_polling(*_: Any) -> None:
+        polling_remover()
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_stop_polling)
+
+    entities = sensor_registry.sensors
+    _LOGGER.debug("Adding entities")
+    add_entities(entities)
+
+    # Backfill just on startup, request once per polling interval after that
+    await sensor_registry.async_backfill()
+    await sensor_registry.async_update()
+
+
+class RainSensor(SensorEntity):
+    def __init__(
+        self, name: str, type: str, icon: str, data=None, value=None, native_unit="in"
+    ):
+        self._attr_name: str = name
+        self.value: float | None = value
+        self.type: str = type
+        self.data: ConfigType | None = data
+        self._icon: str = icon
+        self.update_time: datetime | None = None
+        self._attr_native_unit_of_measurement = native_unit
+        self._attr_device_class = SensorDeviceClass.PRECIPITATION
+
+    @property
+    def icon(self) -> str:
+        return self._icon
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the state."""
+        return self.value
+
+    def handle_update(self) -> None:
+        self.async_write_ha_state()
+
+
+class RainSensorRegistry:
+    """Registry of name to sensor data"""
+
+    def __init__(
+        self,
+        config: ConfigType,
+        key: str,
+        hass: HomeAssistant,
+        lat: float,
+        lon: float,
+        units: str,
+    ):
+        self._registry: dict[str, RainSensor] = {}
+        self._weather_history = WeatherHistoryV3(key, hass, lat, lon, units)
+
+        self._icon_fine = config[ATTR_ICON_FINE]
+        self._icon_lightrain = config[ATTR_ICON_LIGHTRAIN]
+        self._icon_rain = config[ATTR_ICON_RAIN]
+
+        for resource in config[CONF_RESOURCES]:
+            type_ = resource[CONF_TYPE]
+            name = resource[CONF_NAME]
+            data = None
+            if units == "metric":
+                native_unit = "mm"
+            else:
+                native_unit = "in"
+
+            if CONF_DATA in resource:
+                data = resource[CONF_DATA]
+
+            if type_ == TYPE_CUSTOM:
+                if (data is None) or (CONF_FORMULA not in data):
+                    _LOGGER.warn(
+                        "Could not setup custom type with no formula. skipping"
+                    )
+                    continue
+
+            self._registry[name] = RainSensor(
+                name=name,
+                value=None,
+                type=type_,
+                data=data,
+                icon=self._icon_lightrain,
+                native_unit=native_unit,
+            )
+
+    @property
+    def sensors(self) -> list[RainSensor]:
+        return list(self._registry.values())
+
+    def _update_vars(self, weather_history: WeatherHistoryV3):
+        vars: dict[str, Any] = {}
+        for i in range(6):
+            vars[f"day{i}rain"] = weather_history.day_rain(i)
+            vars[f"day{i}snow"] = weather_history.day_snow(i)
+            vars[f"day{i}humidity"] = weather_history.day_humidity(i)
+            vars[f"day{i}temp_high"] = weather_history.day_temp_high(i)
+            vars[f"day{i}temp_low"] = weather_history.day_temp_low(i)
+            vars["max"] = max
+            vars["min"] = min
+            vars["sum"] = sum
+
+        return vars
+
+    def _evaluate_custom_formula(self, formula: str, vars: dict[str, Any]) -> float:
+        environment = jinja2.Environment()
+        template = environment.from_string("{{" + formula + "}}")
+        try:
+            return float(template.render(vars))
+        except Exception as e:
+            _LOGGER.warn("Could not evaluate custom formula: %s. \n %s", formula, e)
+            return 0
+
+    def _evaluate_default_factor(self, rs: RainSensor, vars: dict[str, Any]) -> float:
+        if rs.data is None:
+            return 1
+
+        watertarget = rs.data.get(ATTR_WATERTARGET, 10)
+        if watertarget == 0:
+            return 0
+
+        day0sig = rs.data.get(ATTR_0_SIG, 1)
+        day1sig = rs.data.get(ATTR_1_SIG, 0.5)
+        day2sig = rs.data.get(ATTR_2_SIG, 0.25)
+        day3sig = rs.data.get(ATTR_3_SIG, 0.12)
+        day4sig = rs.data.get(ATTR_4_SIG, 0.06)
+
+        formula = f"max( ({watertarget} - day0rain*{day0sig} - day1rain*{day1sig} - \
+                day2rain*{day2sig} - day3rain*{day3sig} - day4rain*{day4sig}) / {watertarget}, 0)"
+        return self._evaluate_custom_formula(formula, vars)
+
+    async def async_update(self, update_time=None):
+        _LOGGER.debug("SensorRegistry updating, %s", update_time)
+        await self._weather_history.async_update()
+        self.update_sensor_data()
+
+    async def async_backfill(self):
+        await self._weather_history.async_load()
+        await self._weather_history.backfill_update()
+
+    def update_sensor_data(self):
+        _LOGGER.debug("Updating sensor data")
+        vars = self._update_vars(self._weather_history)
+
+        for name in self._registry:
+            sensor = self._registry[name]
+            _LOGGER.debug("Updating %s: %s", name, sensor)
+
+            if sensor.type == TYPE_CUSTOM:
+                sensor.value = self._evaluate_custom_formula(
+                    sensor.data[CONF_FORMULA], vars
+                )
+                sensor.update_time = datetime.now()
+
+            elif sensor.type == TYPE_DEFAULT_FACTOR:
+                sensor.value = self._evaluate_default_factor(sensor, vars)
+                if sensor.value == 1:
+                    sensor._icon = self._icon_fine
+                elif sensor.value == 0:
+                    sensor._icon = self._icon_rain
+                else:
+                    sensor._icon = self._icon_lightrain
+
+                sensor.update_time = datetime.now()
+
+            sensor.handle_update()
+            _LOGGER.debug(
+                "Updated %s: %s. value: %s", name, sensor, sensor.native_value
+            )
 
 
 class RainFactor(SensorEntity):
