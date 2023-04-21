@@ -4,32 +4,21 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-# Breaking Change: V1.0.11 to V1.1.0.
-The following configuration options have been removed, see updated factor calculation below
-|Key |Type|Optional|Description|
-|---|---|---|---|
-|num_days|integer|Optional|the number of days to collect data for|
-|day0min|integer|Optional|the lower limit for the calculation of Day 0 (today's) factor|
-|day0max|integer|Optional|the upper limit for the calculation of Day 0 (today's) factor|
-|day1min|integer|Optional|the lower limit for the calculation of Day 1 (yesterday's) factor|
-|day1max|integer|Optional|the upper limit for the calculation of Day 1 (yesterday's) factor|
-|day2min|integer|Optional|the lower limit for the calculation of Day 2 factor|
-|day2max|integer|Optional|the upper limit for the calculation of Day 2 factor|
-|day3min|integer|Optional|the lower limit for the calculation of Day 3 factor|
-|day3max|integer|Optional|the upper limit for the calculation of Day 3 factor|
-|day4min|integer|Optional|the lower limit for the calculation of Day 4 factor|
-|day4max|integer|Optional|the upper limit for the calculation of Day 4 factor|
+# Breaking Change: V1.1.0 to V1.2.0
+- Version 1.2 supports Open Weather Map API 3 functionally this version remains the same as version 1.1.
+- **A new registration is required for version 3**, but once configured the API Key remains the same.
+- Stay on version 1.1 until you have registered for API 3.
 
 # Functionality
 A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, snow, min and max temperatures as attributes. The data is in 24 hour time slots, not date based, but data for the preceeding 24hrs.
 
-The scan_interval is set at 30 minutes as OpenWeatherMap data only refreshes every hour. A 24 hour period will make 54 API calls.
+On the first installation of version 1.2, 120 API calls are made to populate the data. Data is persisted between starts and will require only 'catch up' calls to complete missing periods. The scan_interval is set at 60 minutes as OpenWeatherMap data only refreshes every hour. A 24 hour period will make 24 API calls.
 
-This information is used to calculate a factor that can be used to reduce the watering time of the [Irrigation Program](https://github.com/petergridge/irrigation_component_V4) custom component.
+Information is used to calculate a factor that can be used to reduce the watering time of the [Irrigation Program](https://github.com/petergridge/irrigation_component_V4) custom component.
 
 A OpenWeatherMap API Key is required see the [OpenWeatherMap](https://www.home-assistant.io/integrations/openweathermap/) custom component for more information.
 
-You need an API key, which is free, but requires a [registration](https://home.openweathermap.org/users/sign_up).
+You need an API key, which is free, but requires a [registration](https://openweathermap.org/api). You do need to provide a payment method, however, the first 1000 calls are free and you can set an upper limit of calls. Setting this to 1000 will prevent you incurring any costs.
 
 ## Attributes
 
@@ -108,6 +97,11 @@ The adjusted total rainfall is compared to a target rainfall:
 - if the total adjusted rainfall is 2mm and the target rainfall is 10mm a factor of 0.8 will be returned
 
 ## REVISION HISTORY
+### 1.1.2
+- Version 1.2 supports Open Weather Map API 3 functionally this version remains the same as version 1.1
+- A new registration is required for version 3, but once configured the API Key remains the same.
+- **Upgrade only after registering for API version 3**
+- Implement Pickle to persist data when restarting
 ### 1.1.1
 - For HACS
 ### 1.1.0
@@ -116,7 +110,6 @@ The adjusted total rainfall is compared to a target rainfall:
 - Optimised API calls
 - Handle missing time zone issue for new OpenWeather registrations. Timezone defaults to HomeAssistant configuration value
 - Only return five full 24hr periods
-
 ### 1.0.11
 * Deprecate unit_system and derive units from HA config.
 ### 1.0.10
