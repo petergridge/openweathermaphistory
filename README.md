@@ -101,7 +101,7 @@ The adjusted total rainfall is compared to a target rainfall:
 - Version 1.2 supports Open Weather Map API 3 functionally this version remains the same as version 1.1
 - A new registration is required for version 3, but once configured the API Key remains the same.
 - **Upgrade only after registering for API version 3**
-- Implement Pickle to persist data when restarting
+- Implement Pickle to store data to limit api calls when when restarting
 ### 1.1.1
 - For HACS
 ### 1.1.0
