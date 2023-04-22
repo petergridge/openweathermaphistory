@@ -1,5 +1,4 @@
 """Support for RESTful API."""
-import json
 import logging
 import math
 from collections import deque
@@ -398,7 +397,8 @@ class WeatherHist:
         totalsnow = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
 
         for rest in self._weather:
-            data = json.loads(rest.data)
+            data = rest.data
+
             try:
                 localtimezone = pytz.timezone(data["timezone"])
             except KeyError:
