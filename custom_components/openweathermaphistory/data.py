@@ -46,11 +46,36 @@ class RestData:
                 data=None,
                 timeout=self._timeout,
             )
+
+            if not response.headers.get("content-type").startswith("application/json"):
+                _LOGGER.warning(
+                    "Response is not json: %s.  Headers: %s", response, response.headers
+                )
+                self.data = None
+                return
+
             self.data = response.text
+
+        except httpx.TimeoutException as ex:
+            if log_errors:
+                _LOGGER.error(
+                    "Error fetching data: %s failed with %s", self._resource, ex
+                )
+            self.last_exception = ex
+            self.data = None
+
         except httpx.RequestError as ex:
             if log_errors:
                 _LOGGER.error(
                     "Error fetching data: %s failed with %s", self._resource, ex
+                )
+            self.last_exception = ex
+            self.data = None
+
+        except Exception as ex:
+            if log_errors:
+                _LOGGER.error(
+                    "Unexpected Error fetching data: %s failed with %s", self._resource, ex
                 )
             self.last_exception = ex
             self.data = None

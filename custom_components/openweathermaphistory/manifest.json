@@ -7,5 +7,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/petergridge/openweathermaphistory/issues",
   "requirements": [],
-  "version": "1.1.2"
+  "version": "1.2.0"
 }

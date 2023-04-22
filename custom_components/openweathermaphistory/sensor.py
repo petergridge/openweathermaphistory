@@ -4,8 +4,10 @@ from .data import RestData
 
 import logging
 import voluptuous as vol
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, date
 from homeassistant.util.unit_system import METRIC_SYSTEM
+import pickle
+from os.path import exists , join
 
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA,
@@ -60,16 +62,14 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-SCAN_INTERVAL = timedelta(seconds=1800) #default to 30 minute intervals
+SCAN_INTERVAL = timedelta(seconds=3600) #default to 60 minute intervals
 
 _LOGGER = logging.getLogger(__name__)
 
-async def _async_create_entities(hass, config, weather):
+async def _async_create_entities(hass, config): #, weather):
     """Create the Template switches."""
     sensors = []
-
     name      = config[CONF_NAME]
-
     daysig = [config[ATTR_0_SIG],config[ATTR_1_SIG],config[ATTR_2_SIG],config[ATTR_3_SIG],config[ATTR_4_SIG]]
     watertarget = config[ATTR_WATERTARGET]
 
@@ -82,7 +82,6 @@ async def _async_create_entities(hass, config, weather):
         RainFactor(
             hass,
             config,
-            weather,
             name,
             daysig,
             watertarget,
@@ -94,27 +93,8 @@ async def _async_create_entities(hass, config, weather):
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the sensors."""
-    weather = []
-    key     = config[CONF_API_KEY]
-    if hass.config.units is METRIC_SYSTEM:
-        units = 'metric'
-    else:
-        units = 'imperial'
-
-    lat = config.get(CONF_LATITUDE,hass.config.latitude)
-    lon = config.get(CONF_LONGITUDE,hass.config.longitude)
-    _LOGGER.debug('setup_platform %s, %s', lat, lon)
-    today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0)
-    for day in range(6):
-        rest = RestData()
-        date = int((today- timedelta(days=day)).timestamp())
-        url = CONST_API_CALL % (lat, lon, date, key, units)
-        _LOGGER.debug( url )
-        await rest.set_resource(hass, url)
-        await rest.async_update(log_errors=False)
-        weather.append (rest)
-    async_add_entities(await _async_create_entities(hass, config, weather))
-    _LOGGER.debug('setup_platform has run successfully')
+#    weather = []
+    async_add_entities(await _async_create_entities(hass, config))
 
 class RainFactor(SensorEntity):
     ''' Rain factor class defn'''
@@ -124,7 +104,6 @@ class RainFactor(SensorEntity):
         self,
         hass,
         config,
-        weather,
         name: str,
         daysig: list,
         watertarget,
@@ -133,7 +112,6 @@ class RainFactor(SensorEntity):
         """Initialize the sensor."""
         self._name               = name
         self._hass               = hass
-        self._weather            = weather
         self._state              = 1
         self._daysig             = daysig
         self._watertarget        = watertarget
@@ -143,15 +121,12 @@ class RainFactor(SensorEntity):
         self._icon_fine          = config[ATTR_ICON_FINE]
         self._icon_lightrain     = config[ATTR_ICON_LIGHTRAIN]
         self._icon_rain          = config[ATTR_ICON_RAIN]
-        self._ran_today          = datetime.utcnow().date().strftime('%Y-%m-%d')
         self._key                = config[CONF_API_KEY]
         self._units              = units
-        self._weatherhist        = None
 
         self._lat = config.get(CONF_LATITUDE,hass.config.latitude)
         self._lon = config.get(CONF_LONGITUDE,hass.config.longitude)
         self._timezone = config.get(CONF_LONGITUDE,hass.config.time_zone)
-        self._today = None
 
     @property
     def name(self):
@@ -178,56 +153,64 @@ class RainFactor(SensorEntity):
         """Return the state attributes."""
         return self._extra_attributes
 
+    def get_stored_data(self):
+        """Return stored data."""
+        file = join(self._hass.config.path(), 'rainfactor' + '.pickle')
+        if not exists(file):
+            return {}
+        with open(file, 'rb') as myfile:
+            content = pickle.load(myfile)
+        myfile.close()
+        return content
+
     async def async_added_to_hass(self):
 
-        self._weatherhist = WeatherHist()
-        await self._weatherhist.set_weather(self._weather,self._daysig,self._watertarget, self._units, self._timezone)
-        await self._weatherhist.async_update()
-        self._today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0)
-        self._state = self._weatherhist.factor
-        self._extra_attributes = self._weatherhist.attrs
+        #run the update in a seperate non blocking task
+        self._hass.async_create_task(self.async_update())
 
-        if self._weatherhist.factor == 0:
-            self._icon = self._icon_rain
-        elif self._weatherhist.factor == 1:
-            self._icon = self._icon_fine
-        else:
-            self._icon = self._icon_lightrain
-
-        self.async_write_ha_state()
         await super().async_added_to_hass()
         _LOGGER.debug('added to hass has run successfully')
 
     async def async_update(self):
         ''' update the sensor'''
-        if self._today == datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0):
-            #update only today's weather
-            date = int((datetime.now(tz=timezone.utc)- timedelta(days=0)).timestamp())
-            url = CONST_API_CALL % (self._lat,self._lon,date,self._key,self._units)
-            await self._weather[0].set_resource(self._hass,url)
-            await self._weather[0].async_update(log_errors=False)
-        else:
-            #first time today reload the weather for all days
-            self._today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0,second=0,microsecond=0)
-            for day, weather in enumerate(self._weather):
-                #reset the url for each day
-                date = int((self._today- timedelta(days=day)).timestamp())
-                url = CONST_API_CALL % (self._lat,self._lon,date,self._key,self._units)
-                await weather.set_resource(self._hass,url)
-                await weather.async_update(log_errors=False)
 
-        await self._weatherhist.set_weather(self._weather, self._daysig, self._watertarget, self._units, self._timezone)
-        await self._weatherhist.async_update()
+        weather = []
+        rest = RestData()
+        hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
+        dt = int(datetime.timestamp(hour))
 
-        self._extra_attributes = self._weatherhist.attrs
-        self._state = self._weatherhist.factor
+        #if the pickle file is deleted reload all days
+        lastdt = dt - 3600*24*5
+        #determine when the last update was done
+        #incase a refresh is missed
+        weatherdata = self.get_stored_data()
+        for hhour in weatherdata.keys():
+            if hhour > lastdt:
+                lastdt = hhour
 
-        if self._weatherhist.factor == 0:
+        i = (dt - lastdt)/3600
+        while i > 0 :
+            url = CONST_API_CALL % (self._lat,self._lon, dt, self._key, self._units)
+            rest = RestData()
+            await rest.set_resource(self._hass, url)
+            await rest.async_update(log_errors=False)
+            weather.append (rest)
+            i -= 1
+            dt -= 3600
+
+        #now call the weather
+        weatherhist = WeatherHist()
+        await weatherhist.set_weather(weather, self._daysig, self._watertarget, self._units, self._timezone, self._hass, self._name)
+        await weatherhist.async_update()
+
+        self._extra_attributes = weatherhist.attrs
+        self._state = weatherhist.factor
+
+        if weatherhist.factor == 0:
             self._icon = self._icon_rain
-        elif self._weatherhist.factor == 1:
+        elif weatherhist.factor == 1:
             self._icon = self._icon_fine
         else:
             self._icon = self._icon_lightrain
-
+        weatherhist = None
         self.async_write_ha_state()
-        _LOGGER.debug('sensor update successful')

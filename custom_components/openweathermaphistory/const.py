@@ -1,7 +1,6 @@
 '''weather history class defn constants'''
 
-CONST_API_CALL          = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s'
-CONST_API_CALL_3        = 'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s'
+CONST_API_CALL        = 'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s'
 ATTR_API_VER            = 'api_ver'
 ATTR_ICON_FINE          = 'fine_icon'       #icon to display when factor is 1
 ATTR_ICON_LIGHTRAIN     = 'lightrain_icon'  #icon to display when factor is > 0 and <1
