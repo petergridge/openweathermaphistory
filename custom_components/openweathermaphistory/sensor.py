@@ -8,7 +8,6 @@ import jinja2
 import voluptuous as vol
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA,
-    SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
@@ -38,8 +37,13 @@ from .const import (
     ATTR_WATERTARGET,
     CONF_ALPHA,
     CONF_DATA,
+    CONF_END_HOUR,
     CONF_FORMULA,
+    CONF_LOOKBACK_DAYS,
+    CONF_MAX_CALLS_PER_DAY,
+    CONF_MAX_CALLS_PER_HOUR,
     CONF_RESOURCES,
+    CONF_START_HOUR,
     CONF_TYPE,
     CONF_V3_API,
     CONST_API_CALL,
@@ -49,6 +53,7 @@ from .const import (
     SENSOR_TYPES,
     TYPE_CUSTOM,
     TYPE_DEFAULT_FACTOR,
+    TYPE_TOTAL_RAIN,
 )
 from .data import RestData
 from .weatherhistory import WeatherHist, WeatherHistoryV3
@@ -74,6 +79,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                             ): cv.positive_float,
                             vol.Optional(CONF_ALPHA): cv.string,
                             vol.Optional(CONF_FORMULA): cv.string,
+                            vol.Optional(CONF_START_HOUR): int,
+                            vol.Optional(CONF_END_HOUR): int,
                         }
                     ),
                 },
@@ -94,10 +101,23 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(ATTR_API_VER, default=1): cv.positive_int,
         vol.Required(CONF_API_KEY): cv.string,
         vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Required(CONF_LOOKBACK_DAYS, default=30): cv.positive_int,
+        # 1,000 free calls per day on default plan.
+        # Set default to 20% lower for some buffer or usage by other apps
+        vol.Required(CONF_MAX_CALLS_PER_DAY, default=800): int,
+        # Can set this to a value larger than max per day/24 to allow for
+        # a larger burst rate during backfills.
+        # We will always reserve up to 24 calls per day to update
+        # at least once per hour.  For example, if you set CONF_MAX_CALLS_PER_DAY
+        # to 1,000 and CONF_MAX_CALLS_PER_HOUR to 1,000, we will use up to
+        # 977 calls in the current hour.  If we use all in the current hour,
+        # we will use 1 per hour for the next 23 hours to stay under the max per day.
+        vol.Required(CONF_MAX_CALLS_PER_HOUR, default=250): int,
     }
 )
 
 SCAN_INTERVAL = timedelta(seconds=1800)  # default to 30 minute intervals
+SCAN_INTERVAL_V3 = timedelta(seconds=30)  # default to 30 second intervals with v3
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -133,8 +153,7 @@ async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType
-    | None = None,  # What is this? do we need it in this func signature?
+    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the sensors."""
     key = config[CONF_API_KEY]
@@ -150,7 +169,7 @@ async def async_setup_platform(
     _LOGGER.debug("setup_platform %s, %s, v3: %s", lat, lon, v3)
 
     if v3:
-        await _async_setup_v3_entities(key, add_entities, hass, lat, lon, config, units)
+        await _async_setup_v3_entities(add_entities, hass, config, units)
     else:
         await _async_setup_v2_5_entities(
             key, add_entities, hass, lat, lon, config, units
@@ -184,27 +203,21 @@ async def _async_setup_v2_5_entities(
 
 
 async def _async_setup_v3_entities(
-    key: str,
     add_entities: AddEntitiesCallback,
     hass: HomeAssistant,
-    lat: float,
-    lon: float,
     config: ConfigType,
     units: str,
 ) -> None:
     _LOGGER.debug("Setting up registry")
     sensor_registry = RainSensorRegistry(
-        config=config,
-        key=key,
         hass=hass,
-        lat=lat,
-        lon=lon,
+        config=config,
         units=units,
     )
 
     # set up registry polling
     polling_remover = async_track_time_interval(
-        hass, sensor_registry.async_update, SCAN_INTERVAL
+        hass, sensor_registry.async_update, SCAN_INTERVAL_V3
     )
 
     @callback
@@ -217,27 +230,27 @@ async def _async_setup_v3_entities(
     _LOGGER.debug("Adding entities")
     add_entities(entities)
 
-    # Backfill just on startup, request once per polling interval after that
-    await sensor_registry.async_backfill()
+    await sensor_registry.async_load()
     await sensor_registry.async_update()
 
 
 class RainSensor(SensorEntity):
-    def __init__(
-        self, name: str, type: str, icon: str, data=None, value=None, native_unit="in"
-    ):
+    def __init__(self, name: str, type: str, icon: str, data=None, value=None):
         self._attr_name: str = name
         self.value: float | None = value
         self.type: str = type
         self.data: ConfigType | None = data
         self._icon: str = icon
         self.update_time: datetime | None = None
-        self._attr_native_unit_of_measurement = native_unit
-        self._attr_device_class = SensorDeviceClass.PRECIPITATION
 
     @property
     def icon(self) -> str:
         return self._icon
+
+    @property
+    def should_poll(self):
+        """Return the polling state."""
+        return False
 
     @property
     def state_class(self) -> SensorStateClass:
@@ -257,15 +270,12 @@ class RainSensorRegistry:
 
     def __init__(
         self,
-        config: ConfigType,
-        key: str,
         hass: HomeAssistant,
-        lat: float,
-        lon: float,
+        config: ConfigType,
         units: str,
     ):
         self._registry: dict[str, RainSensor] = {}
-        self._weather_history = WeatherHistoryV3(key, hass, lat, lon, units)
+        self._weather_history = WeatherHistoryV3(hass, config, units)
 
         self._icon_fine = config[ATTR_ICON_FINE]
         self._icon_lightrain = config[ATTR_ICON_LIGHTRAIN]
@@ -275,10 +285,6 @@ class RainSensorRegistry:
             type_ = resource[CONF_TYPE]
             name = resource[CONF_NAME]
             data = None
-            if units == "metric":
-                native_unit = "mm"
-            else:
-                native_unit = "in"
 
             if CONF_DATA in resource:
                 data = resource[CONF_DATA]
@@ -290,13 +296,38 @@ class RainSensorRegistry:
                     )
                     continue
 
+            elif type_ == TYPE_TOTAL_RAIN:
+                if (
+                    (data is None)
+                    or (CONF_START_HOUR not in data)
+                    or (CONF_END_HOUR not in data)
+                ):
+                    _LOGGER.warn(
+                        "Could not setup total rain type without start and end hour. skipping"
+                    )
+                    continue
+                start_hour = int(data[CONF_START_HOUR])
+                end_hour = int(data[CONF_END_HOUR])
+
+                if start_hour > end_hour:
+                    _LOGGER.warn(
+                        "Could not setup total rain type without start hour > end hour. skipping. %s",
+                        data,
+                    )
+                    continue
+                if end_hour > 0:
+                    _LOGGER.warn(
+                        "Could not setup total rain type without end hour > 0. skipping. %s",
+                        data,
+                    )
+                    continue
+
             self._registry[name] = RainSensor(
                 name=name,
                 value=None,
                 type=type_,
                 data=data,
                 icon=self._icon_lightrain,
-                native_unit=native_unit,
             )
 
     @property
@@ -344,14 +375,31 @@ class RainSensorRegistry:
                 day2rain*{day2sig} - day3rain*{day3sig} - day4rain*{day4sig}) / {watertarget}, 0)"
         return self._evaluate_custom_formula(formula, vars)
 
+    def _evaluate_total_rain(self, rs: RainSensor) -> float:
+        assert rs.data is not None
+        # `start_hour` and `end_hour` are offsets from the current hour.
+        # For example, start_hour=-24, end_hour=0 would show the last 24hours of data.
+        start_hour: int = rs.data[CONF_START_HOUR]
+        end_hour: int = rs.data[CONF_END_HOUR]
+        now = datetime.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
+
+        start = now + timedelta(hours=start_hour)
+        end = now + timedelta(hours=end_hour)
+
+        return self._weather_history.total_attr(start, end, "rain")
+
     async def async_update(self, update_time=None):
         _LOGGER.debug("SensorRegistry updating, %s", update_time)
+        # Update for current time if needed
         await self._weather_history.async_update()
+        # Continue backfill if needed
+        await self._weather_history.backfill_chunk()
+
         self.update_sensor_data()
 
-    async def async_backfill(self):
+    async def async_load(self):
+        """Load weather history data from persistent storage"""
         await self._weather_history.async_load()
-        await self._weather_history.backfill_update()
 
     def update_sensor_data(self):
         _LOGGER.debug("Updating sensor data")
@@ -377,6 +425,9 @@ class RainSensorRegistry:
                     sensor._icon = self._icon_lightrain
 
                 sensor.update_time = datetime.now()
+
+            elif sensor.type == TYPE_TOTAL_RAIN:
+                sensor.value = self._evaluate_total_rain(sensor)
 
             sensor.handle_update()
             _LOGGER.debug(

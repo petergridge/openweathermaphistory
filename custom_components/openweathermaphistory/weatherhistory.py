@@ -8,11 +8,22 @@ from datetime import datetime, timedelta, timezone
 from json import JSONEncoder
 
 import pytz
+from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
-from .const import CONST_API_CALL_3, STORAGE_KEY, STORAGE_VERSION
+from homeassistant.helpers.typing import ConfigType
+
+from .const import (
+    CONF_LOOKBACK_DAYS,
+    CONF_MAX_CALLS_PER_DAY,
+    CONF_MAX_CALLS_PER_HOUR,
+    CONST_API_CALL_3,
+    STORAGE_KEY,
+    STORAGE_VERSION,
+)
 from .data import RestData
+from .util import RollingWindow
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,28 +52,30 @@ class WeatherHistoryV3:
 
     def __init__(
         self,
-        key: str,
         hass: HomeAssistant,
-        lat: float,
-        lon: float,
+        config: ConfigType,
         units: str,
         url_template: str = CONST_API_CALL_3,
-        lookback_days: int = 5,
     ):
+        self.lookback_days = config[CONF_LOOKBACK_DAYS]
         self._hourly_history: deque[tuple[datetime, WeatherData]] = deque(
-            maxlen=lookback_days * 24
+            maxlen=self.lookback_days * 24
         )
-        self._store = Store[dict[str, deque[tuple[datetime, WeatherData]]]](
-            hass, STORAGE_VERSION, STORAGE_KEY, encoder=WeatherEncoder
-        )
+        self._store = Store[
+            dict[str, deque[tuple[datetime, WeatherData] | deque[datetime]]]
+        ](hass, STORAGE_VERSION, STORAGE_KEY, encoder=WeatherEncoder)
 
-        self.lat = lat
-        self.lon = lon
+        self.lat = config.get(CONF_LATITUDE, hass.config.latitude)
+        self.lon = config.get(CONF_LONGITUDE, hass.config.latitude)
         self.hass = hass
         self.units = units
-        self.lookback_days = lookback_days
         self._url_template = url_template
-        self._key = key
+        self._key = config[CONF_API_KEY]
+
+        self.hour_request_limit = config[CONF_MAX_CALLS_PER_HOUR]
+        self.day_request_limit = config[CONF_MAX_CALLS_PER_DAY]
+        self._hour_rolling_window = RollingWindow(len=timedelta(hours=1))
+        self._day_rolling_window = RollingWindow(len=timedelta(days=1))
 
     def _make_url(self, date: datetime):
         fmt_date = int(date.timestamp())
@@ -80,31 +93,48 @@ class WeatherHistoryV3:
             _LOGGER.debug("No data from storage: %s", self._store.path)
             return
 
-        self._hourly_history.clear()
-        for dt_str, wd_dict in data["hourly_history"]:
-            dt = datetime.fromisoformat(dt_str)
-            wd = WeatherData(**wd_dict)
-            self._hourly_history.append((dt, wd))
+        if data["hourly_history"]:
+            self._hourly_history.clear()
+            for dt_str, wd_dict in data["hourly_history"]:
+                dt = datetime.fromisoformat(dt_str)
+                wd = WeatherData(**wd_dict)
+                self._hourly_history.append((dt, wd))
+
+        if data["hour_rolling_window"]:
+            for dt_str in data["hour_rolling_window"]:
+                datetime.fromisoformat(dt_str)
+                self._hour_rolling_window.data.append(dt)
+
+        if data["day_rolling_window"]:
+            for dt_str in data["day_rolling_window"]:
+                datetime.fromisoformat(dt_str)
+                self._hour_rolling_window.data.append(dt)
 
         _LOGGER.debug("Loaded data from storage: %s", self._hourly_history)
 
     async def async_save(self):
-        _LOGGER.debug("Saving data to storage %s", self._hourly_history)
-        await self._store.async_save({"hourly_history": self._hourly_history})
+        data = {
+            "hourly_history": self._hourly_history,
+            "day_rolling_window": self._day_rolling_window.data,
+            "hour_rolling_window": self._hour_rolling_window.data,
+        }
+        await self._store.async_save(data)
 
-    async def backfill_update(self):
+    async def backfill_chunk(self, max_calls: int = 10):
         """Backfill hourly data for self.lookback_days days.
+        Continue backfilling for up to `max_calls` api requests.
         NOTE: This requires 1 api call per hour on v3 api."""
-
-        # TODO: Can reduce api calls by up to 23 on a backfill by calling non-timemachine API
-        # endpoint for most recent 24hrs.  timemachine endpoint now only returns 1 hour on v3
 
         end_dt = datetime.now(tz=timezone.utc).replace(
             minute=0, second=0, microsecond=0
         )
         start_dt = end_dt - timedelta(days=self.lookback_days)
 
-        _LOGGER.debug(
+        if len(self._hourly_history) == self.lookback_days * 24:
+            # No need to backfill if we have all data
+            return
+
+        _LOGGER.warning(
             "Backfilling weather data between %s and %s (%s)",
             start_dt,
             end_dt,
@@ -114,40 +144,90 @@ class WeatherHistoryV3:
         dt_to_data = {d[0]: d[1] for d in self._hourly_history}
 
         self._hourly_history.clear()
+        remaining_calls = max_calls
 
-        while start_dt <= end_dt:
-            _LOGGER.debug("Backfilling weather data for %s", start_dt)
-            if start_dt in dt_to_data:
+        while end_dt >= start_dt:
+            if end_dt in dt_to_data:
                 # If we already have the data, no need to request
-                _LOGGER.debug("Found weather data for %s, skipping request", start_dt)
-                self._hourly_history.appendleft((start_dt, dt_to_data[start_dt]))
+                _LOGGER.debug("Found weather data for %s, skipping request", end_dt)
+                self._hourly_history.appendleft((end_dt, dt_to_data[end_dt]))
             else:
-                await self._async_update_for_date(start_dt)
-            start_dt += timedelta(hours=1)
+                if remaining_calls > 0:
+                    _LOGGER.debug("Backfilling weather data for %s", end_dt)
+                    await self._async_update_for_datetime(end_dt)
+                    remaining_calls -= 1
+
+            end_dt -= timedelta(hours=1)
 
         await self.async_save()
 
     async def async_update(self) -> bool:
         """Get update for top of the current hour"""
         date = datetime.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
-        result = await self._async_update_for_date(date)
+        result = await self._async_update_for_datetime(date, live=True)
         await self.async_save()
         return result
 
-    async def _async_update_for_date(self, date: datetime) -> bool:
-        _LOGGER.debug("Updating weather history for %s", date)
+    def _check_limits(self, live: bool = False) -> bool:
+        hour_limit = self.hour_request_limit
+        day_limit = self.day_request_limit
+        if not live:
+            hour_limit -= 1
+            day_limit -= 24  # reserve enough to request once per hour live
 
-        if self._hourly_history and self._hourly_history[0][0] == date:
-            _LOGGER.info("Already have observation for %s, skipping", date)
+        if self._hour_rolling_window.count() >= hour_limit:
+            _LOGGER.info(
+                "Hourly request limit hit (%s of %s).",
+                self._hour_rolling_window.count(),
+                self.hour_request_limit,
+            )
             return False
 
-        url = self._make_url(date)
+        if self._day_rolling_window.count() >= day_limit:
+            _LOGGER.info(
+                "Day request limit hit (%s of %s).",
+                self._day_rolling_window.count(),
+                self.day_request_limit,
+            )
+            return False
+
+        _LOGGER.debug(
+            "No limits hit, used limits: day: (%s / %s), hour: (%s / %s)",
+            self._day_rolling_window.count(),
+            self.day_request_limit,
+            self._hour_rolling_window.count(),
+            self.hour_request_limit,
+        )
+
+        return True
+
+    async def _async_get_rest_data(self, url: str, live: bool = False) -> RestData:
         data = RestData()
+        if not self._check_limits(live=live):
+            return data
+
         await data.set_resource(self.hass, url)
         await data.async_update(log_errors=False)
 
+        self._hour_rolling_window.increment()
+        self._day_rolling_window.increment()
+
+        return data
+
+    async def _async_update_for_datetime(
+        self, date: datetime, live: bool = False
+    ) -> bool:
+        _LOGGER.debug("Updating weather history for %s", date)
+
+        if self._hourly_history and self._hourly_history[0][0] == date:
+            _LOGGER.debug("Already have observation for %s, skipping", date)
+            return False
+
+        url = self._make_url(date)
+        data = await self._async_get_rest_data(url, live=live)
+
         if data.data is None:
-            _LOGGER.warning("Got no data for %s !", date)
+            _LOGGER.debug("Got no data for %s !", date)
             return False
         return self.add_observation(data)
 
@@ -177,15 +257,15 @@ class WeatherHistoryV3:
             last_dt = self._hourly_history[0][0]
             if dt - last_dt > timedelta(hours=1):
                 _LOGGER.warning(
-                    "Missing observation.  Current dt: %s last dt: %s.\n Data: %s",
+                    "Missing observation.  Current dt: %s last dt: %s.",
                     dt,
                     last_dt,
-                    self._hourly_history,
                 )
 
             elif last_dt == dt:
                 _LOGGER.warning(
-                    "Already seen observation for: %s, skipping.\n Data: %s"
+                    "Already seen observation for: %s, skipping.",
+                    dt,
                 )
                 return False
 
@@ -222,6 +302,9 @@ class WeatherHistoryV3:
         today = datetime.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
         end = today - timedelta(days=day)
         start = end - timedelta(days=1)
+        return self.total_attr(start, end, attr)
+
+    def total_attr(self, start: datetime, end: datetime, attr: str) -> float:
         total = 0.0
         high = -999.0
         low = 999.0
@@ -247,6 +330,8 @@ class WeatherHistoryV3:
                     case "temp_low":
                         if self._hourly_history[ix][1].temp < low:
                             low = self._hourly_history[ix][1].temp
+                    case _:
+                        raise ValueError("Unknown attr: %s", attr)
 
             end -= timedelta(hours=1)
 
