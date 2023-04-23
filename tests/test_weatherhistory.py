@@ -7,8 +7,7 @@ from homeassistant.const import CONF_API_KEY
 from homeassistant.helpers.httpx_client import get_async_client
 
 import custom_components.openweathermaphistory.const as const
-from custom_components.openweathermaphistory.weatherhistory import \
-    WeatherHistoryV3
+from custom_components.openweathermaphistory.weatherhistory import WeatherHistoryV3
 
 TEST_CONFIG = {
     CONF_API_KEY: "XXX",

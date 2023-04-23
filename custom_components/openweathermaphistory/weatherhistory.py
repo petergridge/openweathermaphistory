@@ -71,8 +71,8 @@ class WeatherHistoryV3:
         self._url_template = url_template
         self._key = config[CONF_API_KEY]
 
-        self.hour_request_limit : int = config[CONF_MAX_CALLS_PER_HOUR]
-        self.day_request_limit : int = config[CONF_MAX_CALLS_PER_DAY]
+        self.hour_request_limit: int = config[CONF_MAX_CALLS_PER_HOUR]
+        self.day_request_limit: int = config[CONF_MAX_CALLS_PER_DAY]
         self._hour_rolling_window = RollingWindow(len=timedelta(hours=1))
         self._day_rolling_window = RollingWindow(len=timedelta(days=1))
 
