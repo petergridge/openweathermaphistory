@@ -10,7 +10,6 @@ import pytz
 from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
-
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
@@ -92,6 +91,8 @@ class WeatherHistoryV3:
             _LOGGER.debug("No data from storage: %s", self._store.path)
             return
 
+        _LOGGER.debug("Loaded data from storage")
+
         if data["hourly_history"]:
             self._hourly_history.clear()
             for dt_str, wd_dict in data["hourly_history"]:
@@ -107,9 +108,7 @@ class WeatherHistoryV3:
         if data["day_rolling_window"]:
             for dt_str in data["day_rolling_window"]:
                 datetime.fromisoformat(dt_str)
-                self._hour_rolling_window.data.append(dt)
-
-        _LOGGER.debug("Loaded data from storage: %s", self._hourly_history)
+                self._day_rolling_window.data.append(dt)
 
     async def async_save(self):
         data = {
@@ -117,6 +116,7 @@ class WeatherHistoryV3:
             "day_rolling_window": self._day_rolling_window.data,
             "hour_rolling_window": self._hour_rolling_window.data,
         }
+        _LOGGER.debug("Saving data")
         await self._store.async_save(data)
 
     async def backfill_chunk(self, max_calls: int = 10):
