@@ -274,6 +274,7 @@ class RainSensorRegistry:
         config: ConfigType,
         units: str,
     ):
+        self._hass = hass
         self._registry: dict[str, RainSensor] = {}
         self._weather_history = WeatherHistoryV3(hass, config, units)
 
@@ -392,8 +393,8 @@ class RainSensorRegistry:
         _LOGGER.debug("SensorRegistry updating, %s", update_time)
         # Update for current time if needed
         await self._weather_history.async_update()
-        # Continue backfill if needed
-        await self._weather_history.backfill_chunk()
+        # Continue backfill if needed in a background task
+        self._hass.async_create_task(self._weather_history.backfill_chunk())
 
         self.update_sensor_data()
 

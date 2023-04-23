@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from freezegun import freeze_time
@@ -21,5 +21,7 @@ def test_rolling_window(window_size: timedelta):
 
     assert rolling_window.count() == 100
 
-    with freeze_time(datetime.now() + window_size + timedelta(seconds=1)):
+    with freeze_time(
+        datetime.now(tz=timezone.utc) + window_size + timedelta(seconds=1)
+    ):
         assert rolling_window.count() == 0

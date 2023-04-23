@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
@@ -7,7 +7,8 @@ from homeassistant.const import CONF_API_KEY
 from homeassistant.helpers.httpx_client import get_async_client
 
 import custom_components.openweathermaphistory.const as const
-from custom_components.openweathermaphistory.weatherhistory import WeatherHistoryV3
+from custom_components.openweathermaphistory.weatherhistory import \
+    WeatherHistoryV3
 
 TEST_CONFIG = {
     CONF_API_KEY: "XXX",
@@ -56,7 +57,7 @@ async def test_api_limits():
         await wh.async_update()
         assert get_async_client(mock_hass).request.call_count == 100
 
-        with freeze_time(datetime.now() + timedelta(hours=1, seconds=1)):
+        with freeze_time(datetime.now(tz=timezone.utc) + timedelta(hours=1, seconds=1)):
             await wh.backfill_chunk(max_calls=200)
             # day limit, but save enough for live updates the rest of teh day
             assert get_async_client(mock_hass).request.call_count == 200 - 24
