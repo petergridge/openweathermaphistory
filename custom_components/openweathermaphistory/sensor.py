@@ -30,12 +30,10 @@ from .const import (
     ATTR_2_SIG,
     ATTR_3_SIG,
     ATTR_4_SIG,
-    ATTR_API_VER,
     ATTR_ICON_FINE,
     ATTR_ICON_LIGHTRAIN,
     ATTR_ICON_RAIN,
     ATTR_WATERTARGET,
-    CONF_ALPHA,
     CONF_DATA,
     CONF_END_HOUR,
     CONF_FORMULA,
@@ -77,7 +75,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                             vol.Optional(
                                 ATTR_WATERTARGET, default=10
                             ): cv.positive_float,
-                            vol.Optional(CONF_ALPHA): cv.string,
                             vol.Optional(CONF_FORMULA): cv.string,
                             vol.Optional(CONF_START_HOUR): int,
                             vol.Optional(CONF_END_HOUR): int,
@@ -98,7 +95,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
         vol.Optional(CONF_V3_API, default=False): cv.boolean,
-        vol.Optional(ATTR_API_VER, default=1): cv.positive_int,
         vol.Required(CONF_API_KEY): cv.string,
         vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_LOOKBACK_DAYS, default=30): cv.positive_int,
