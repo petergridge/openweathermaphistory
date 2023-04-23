@@ -335,30 +335,24 @@ class WeatherHistoryV3:
         low = 999.0
         count = 0
 
-        ix = 0
-        while end >= start:
-            if len(self._hourly_history) > ix and self._hourly_history[ix][0] > end:
-                ix += 1
-
-            if len(self._hourly_history) > ix and self._hourly_history[ix][0] == end:
+        for dt, wd in self._hourly_history:
+            if (dt >= start) and (dt < end):
                 match attr:
                     case "snow":
-                        total += self._hourly_history[ix][1].snow
+                        total += wd.snow
                     case "rain":
-                        total += self._hourly_history[ix][1].rain
+                        total += wd.rain
                     case "humidity":
-                        total += self._hourly_history[ix][1].humidity
+                        total += wd.humidity
                         count += 1
                     case "temp_high":
-                        if self._hourly_history[ix][1].temp > high:
-                            high = self._hourly_history[ix][1].temp
+                        if wd.temp > high:
+                            high = wd.temp
                     case "temp_low":
-                        if self._hourly_history[ix][1].temp < low:
-                            low = self._hourly_history[ix][1].temp
+                        if wd.temp < low:
+                            low = wd.temp
                     case _:
                         raise ValueError("Unknown attr: %s", attr)
-
-            end -= timedelta(hours=1)
 
         match attr:
             case "humidity":

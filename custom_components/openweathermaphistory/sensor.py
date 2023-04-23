@@ -255,7 +255,14 @@ class RainSensor(SensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the state."""
-        return self.value
+        # round this for now, suggested_display_precision appears to not
+        # be working as described in the docs
+        return round(self.value, self.suggested_display_precision)
+
+    @property
+    def suggested_display_precision(self) -> int | None:
+        """Return the number of digits after the decimal point for the sensor's state."""
+        return 2
 
     def handle_update(self) -> None:
         self.async_write_ha_state()
