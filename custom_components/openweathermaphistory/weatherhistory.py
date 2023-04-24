@@ -17,7 +17,7 @@ from .const import (
     CONF_LOOKBACK_DAYS,
     CONF_MAX_CALLS_PER_DAY,
     CONF_MAX_CALLS_PER_HOUR,
-    CONST_API_CALL_3,
+    CONST_API_CALL,
     STORAGE_DAY_KEY,
     STORAGE_HISTORY_KEY,
     STORAGE_HOUR_KEY,
@@ -57,7 +57,7 @@ class WeatherHistoryV3:
         hass: HomeAssistant,
         config: ConfigType,
         units: str,
-        url_template: str = CONST_API_CALL_3,
+        url_template: str = CONST_API_CALL,
     ):
         self.lookback_days = config[CONF_LOOKBACK_DAYS]
         self._hourly_history: deque[tuple[datetime, WeatherData]] = deque(
@@ -152,8 +152,8 @@ class WeatherHistoryV3:
             # No need to backfill if we have all data
             return
 
-        _LOGGER.warning(
-            "Backfilling weather data for %s between %s and %s (%s)",
+        _LOGGER.info(
+            "Continuing backfill of weather data for %s between %s and %s (%s)",
             self.location,
             start_dt,
             end_dt,
@@ -168,11 +168,6 @@ class WeatherHistoryV3:
         while end_dt >= start_dt:
             if end_dt in dt_to_data:
                 # If we already have the data, no need to request
-                _LOGGER.debug(
-                    "Found weather data for %s at %s, skipping request",
-                    self.location,
-                    end_dt,
-                )
                 self._hourly_history.appendleft((end_dt, dt_to_data[end_dt]))
             else:
                 if remaining_calls > 0:
@@ -256,14 +251,50 @@ class WeatherHistoryV3:
             return False
         return self.add_observation(data)
 
+    def _get_1hr_precipitation(self, data: dict, field: str) -> float:
+        total = 0
+        if field in data and isinstance(data[field], dict):
+            for k, v in data[field].items():
+                if k == "1h":
+                    total += v
+                elif k == "3h":
+                    """
+                    Sometimes the API will return "3h" instead of "1h".  This is not documented on the v3
+                    API docs (https://openweathermap.org/api/one-call-3#hist_example), but it is in the v2.5
+                    (https://openweathermap.org/history) docs.
+
+                    From observation, it seems like the 3 hour total is always repeated for 3 consecutive hourly
+                    observations.  If we divide the number by 3, we will get 1/3 of the 3 hour total in each 1 hour
+                    observation, recording the correct total over the period.
+
+                    Discussed here: https://github.com/petergridge/openweathermaphistory/pull/14#issuecomment-1519084629
+                    """
+                    total += v / 3.0
+
+                else:
+                    _LOGGER.critical("Unknown key in %s data: %s \n%s", field, k, data)
+
+        return total
+
     def add_observation(self, data: RestData) -> bool:
-        json_data = data.data
-        json_data = json_data["data"][0]
+        json_data: dict = data.data["data"][0]
 
         dt = datetime.fromtimestamp(json_data["dt"], tz=timezone.utc)
 
-        rain = json_data["rain"]["1h"] if "rain" in json_data else 0
-        snow = json_data["snow"]["1h"] if "snow" in json_data else 0
+        # We only expect observations on the hour, our calculations will not work
+        # as expected if we have more frequent observations.
+        if (dt.minute != 0) or (dt.second != 0) or (dt.microsecond != 0):
+            _LOGGER.critical(
+                "Unexpected timestamp in observation, does not fall on the hour. Skipping. ts: %s\n"
+                + "%s\nurl: %s",
+                dt,
+                json_data,
+                data._resource,
+            )
+            return False
+
+        rain = self._get_1hr_precipitation(json_data, "rain")
+        snow = self._get_1hr_precipitation(json_data, "snow")
 
         # Rain and snow data comes back in mm/h even if we specify imperial units in the url,
         # convert to in/h if needed

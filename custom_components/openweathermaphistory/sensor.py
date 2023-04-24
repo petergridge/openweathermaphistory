@@ -94,13 +94,13 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(ATTR_WATERTARGET, default=10): cv.positive_float,
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
-        vol.Optional(CONF_V3_API, default=False): cv.boolean,
+        vol.Optional(CONF_V3_API, default=True): cv.boolean,
         vol.Required(CONF_API_KEY): cv.string,
         vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_LOOKBACK_DAYS, default=30): cv.positive_int,
         # 1,000 free calls per day on default plan.
         # Set default to 20% lower for some buffer or usage by other apps
-        vol.Required(CONF_MAX_CALLS_PER_DAY, default=800): int,
+        vol.Required(CONF_MAX_CALLS_PER_DAY, default=300): int,
         # Can set this to a value larger than max per day/24 to allow for
         # a larger burst rate during backfills.
         # We will always reserve up to 24 calls per day to update
@@ -108,7 +108,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         # to 1,000 and CONF_MAX_CALLS_PER_HOUR to 1,000, we will use up to
         # 977 calls in the current hour.  If we use all in the current hour,
         # we will use 1 per hour for the next 23 hours to stay under the max per day.
-        vol.Required(CONF_MAX_CALLS_PER_HOUR, default=250): int,
+        vol.Required(CONF_MAX_CALLS_PER_HOUR, default=150): int,
     }
 )
 
@@ -257,10 +257,12 @@ class RainSensor(SensorEntity):
         """Return the state."""
         # round this for now, suggested_display_precision appears to not
         # be working as described in the docs
+        if self.value is None:
+            return self.value
         return round(self.value, self.suggested_display_precision)
 
     @property
-    def suggested_display_precision(self) -> int | None:
+    def suggested_display_precision(self) -> int:
         """Return the number of digits after the decimal point for the sensor's state."""
         return 2
 

@@ -1,7 +1,6 @@
 """weather history class defn constants"""
 
-CONST_API_CALL = "https://api.openweathermap.org/data/2.5/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s"
-CONST_API_CALL_3 = "https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s"
+CONST_API_CALL = "https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s"
 
 CONF_DATA = "data"
 CONF_FORMULA = "formula"

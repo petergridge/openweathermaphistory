@@ -35,25 +35,48 @@ TEST_CONFIG = {
     const.ATTR_ICON_RAIN: "x",
 }
 
+REST_DATA = [
+    """ {"data": [{"dt": 1682265600, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]} """,
+    """ {"data": [{"dt": 1682262000, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]}""",
+    """ {"data": [{"dt": 1682258400, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]}""",
+    """ {"data": [{"dt": 1682254800, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]}""",
+    """ {"data": [{"dt": 1682251200, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]}""",
+]
+
+REST_DATA_WITH_3H = [
+    """ {"data": [{"dt": 1682265600, "temp": 83.25, "humidity": 67, "rain": {"1h": 1}}]} """,
+    """ {"data": [{"dt": 1682262000, "temp": 83.25, "humidity": 67, "rain": {"1h": 1}}]}""",
+    """ {"data": [{"dt": 1682258400, "temp": 83.25, "humidity": 67, "rain": {"1h": 1}}]}""",
+    """ {"data": [{"dt": 1682254800, "temp": 83.25, "humidity": 67, "rain": {"3h": 1}}]}""",
+    """ {"data": [{"dt": 1682251200, "temp": 83.25, "humidity": 67, "rain": {"3h": 1}}]}""",
+    """ {"data": [{"dt": 1682247600, "temp": 83.25, "humidity": 67, "rain": {"3h": 1}}]}""",
+]
+
 
 @pytest.fixture
 def weather_history():
     mock_hass = Mock()
     wh = WeatherHistoryV3(hass=mock_hass, config=TEST_CONFIG, units="metric")
 
-    rest_data = [
-        """ {"data": [{"dt": 1682265600, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]} """,
-        """ {"data": [{"dt": 1682264600, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]}""",
-        """ {"data": [{"dt": 1682263600, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]}""",
-        """ {"data": [{"dt": 1682262600, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]}""",
-        """ {"data": [{"dt": 1682261600, "temp": 83.25, "humidity": 67, "rain": {"1h": 0.32}}]}""",
-    ]
-    for rd in rest_data:
+    for rd in REST_DATA:
         data = RestData()
         data.data = json.loads(rd)
         wh.add_observation(data)
 
     assert len(wh._hourly_history) == 5
+    return wh
+
+
+@pytest.fixture
+def weather_history_with_3h():
+    mock_hass = Mock()
+    wh = WeatherHistoryV3(hass=mock_hass, config=TEST_CONFIG, units="metric")
+
+    for rd in REST_DATA_WITH_3H:
+        data = RestData()
+        data.data = json.loads(rd)
+        wh.add_observation(data)
+
     return wh
 
 
@@ -72,3 +95,18 @@ def test_total_rain_calc(sensor_registry: RainSensorRegistry):
     with freeze_time(now):
         total = sensor_registry._evaluate_total_rain(sensor)
         assert pytest.approx(total) == 1.6
+
+
+def test_3h_handling(
+    sensor_registry: RainSensorRegistry, weather_history_with_3h: WeatherHistoryV3
+):
+    sensor_registry._weather_history = weather_history_with_3h
+    assert "total_rain_sensor" in sensor_registry._registry
+
+    sensor: RainSensor = sensor_registry._registry["total_rain_sensor"]
+    now = datetime.fromtimestamp(1682275600, tz=timezone.utc)
+
+    with freeze_time(now):
+        total = sensor_registry._evaluate_total_rain(sensor)
+        # Expect a total of 3 from the 1h samples, plus 1/3 * 3 for the 3h samples
+        assert pytest.approx(total) == 4

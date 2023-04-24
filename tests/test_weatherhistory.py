@@ -31,10 +31,21 @@ async def test_api_limits():
     mock_hass = Mock()
     wh = WeatherHistoryV3(hass=mock_hass, config=TEST_CONFIG, units="imperial")
     with pytest.MonkeyPatch.context() as mp:
+
+        # We need to set the request data to make sure our timestamp falls on the hour.
+        # We check to make sure the timestamp has minute==0, second==0, microsecond==0
+        request_data = MagicMock()
+        mp.setattr(
+            request_data,
+            "json",
+            lambda: {"data": [{"dt": 1682254800, "temp": 83.25, "humidity": 67}]},
+        )
         mp.setattr(
             "homeassistant.helpers.httpx_client.get_async_client", lambda: Mock()
         )
-        get_async_client(mock_hass).request = AsyncMock(return_value=MagicMock())
+
+        get_async_client(mock_hass).request = AsyncMock(return_value=request_data)
+
         mp.setattr(wh, "async_save", AsyncMock())
 
         assert wh._hour_rolling_window.count() == 0
