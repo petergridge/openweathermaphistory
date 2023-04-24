@@ -177,11 +177,12 @@ class WeatherHistory:
         await self.async_save()
 
     async def async_update(self) -> bool:
-        """Get update for top of the current hour"""
+        """Get update for top of the current hour. Returns `True` if updated"""
         date = datetime.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
-        result = await self._async_update_for_datetime(date, live=True)
-        await self.async_save()
-        return result
+        updated = await self._async_update_for_datetime(date, live=True)
+        if updated:
+            await self.async_save()
+        return updated
 
     def _check_limits(self, live: bool = False) -> bool:
         hour_limit = self.hour_request_limit
@@ -235,6 +236,8 @@ class WeatherHistory:
     async def _async_update_for_datetime(
         self, date: datetime, live: bool = False
     ) -> bool:
+        """Updates data for `date` if not already present and adds to rolling window.  
+        Returns True if updated"""
         _LOGGER.debug("Updating weather history for %s at %s", self.location, date)
 
         if self._hourly_history and self._hourly_history[0][0] == date:
