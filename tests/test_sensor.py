@@ -12,7 +12,7 @@ from custom_components.openweathermaphistory.sensor import (
     RainSensor,
     RainSensorRegistry,
 )
-from custom_components.openweathermaphistory.weatherhistory import WeatherHistoryV3
+from custom_components.openweathermaphistory.weatherhistory import WeatherHistory
 
 TEST_CONFIG = {
     CONF_API_KEY: "XXX",
@@ -56,7 +56,7 @@ REST_DATA_WITH_3H = [
 @pytest.fixture
 def weather_history():
     mock_hass = Mock()
-    wh = WeatherHistoryV3(hass=mock_hass, config=TEST_CONFIG, units="metric")
+    wh = WeatherHistory(hass=mock_hass, config=TEST_CONFIG, units="metric")
 
     for rd in REST_DATA:
         data = RestData()
@@ -70,7 +70,7 @@ def weather_history():
 @pytest.fixture
 def weather_history_with_3h():
     mock_hass = Mock()
-    wh = WeatherHistoryV3(hass=mock_hass, config=TEST_CONFIG, units="metric")
+    wh = WeatherHistory(hass=mock_hass, config=TEST_CONFIG, units="metric")
 
     for rd in REST_DATA_WITH_3H:
         data = RestData()
@@ -81,7 +81,7 @@ def weather_history_with_3h():
 
 
 @pytest.fixture
-def sensor_registry(weather_history: WeatherHistoryV3):
+def sensor_registry(weather_history: WeatherHistory):
     mock_hass = Mock()
     sr = RainSensorRegistry(mock_hass, TEST_CONFIG, "metric")
     sr._weather_history = weather_history
@@ -98,7 +98,7 @@ def test_total_rain_calc(sensor_registry: RainSensorRegistry):
 
 
 def test_3h_handling(
-    sensor_registry: RainSensorRegistry, weather_history_with_3h: WeatherHistoryV3
+    sensor_registry: RainSensorRegistry, weather_history_with_3h: WeatherHistory
 ):
     sensor_registry._weather_history = weather_history_with_3h
     assert "total_rain_sensor" in sensor_registry._registry

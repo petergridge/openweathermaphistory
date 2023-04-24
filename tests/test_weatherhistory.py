@@ -7,7 +7,7 @@ from homeassistant.const import CONF_API_KEY
 from homeassistant.helpers.httpx_client import get_async_client
 
 import custom_components.openweathermaphistory.const as const
-from custom_components.openweathermaphistory.weatherhistory import WeatherHistoryV3
+from custom_components.openweathermaphistory.weatherhistory import WeatherHistory
 
 TEST_CONFIG = {
     CONF_API_KEY: "XXX",
@@ -19,7 +19,7 @@ TEST_CONFIG = {
 
 
 def test_init_weather_history():
-    wh = WeatherHistoryV3(hass=Mock(), config=TEST_CONFIG, units="imperial")
+    wh = WeatherHistory(hass=Mock(), config=TEST_CONFIG, units="imperial")
     assert wh.lookback_days == TEST_CONFIG[const.CONF_LOOKBACK_DAYS]
     assert wh._hour_rolling_window.count() == 0
     assert wh.day_request_limit == 200
@@ -29,9 +29,8 @@ def test_init_weather_history():
 @pytest.mark.asyncio
 async def test_api_limits():
     mock_hass = Mock()
-    wh = WeatherHistoryV3(hass=mock_hass, config=TEST_CONFIG, units="imperial")
+    wh = WeatherHistory(hass=mock_hass, config=TEST_CONFIG, units="imperial")
     with pytest.MonkeyPatch.context() as mp:
-
         # We need to set the request data to make sure our timestamp falls on the hour.
         # We check to make sure the timestamp has minute==0, second==0, microsecond==0
         request_data = MagicMock()
