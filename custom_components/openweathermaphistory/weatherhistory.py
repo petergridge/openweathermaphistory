@@ -95,6 +95,11 @@ class WeatherHistory:
     def location(self) -> str:
         return f"{self.lat}_{self.lon}"
 
+    @property
+    def backfill_pct(self) -> float:
+        """Percent of samples in the lookback window filled in"""
+        return len(self._hourly_history) / (self.lookback_days * 24)
+
     async def async_load(self):
         """Load data from persistent storage"""
         if (data := await self._store.async_load()) is None:
@@ -104,11 +109,12 @@ class WeatherHistory:
         _LOGGER.debug("Loaded data from storage: %s", self._store.path)
 
         if STORAGE_HISTORY_KEY in data and data[STORAGE_HISTORY_KEY]:
-            self._hourly_history.clear()
+            history = deque()
             for dt_str, wd_dict in data[STORAGE_HISTORY_KEY]:
                 dt = datetime.fromisoformat(dt_str)
                 wd = WeatherData(**wd_dict)
-                self._hourly_history.append((dt, wd))
+                history.append((dt, wd))
+            self._hourly_history = history
 
         if STORAGE_HOUR_KEY in data and data[STORAGE_HOUR_KEY]:
             for dt_str in data[STORAGE_HOUR_KEY]:
@@ -151,29 +157,31 @@ class WeatherHistory:
             return
 
         _LOGGER.info(
-            "Continuing backfill of weather data for %s between %s and %s (%s)",
+            "Continuing backfill of weather data for %s between %s and %s. Total data (%s of %s)",
             self.location,
             start_dt,
             end_dt,
-            start_dt <= end_dt,
+            len(self._hourly_history),
+            self.lookback_days * 24,
         )
 
         dt_to_data = {d[0]: d[1] for d in self._hourly_history}
 
-        self._hourly_history.clear()
+        new_history: deque[tuple[datetime, WeatherData]] = deque()
         remaining_calls = max_calls
 
         while end_dt >= start_dt:
             if end_dt in dt_to_data:
                 # If we already have the data, no need to request
-                self._hourly_history.appendleft((end_dt, dt_to_data[end_dt]))
+                new_history.appendleft((end_dt, dt_to_data[end_dt]))
             else:
                 if remaining_calls > 0:
-                    await self._async_update_for_datetime(end_dt)
+                    await self._async_update_for_datetime(end_dt, history=new_history)
                     remaining_calls -= 1
 
             end_dt -= timedelta(hours=1)
 
+        self._hourly_history = new_history
         await self.async_save()
 
     async def async_update(self) -> bool:
@@ -234,23 +242,32 @@ class WeatherHistory:
         return data
 
     async def _async_update_for_datetime(
-        self, date: datetime, live: bool = False
+        self,
+        date: datetime,
+        live: bool = False,
+        history: deque[tuple[datetime, WeatherData]] | None = None,
     ) -> bool:
-        """Updates data for `date` if not already present and adds to rolling window.  
+        """Updates data for `date` if not already present and adds to rolling window.
         Returns True if updated"""
         _LOGGER.debug("Updating weather history for %s at %s", self.location, date)
 
-        if self._hourly_history and self._hourly_history[0][0] == date:
+        if history is None:
+            history = self._hourly_history
+
+        if history and history[0][0] == date:
             _LOGGER.debug("Already have observation for %s, skipping", date)
             return False
 
         url = self._make_url(date)
+        if not self._check_limits(live=live):
+            return False
+
         data = await self._async_get_rest_data(url, live=live)
 
         if data.data is None:
-            _LOGGER.debug("Got no data for %s !", date)
+            _LOGGER.info("Got no data for %s !", date)
             return False
-        return self.add_observation(data)
+        return self.add_observation(data, history)
 
     def _get_1hr_precipitation(self, data: dict, field: str) -> float:
         total = 0
@@ -277,7 +294,12 @@ class WeatherHistory:
 
         return total
 
-    def add_observation(self, data: RestData) -> bool:
+    def add_observation(
+        self, data: RestData, history: deque[tuple[datetime, WeatherData]] | None = None
+    ) -> bool:
+        if history is None:
+            history = self._hourly_history
+
         json_data: dict = data.data["data"][0]
 
         dt = datetime.fromtimestamp(json_data["dt"], tz=timezone.utc)
@@ -310,8 +332,8 @@ class WeatherHistory:
             humidity=json_data["humidity"],
         )
 
-        if self._hourly_history:
-            last_dt = self._hourly_history[0][0]
+        if history:
+            last_dt = history[0][0]
             if dt - last_dt > timedelta(hours=1):
                 _LOGGER.warning(
                     "Missing observation.  Current dt: %s last dt: %s.",
@@ -327,7 +349,7 @@ class WeatherHistory:
                 return False
 
         _LOGGER.debug("Adding observation: %s, %s", dt, wd)
-        self._hourly_history.appendleft((dt, wd))
+        history.appendleft((dt, wd))
         return True
 
     def day_rain(self, day: int) -> float:
