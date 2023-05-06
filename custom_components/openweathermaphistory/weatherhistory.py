@@ -1,43 +1,62 @@
-"""Process the weater data"""
+"""define the weather class"""
 
+from .data import RestData
+from datetime import datetime, date, timezone
+from os.path import exists , join
 import logging
-import json
-import math
-from datetime import datetime, timezone
-import pytz
 import pickle
-from os.path import exists, join
+import re
+import json
+import pytz
+from homeassistant.core import HomeAssistant
+from homeassistant.const import (
+    CONF_API_KEY,
+    CONF_LATITUDE,
+    CONF_LONGITUDE,
+    CONF_NAME,
+    )
+from .const import (
+    CONST_API_CALL,
+    CONST_API_FORECAST,
+    CONF_MAX_DAYS,
+    CONF_INTIAL_DAYS
+    )
 
 _LOGGER = logging.getLogger(__name__)
 
-class WeatherHist:
-    """Class for handling the data retrieval."""
+DEFAULT_NAME = "Open Weather Map History"
 
-    def __init__(self):
-        """Initialize the data object."""
-        self._weather      = None
-        self._daysig       = None
-        self._water_target = None
-        self.attrs         = None
-        self.factor        = None
-        self._units        = None
-        self._timezone     = None
-        self._hass         = None
-        self._name         = None
+class Weather():
+    """weather class"""
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        config,
+    ) -> None:
 
-    async def set_weather(self, weather, daysig, watertarget, units, time_zone, hass, name):
-        """Set url."""
-        self._weather      = weather
-        self._daysig       = daysig
-        self._water_target = watertarget
-        self._units        = units
-        self._timezone     = time_zone
+        self._timezone     = hass.config.time_zone
         self._hass         = hass
-        self._name         = name
+        self._config       = config
+        self._attrsrain    = {}
+        self._attrssnow    = {}
+        self._attrshum     = {}
+        self._mintemp      = {}
+        self._maxtemp      = {}
+        self._yesterdays   = {}
+        self._tomorrow     = {}
+        self._day_after    = {}
+        self._processed    = {}
 
-    def get_stored_data(self,):
+        self._name      = config.get(CONF_NAME,DEFAULT_NAME)
+        self._lat       = config.get(CONF_LATITUDE,hass.config.latitude)
+        self._lon       = config.get(CONF_LONGITUDE,hass.config.longitude)
+        self._key       = config[CONF_API_KEY]
+        self._initdays  = config.get(CONF_INTIAL_DAYS)
+        self._maxdays   = config.get(CONF_MAX_DAYS)
+
+    def get_stored_data(self):
         """Return stored data."""
-        file = join(self._hass.config.path(), self._name + '.pickle')
+        file = join(self._hass.config.path(), self._name  + '.pickle')
         if not exists(file):
             return {}
         with open(file, 'rb') as myfile:
@@ -47,112 +66,221 @@ class WeatherHist:
 
     def store_data(self, content):
         """Store uri timestamp to file."""
+
+        keys = list(content.keys())
+        keys.sort()
+        sorted_dict = {i: content[i] for i in keys}
+
         file = join(self._hass.config.path(), self._name + '.pickle')
         with open(file, 'wb') as myfile:
-            pickle.dump(content, myfile, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(sorted_dict, myfile, pickle.HIGHEST_PROTOCOL)
         myfile.close()
 
-    async def async_update(self):
-        '''update the weather stats'''
-        factor = 1
-        mintemp = {0:999,1:999,2:999,3:999,4:999}
-        maxtemp = {0:-999,1:-999,2:-999,3:-999,4:-999}
-        attrsrain = {'day_0_rain':0,'day_1_rain':0,'day_2_rain':0,'day_3_rain':0,'day_4_rain':0}
-        attrssnow = {'day_0_snow':0,'day_1_snow':0,'day_2_snow':0,'day_3_snow':0,'day_4_snow':0}
-        attrmin = {}
-        attrmax = {}
-        totalrain = {0:0,1:0,2:0,3:0,4:0}
-        totalsnow = {0:0,1:0,2:0,3:0,4:0}
+    def validate_data(self,data) -> bool:
+        """check if the call was successful"""
+        try:
+            code    = data["cod"]
+            message = data["message"]
+            _LOGGER.error('OpenWeatherMap call failed code: %s message: %s', code, message)
+            return None
+        except KeyError:
+            pass
 
-        #get persistent data to limit the number of calls on restart
-        weatherdata = self.get_stored_data()
-        localtimezone =   pytz.timezone(self._timezone)
+    async def get_forecastdata(self):
+        """get forecast data"""
+        url = CONST_API_FORECAST % (self._lat,self._lon, self._key)
+        rest = RestData()
+        await rest.set_resource(self._hass, url)
+        await rest.async_update(log_errors=False)
+        data = json.loads(rest.data)
+        #check if the call was successful
+        try:
+            days = data.get('daily',{})
+            current = data.get('current',{})
+        except KeyError:
+            _LOGGER.error('OpenWeatherMap forecast call failed data: %s', data)
+        #current observations
+        currentdata = {"rain":current.get('rain',{}).get('1h',0)
+                    , "snow":current.get('snow',{}).get('1h',0)
+                    , "temp":current.get("temp",0)
+                    , "humidity":current.get("humidity",0)
+                    , "pressure":current.get("pressure",0)}
+        #build forecast
+        forecastdaily = {}
+        for day in days:
+            temp = day.get('temp',{})
+            daydata = {'max_temp':temp.get('max',0),
+                       'min_temp':temp.get('min',0),
+                       'pressure':day.get('pressure',0),
+                       'humidity':day.get('humidity',0),
+                       'pop':day.get('pop',0),
+                       'rain': day.get('rain',0),
+                       'snow':day.get('snow',0)}
+            forecastdaily.update({day.get('dt') : daydata})
 
-        for rest in self._weather:
+        return currentdata, forecastdaily
+
+    async def get_historydata(self,num_hours,historydata):
+        """get history data"""
+        i=0
+        rest = RestData()
+        hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
+        expectedhour = int(datetime.timestamp(hour))
+        try:
+            lastdt = max(historydata)
+        except ValueError:
+            #backdate the required number of days
+            lastdt = expectedhour - 3600*24*self._initdays
+        #iterate until caught up to current hour
+        while lastdt < expectedhour :
+            #increment last date by an hour
+            lastdt += 3600
+            url = CONST_API_CALL % (self._lat,self._lon, lastdt, self._key)
+            rest = RestData()
+            await rest.set_resource(self._hass, url)
+            await rest.async_update(log_errors=False)
+            #limit the number of calls in a scan interval
+            i += 1
+            if i > num_hours:
+                self.store_data(historydata)
+                break
             data = json.loads(rest.data)
-
             #check if the call was successful
+            self.validate_data(data)
             try:
-                code    = data["cod"]
-                message = data["message"]
-                _LOGGER.error('OpenWeatherMap call failed code: %s message: %s', code, message)
-                return #just stop processing
+                current = data.get('data')[0]
+                if current is None:
+                    current = {}
             except KeyError:
-                pass
-            #get the data
-            try:
-                current = data["data"][0]
-            except KeyError:
-                _LOGGER.error('OpenWeatherMap call failed data: %s', data)
-                return #just stop processing
+                _LOGGER.error('OpenWeatherMap history call failed data: %s', data)
             #build this hours data
-            rainval = 0
-            if 'rain' in current:
-                rain = current["rain"]
-                if not math.isnan(rain["1h"]):
-                    rainval = rain["1h"]
-            snowval = 0
-            if 'snow' in current:
-                snow = current["snow"]
-                if not math.isnan(snow["1h"]):
-                    snowval = snow["1h"]
-            tempval = current["temp"]
-            hourdata = {"rain":rainval, "snow":snowval, "temp":tempval}
-            dt = current["dt"]
-            weatherdata.update({dt : hourdata })
-        #end rest loop
+            precipval = {}
+            preciptypes = ['rain','snow']
+            for preciptype in preciptypes:
+                if preciptype in current:
+                    #get the rain/snow eg 'rain': {'1h':0.89}
+                    precip = current[preciptype]
+                    #get the first key eg 1h, 3h
+                    key = next(iter(precip))
+                    #get the number component assuming only a singe digit
+                    divby = float(re.search(r'\d+', key).group())
+                    try:
+                        volume = precip.get(key,0)/divby
+                    except ZeroDivisionError:
+                        volume = 0
+                    precipval.update({preciptype:volume})
 
+            rain = precipval.get('rain',0)
+            snow = precipval.get('snow',0)
+            hourdata = {"rain": rain
+                        ,"snow":snow
+                        ,"temp":current.get("temp",0)
+                        ,"humidity":current.get("humidity",0)
+                        ,"pressure":current.get("pressure",0)}
+            wdt = current["dt"]
+            historydata.update({wdt : hourdata })
+        #end rest loop
+        return historydata
+
+    async def processcurrent(self,current):
+        """process the currrent data"""
+        current_data ={ 'current': {'rain': current.get('rain')
+                                   , 'snow': current.get('snow')
+                                   , 'humidity': current.get('humidity')
+                                   , 'temp': current.get('temp')
+                                   , 'pressure': current.get('pressure')}
+                                   }
+        return current_data
+
+    async def processdailyforecast(self,dailydata):
+        "process daily forecast data"
+        processed_data = {}
+        i = 0
+        for data in dailydata.values():
+            #get the days data
+            day = {}
+            #update the days data
+            day.update({"pop":data.get('pop',0)})
+            day.update({"rain":data.get('rain',0)})
+            day.update({"snow":data.get('snow',0)})
+            day.update({"min_temp":data.get('min_temp',0)})
+            day.update({"max_temp":data.get('max_temp',0)})
+            day.update({"humidity":data.get('humidity',0)})
+            day.update({"pressure":data.get('pressure',0)})
+            processed_data.update({f'f{i}':day})
+            i += 1
+        return processed_data
+
+    async def processhistory(self,historydata):
+        """process history data"""
         removehours = []
-        #now reprocess the data to calc each days data
-        for hour, data in weatherdata.items():
+        localtimezone = pytz.timezone(self._timezone)
+        processed_data = {}
+        for hour, data in historydata.items():
             localday = datetime.utcfromtimestamp(hour).replace(tzinfo=timezone.utc).astimezone(tz=localtimezone)
             localnow = datetime.now(localtimezone)
             localdaynum = (localnow - localday).days
-            if localdaynum > 4:
+            if localdaynum > self._maxdays-1:
+                #identify data to age out
                 removehours.append(hour)
                 continue
-
-            totalrain.update({localdaynum: totalrain[localdaynum] + data["rain"]})
-            totalsnow.update({localdaynum: totalsnow[localdaynum] + data["snow"]})
-            if self._units == "imperial":
-                #convert to inches
-                attrsrain.update({"day_%d_rain"%(localdaynum) : round(totalrain[localdaynum]/25.4,2)})
-                attrssnow.update({"day_%d_snow"%(localdaynum) : round(totalsnow[localdaynum]/25.4,2)})
-            else:
-                attrsrain.update({"day_%d_rain"%(localdaynum) : round(totalrain[localdaynum],2)})
-                attrssnow.update({"day_%d_snow"%(localdaynum) : round(totalsnow[localdaynum],2)})
-
-            if data["temp"] < mintemp[localdaynum]:
-                mintemp.update({localdaynum : data["temp"]})
-                attrmin.update({"day_%d_min"%(localdaynum): data["temp"]})
-            if data["temp"] > maxtemp[localdaynum]:
-                maxtemp.update({localdaynum : data["temp"]})
-                attrmax.update({"day_%d_max"%(localdaynum): data["temp"]})
-
-        #now loop through the data to calculate the adjustment factor
-        equivalent = 0
-        for day, daysig in enumerate(self._daysig):
-            #calculate rainfall equivalent watering
-            #each days rain has varying significance
-            #e.g. yesterdays rain is less significant than todays rain
-            equivalent += attrsrain ["day_%d_rain"%(day)] * daysig
-        try:
-            if equivalent < self._water_target:
-                #calculate the factor
-                factor = (self._water_target - equivalent) / self._water_target
-                factor = max(0,factor)
-            else:
-                factor = 0
-        except ZeroDivisionError:
-            #watering target has been set as 0
-            factor = 1
-
-        self.factor = ('%.2f' %factor)
-        self.attrs = {**attrsrain, **attrssnow, **attrmin, **attrmax}
-
-        #clear old data
+            #get the days data
+            day = processed_data.get(localdaynum,{})
+            #process the new data
+            rain = day.get('rain',0) + data["rain"]
+            snow = day.get('snow',0) + data["snow"]
+            mintemp = min(data["temp"],day.get('min_temp',999), 999)
+            maxtemp = max(data["temp"],day.get('max_temp',-999), -999)
+            #update the days data
+            day.update({"rain":rain})
+            day.update({"snow":snow})
+            day.update({"min_temp":mintemp})
+            day.update({"max_temp":maxtemp})
+            processed_data.update({localdaynum:day})
+        #age out old data
         for hour in removehours:
-            weatherdata.pop(hour)
-        _LOGGER.warning('Weaterdata item count: %s', len(weatherdata))
+            historydata.pop(hour)
+        return historydata,processed_data
+
+    async def async_update(self,num_hours):
+        '''update the weather stats'''
+        hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
+        expectedhour = int(datetime.timestamp(hour))
+        #restore saved data
+        storeddata = self.get_stored_data()
+        historydata = storeddata.get("history",{})
+        currentdata = storeddata.get('current',{})
+        dailydata = storeddata.get('dailyforecast',{})
+        #determine when the last update was done
+        try:
+            lastdt = max(historydata)
+        except ValueError:
+            #backdate the required number of days
+            lastdt = expectedhour - 3600*24*self._initdays
+        #get new data if requrired
+        if lastdt < expectedhour:
+            data = await self.get_forecastdata()
+            currentdata = data[0]
+            dailydata = data[1]
+            historydata = await self.get_historydata(num_hours,historydata)
+        #Process the available data
+        processedcurrent = await self.processcurrent(currentdata)
+        processeddaily = await  self.processdailyforecast(dailydata)
+        data = await self.processhistory(historydata)
+        historydata = data[0]
+        processedweather = data[1]
+        #build data to support template variables
+        self._processed = {**processeddaily, **processedcurrent, **processedweather}
         #write persistent data
-        self.store_data(weatherdata)
+        self.store_data({'history':historydata, 'current':currentdata, 'dailyforecast':dailydata})
+#        _LOGGER.warning(self._processed)
+
+    def num_days(self) -> int:
+        """ return how many days of data has been collected"""
+        return len(self._attrsrain)
+
+    def processed_value(self, period, value) -> float:
+        """return the days current rainfall"""
+        data = self._processed.get(period,{})
+        return data.get(value,0)
+
