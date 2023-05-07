@@ -13,7 +13,7 @@
           "language": "Language",
           "latitude": "Latitude",
           "longitude": "Longitude",
-          "name": "Name"
+          "name": "Location Name"
         },
         "description": "To generate API key go to https://openweathermap.org/appid.\nThen go to https://openweathermap.org/api and subscribe to the 'One Call API 3.0' plan.  You will need to enter billing info, but you get 1,000 free calls per day which is plenty for this integration. You can configure your account to never go over the free limit here with `Calls per day` here: https://home.openweathermap.org/subscriptions."
       }

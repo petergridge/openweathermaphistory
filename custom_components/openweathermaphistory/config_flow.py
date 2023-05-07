@@ -101,7 +101,7 @@ class OpenweathermaphistoryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN_K
                 ): cv.longitude,
                 vol.Required(
                     CONF_NAME,
-                    default=f"{self.hass.config.latitude}_{self.hass.config.longitude}",
+                    default=self.hass.config.location_name,
                 ): str,
             }
         )
