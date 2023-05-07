@@ -3,16 +3,16 @@
 CONST_API_CALL = "https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=%s"
 
 CONF_DATA = "data"
-CONF_FORMULA = "formula"
-CONF_RESOURCES = "resources"
-CONF_TYPE = "type"
-CONF_NAME = "name"
-CONF_START_HOUR = "start_hour"
 CONF_END_HOUR = "end_hour"
+CONF_FORMULA = "formula"
 CONF_LOOKBACK_DAYS = "lookback_days"
-CONF_MAX_CALLS_PER_HOUR = "max_api_calls_per_hour"
 CONF_MAX_CALLS_PER_DAY = "max_api_calls_per_day"
+CONF_MAX_CALLS_PER_HOUR = "max_api_calls_per_hour"
+CONF_START_HOUR = "start_hour"
 
+DOMAIN_KEY = "openweathermaphistory"
+
+TYPE_BACKFILL_PCT = "backfill_pct"
 TYPE_CUSTOM = "custom"
 TYPE_DEFAULT_FACTOR = "default_factor"
 TYPE_TOTAL_RAIN = "total_rain"
@@ -31,6 +31,9 @@ ATTR_ICON_RAIN = "rain_icon"  # icon to display when factor is 0
 DFLT_ICON_FINE = "mdi:weather-sunny"
 DFLT_ICON_LIGHTRAIN = "mdi:weather-rainy"
 DFLT_ICON_RAIN = "mdi:weather-pouring"
+DFLT_LOOKBACK_DAYS = 5
+DFLT_MAX_CALLS_PER_DAY = 300
+DFLT_MAX_CALLS_PER_HOUR = 150
 
 ATTR_0_SIG = "day0sig"
 ATTR_1_SIG = "day1sig"

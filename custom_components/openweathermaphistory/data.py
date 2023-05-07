@@ -48,7 +48,7 @@ class RestData:
             )
 
             if not response.is_success:
-                _LOGGER.warn("Response not ok: %s", response, response.text)
+                _LOGGER.warn("Response not ok: %s, %s", response, response.text)
                 return
 
             if not response.headers.get("content-type").startswith("application/json"):

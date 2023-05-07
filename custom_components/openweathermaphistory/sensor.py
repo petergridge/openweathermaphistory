@@ -11,11 +11,14 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_LATITUDE,
     CONF_LONGITUDE,
     CONF_NAME,
+    CONF_RESOURCES,
+    CONF_TYPE,
     EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant, callback
@@ -40,13 +43,15 @@ from .const import (
     CONF_LOOKBACK_DAYS,
     CONF_MAX_CALLS_PER_DAY,
     CONF_MAX_CALLS_PER_HOUR,
-    CONF_RESOURCES,
     CONF_START_HOUR,
-    CONF_TYPE,
     DFLT_ICON_FINE,
     DFLT_ICON_LIGHTRAIN,
     DFLT_ICON_RAIN,
+    DFLT_MAX_CALLS_PER_DAY,
+    DFLT_MAX_CALLS_PER_HOUR,
+    DFLT_LOOKBACK_DAYS,
     SENSOR_TYPES,
+    TYPE_BACKFILL_PCT,
     TYPE_CUSTOM,
     TYPE_DEFAULT_FACTOR,
     TYPE_TOTAL_RAIN,
@@ -86,10 +91,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_LATITUDE): cv.latitude,
         vol.Optional(CONF_LONGITUDE): cv.longitude,
         vol.Required(CONF_API_KEY): cv.string,
-        vol.Required(CONF_LOOKBACK_DAYS, default=30): cv.positive_int,
+        vol.Required(CONF_LOOKBACK_DAYS, default=DFLT_LOOKBACK_DAYS): cv.positive_int,
         # 1,000 free calls per day on default plan.
         # Set default to 20% lower for some buffer or usage by other apps
-        vol.Required(CONF_MAX_CALLS_PER_DAY, default=300): int,
+        vol.Required(CONF_MAX_CALLS_PER_DAY, default=DFLT_MAX_CALLS_PER_DAY): int,
         # Can set this to a value larger than max per day/24 to allow for
         # a larger burst rate during backfills.
         # We will always reserve up to 24 calls per day to update
@@ -97,7 +102,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         # to 1,000 and CONF_MAX_CALLS_PER_HOUR to 1,000, we will use up to
         # 977 calls in the current hour.  If we use all in the current hour,
         # we will use 1 per hour for the next 23 hours to stay under the max per day.
-        vol.Required(CONF_MAX_CALLS_PER_HOUR, default=150): int,
+        vol.Required(CONF_MAX_CALLS_PER_HOUR, default=DFLT_MAX_CALLS_PER_HOUR): int,
     }
 )
 
@@ -107,6 +112,19 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 SCAN_INTERVAL = timedelta(seconds=30)
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the sensors from ConfigEntry or Options flow (ui flows)."""
+    # first merge options into data to handle updates via reconfigure, then reload
+    data = dict(config_entry.data)
+    options = dict(config_entry.options)
+    data.update(options)
+    await async_setup_platform(hass, data, add_entities)
 
 
 async def async_setup_platform(
@@ -217,9 +235,9 @@ class RainSensorRegistry:
         self._registry: dict[str, RainSensor] = {}
         self._weather_history = WeatherHistory(hass, config, units)
 
-        self._icon_fine = config[ATTR_ICON_FINE]
-        self._icon_lightrain = config[ATTR_ICON_LIGHTRAIN]
-        self._icon_rain = config[ATTR_ICON_RAIN]
+        self._icon_fine = config.get(ATTR_ICON_FINE, DFLT_ICON_FINE)
+        self._icon_lightrain = config.get(ATTR_ICON_LIGHTRAIN, DFLT_ICON_LIGHTRAIN)
+        self._icon_rain = config.get(ATTR_ICON_RAIN, DFLT_ICON_RAIN)
 
         for resource in config[CONF_RESOURCES]:
             type_ = resource[CONF_TYPE]
@@ -276,15 +294,15 @@ class RainSensorRegistry:
 
     def _update_vars(self, weather_history: WeatherHistory):
         vars: dict[str, Any] = {}
-        for i in range(6):
+        for i in range(weather_history.lookback_days):
             vars[f"day{i}rain"] = weather_history.day_rain(i)
             vars[f"day{i}snow"] = weather_history.day_snow(i)
             vars[f"day{i}humidity"] = weather_history.day_humidity(i)
             vars[f"day{i}temp_high"] = weather_history.day_temp_high(i)
             vars[f"day{i}temp_low"] = weather_history.day_temp_low(i)
-            vars["max"] = max
-            vars["min"] = min
-            vars["sum"] = sum
+        vars["max"] = max
+        vars["min"] = min
+        vars["sum"] = sum
 
         return vars
 
@@ -368,6 +386,9 @@ class RainSensorRegistry:
 
             elif sensor.type == TYPE_TOTAL_RAIN:
                 sensor.value = self._evaluate_total_rain(sensor)
+
+            elif sensor.type == TYPE_BACKFILL_PCT:
+                sensor.value = self._weather_history.backfill_pct
 
             sensor.handle_update()
             _LOGGER.debug(

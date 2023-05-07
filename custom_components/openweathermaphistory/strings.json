@@ -1,0 +1,90 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Location is already configured."
+    },
+    "error": {
+      "base": "Cannot connect, possible invalid_api_key"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "api_key": "API key",
+          "language": "Language",
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "name": "Name"
+        },
+        "description": "To generate API key go to https://openweathermap.org/appid.\nThen go to https://openweathermap.org/api and subscribe to the 'One Call API 3.0' plan.  You will need to enter billing info, but you get 1,000 free calls per day which is plenty for this integration. You can configure your account to never go over the free limit here with `Calls per day` here: https://home.openweathermap.org/subscriptions."
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "hours": "Start hour must be before end hour.",
+      "formula": "Invalid formula"
+    },
+    "step": {
+      "init": {
+        "data": {
+          "language": "Language",
+          "mode": "Mode"
+        }
+      },
+      "lookback_days": {
+        "data": {
+          "lookback_days": "Lookback days",
+          "max_api_calls_per_hour": "Max API calls per hour",
+          "max_api_calls_per_day": "Max API calls per day"
+        },
+        "description": "How many days of history should we keep and how many API calls should we use? openweathermaphistory keeps a rolling window of historical data for use in custom sensor calculations.\nIt takes 1 API call to get 1Hr of data and we persist the data so it remains through HA restarts.  In a steady state, we only need 1 request per hour, but we will use more during backfills when setting up a new location or if HA has been down for some time.  Setting higher API limits can allow for a faster backfill of the lookback window.  Setting lower API limits can help to reduce usage towards your free tier cap and can enable multiple locations to run on the same account. \n If you are unsure and are setting up <= 3 locations, leave the default values.",
+        "title": "Lookback days and limits"
+      },
+      "add_sensors": {
+        "data": {
+          "name": "Name",
+          "type": "Type",
+          "start_hour": "Start hour",
+          "end_hour": "End hour"
+        },
+        "description": "Add or remove sensors for this location.  Names of sensors must be unique per location, adding a new sensor with the same name as an existing one will overwrite the existing sensor."
+      },
+      "choose_sensor_type": {
+        "description": "Choose sensor type to add."
+      },
+      "add_custom_sensor": {
+        "data": {
+          "name": "Sensor Name",
+          "formula": "Formula"
+        },
+        "description": "Add custom formula sensor. Custom formulas can access the following variables where day0 is the previous 24 hours, day1 is 48hours ago to 24hours ago, etc.: \n`day[i]rain`\n`day[i]snow`\n`day[i]humidity`\n`day[i]temp_high`\n`day[i]temp_low`\n`i` must be within range of the configured lookback days.  The formula can also use functions such as `max()`, `min()`, `sum()`, as well as jinja compatible calculations (for example +,-,*,/).\nFor example, the following is a valid formula:\n`day1snow + max(day0rain, day2rain, 0.24) / min(day0temp_high, day1temp_high)`"
+      },
+      "add_total_rain_sensor": {
+        "data": {
+          "name": "Sensor Name",
+          "start_hour": "Start hour",
+          "end_hour": "End hour"
+        },
+        "description": "Add total rain sensor. Returns the total rainfall between start hour and end hour. Start and end hours are expressed as offsets to the current time.\nFor example to get the total rainfall in the last 48 hours, use start hour = -48, end hour = 0"
+      },
+      "add_rainfactor_sensor": {
+        "data": {
+          "name": "Sensor Name",
+          "day0sig": "Day0sig",
+          "day1sig": "Day1sig",
+          "day2sig": "Day2sig",
+          "day3sig": "Day3sig",
+          "day4sig": "Day4sig",
+          "watertarget": "Watertarget"
+        },
+        "description": "Add default rainfactor sensor.  Formula is equivalent to `max( (watertarget - day0rain*day0sig - day1rain*day1sig - day2rain*day2sig - day3rain*day3sig - day4rain*day4sig) / watertarget, 0)`"
+      },
+      "add_backfill_sensor": {
+        "data": {
+          "name": "Sensor Name"
+        },
+        "description": "Add backfill pct sensor. Sensor displays the backfill status. Number of hourly samples saved / lookback_window*24"
+      }
+    }
+  }
+}
