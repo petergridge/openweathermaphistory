@@ -130,7 +130,9 @@ class OpenweathermaphistoryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN_K
                     ATTR_2_SIG: 0.25,
                     ATTR_3_SIG: 0.12,
                     ATTR_4_SIG: 0.06,
-                    ATTR_WATERTARGET: 10,
+                    ATTR_WATERTARGET: 10
+                    if self.hass.config.units is METRIC_SYSTEM
+                    else 0.4,
                 },
             }
         ]
@@ -405,7 +407,9 @@ class OpenweathermaphistoryOptionsFlow(config_entries.OptionsFlow):
                 ATTR_2_SIG: 0.25,
                 ATTR_3_SIG: 0.12,
                 ATTR_4_SIG: 0.06,
-                ATTR_WATERTARGET: 10,
+                ATTR_WATERTARGET: 10
+                if self.hass.config.units is METRIC_SYSTEM
+                else 0.4,
                 CONF_NAME: "rainfactor",
             }
 
