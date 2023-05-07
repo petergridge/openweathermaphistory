@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 from freezegun import freeze_time
-from homeassistant.const import CONF_API_KEY
+from homeassistant.const import CONF_API_KEY, CONF_NAME, CONF_RESOURCES, CONF_TYPE
 
 import custom_components.openweathermaphistory.const as const
 from custom_components.openweathermaphistory.data import RestData
@@ -20,10 +20,10 @@ TEST_CONFIG = {
     const.CONF_MAX_CALLS_PER_HOUR: 100,
     const.CONF_MAX_CALLS_PER_DAY: 200,
     const.CONF_LOOKBACK_DAYS: 20,
-    const.CONF_RESOURCES: [
+    CONF_RESOURCES: [
         {
-            const.CONF_TYPE: "total_rain",
-            const.CONF_NAME: "total_rain_sensor",
+            CONF_TYPE: "total_rain",
+            CONF_NAME: "total_rain_sensor",
             const.CONF_DATA: {
                 const.CONF_START_HOUR: -24,
                 const.CONF_END_HOUR: 0,

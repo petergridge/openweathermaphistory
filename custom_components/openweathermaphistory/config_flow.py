@@ -4,9 +4,9 @@ import logging
 from datetime import datetime
 from functools import partial
 from typing import Any
-import jinja2
 
 import homeassistant.helpers.config_validation as cv
+import jinja2
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -20,21 +20,21 @@ from .const import (
     ATTR_4_SIG,
     ATTR_WATERTARGET,
     CONF_DATA,
-    CONF_FORMULA,
-    CONF_START_HOUR,
     CONF_END_HOUR,
+    CONF_FORMULA,
     CONF_LOOKBACK_DAYS,
     CONF_MAX_CALLS_PER_DAY,
     CONF_MAX_CALLS_PER_HOUR,
+    CONF_START_HOUR,
     CONST_API_CALL,
-    DOMAIN_KEY,
     DFLT_LOOKBACK_DAYS,
-    DFLT_MAX_CALLS_PER_HOUR,
     DFLT_MAX_CALLS_PER_DAY,
+    DFLT_MAX_CALLS_PER_HOUR,
+    DOMAIN_KEY,
+    TYPE_BACKFILL_PCT,
     TYPE_CUSTOM,
     TYPE_DEFAULT_FACTOR,
     TYPE_TOTAL_RAIN,
-    TYPE_BACKFILL_PCT,
 )
 from .data import RestData
 
@@ -520,7 +520,7 @@ def safe_name(name: str) -> str:
 
 
 def validate_formula(formula: str, lookback_days: int) -> bool:
-    allowed_vars = {}
+    allowed_vars: dict[str, Any] = {}
 
     for i in range(lookback_days):
         allowed_vars[f"day{i}rain"] = 0

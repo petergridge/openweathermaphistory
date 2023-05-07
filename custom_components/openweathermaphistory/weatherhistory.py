@@ -109,7 +109,7 @@ class WeatherHistory:
         _LOGGER.debug("Loaded data from storage: %s", self._store.path)
 
         if STORAGE_HISTORY_KEY in data and data[STORAGE_HISTORY_KEY]:
-            history = deque()
+            history = deque(maxlen=self.lookback_days * 24)
             for dt_str, wd_dict in data[STORAGE_HISTORY_KEY]:
                 dt = datetime.fromisoformat(dt_str)
                 wd = WeatherData(**wd_dict)
@@ -167,7 +167,9 @@ class WeatherHistory:
 
         dt_to_data = {d[0]: d[1] for d in self._hourly_history}
 
-        new_history: deque[tuple[datetime, WeatherData]] = deque()
+        new_history: deque[tuple[datetime, WeatherData]] = deque(
+            maxlen=self.lookback_days * 24
+        )
         remaining_calls = max_calls
 
         while end_dt >= start_dt:

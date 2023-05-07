@@ -47,9 +47,9 @@ from .const import (
     DFLT_ICON_FINE,
     DFLT_ICON_LIGHTRAIN,
     DFLT_ICON_RAIN,
+    DFLT_LOOKBACK_DAYS,
     DFLT_MAX_CALLS_PER_DAY,
     DFLT_MAX_CALLS_PER_HOUR,
-    DFLT_LOOKBACK_DAYS,
     SENSOR_TYPES,
     TYPE_BACKFILL_PCT,
     TYPE_CUSTOM,
@@ -183,8 +183,11 @@ async def _async_setup_entities(
 
 
 class RainSensor(SensorEntity):
-    def __init__(self, name: str, type: str, icon: str, data=None, value=None):
+    def __init__(
+        self, name: str, location: str, type: str, icon: str, data=None, value=None
+    ):
         self._attr_name: str = name
+        self.location: str = location
         self.value: float | None = value
         self.type: str = type
         self.data: ConfigType | None = data
@@ -194,6 +197,11 @@ class RainSensor(SensorEntity):
     @property
     def icon(self) -> str:
         return self._icon
+
+    @property
+    def unique_id(self):
+        """Return a unique_id for this entity."""
+        return f"{self._attr_name}_{self.location}"
 
     @property
     def should_poll(self):
@@ -282,6 +290,7 @@ class RainSensorRegistry:
 
             self._registry[name] = RainSensor(
                 name=name,
+                location=self._weather_history.location,
                 value=None,
                 type=type_,
                 data=data,
