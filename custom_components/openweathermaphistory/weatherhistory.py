@@ -98,7 +98,7 @@ class WeatherHistory:
     @property
     def backfill_pct(self) -> float:
         """Percent of samples in the lookback window filled in"""
-        return len(self._hourly_history) / (self.lookback_days * 24)
+        return len(self._hourly_history) / (self.lookback_days * 24) * 100
 
     async def async_load(self):
         """Load data from persistent storage"""

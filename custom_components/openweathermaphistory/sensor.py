@@ -20,6 +20,7 @@ from homeassistant.const import (
     CONF_RESOURCES,
     CONF_TYPE,
     EVENT_HOMEASSISTANT_STOP,
+    PERCENTAGE,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -184,7 +185,13 @@ async def _async_setup_entities(
 
 class RainSensor(SensorEntity):
     def __init__(
-        self, name: str, location: str, type: str, icon: str, data=None, value=None
+        self,
+        name: str,
+        location: str,
+        type: str,
+        icon: str,
+        data=None,
+        value=None,
     ):
         self._attr_name: str = name
         self.location: str = location
@@ -193,6 +200,8 @@ class RainSensor(SensorEntity):
         self.data: ConfigType | None = data
         self._icon: str = icon
         self.update_time: datetime | None = None
+        if self.type == TYPE_BACKFILL_PCT:
+            self._attr_native_unit_of_measurement = PERCENTAGE
 
     @property
     def icon(self) -> str:
