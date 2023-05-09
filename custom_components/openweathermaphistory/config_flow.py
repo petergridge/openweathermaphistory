@@ -191,14 +191,21 @@ class OpenweathermaphistoryOptionsFlow(config_entries.OptionsFlow):
 
         schema = vol.Schema(
             {
-                vol.Required(CONF_LOOKBACK_DAYS, default=DFLT_LOOKBACK_DAYS): vol.All(
-                    int, vol.Range(min=1, max=365)
-                ),
+                vol.Required(
+                    CONF_LOOKBACK_DAYS,
+                    default=self.config.get(CONF_LOOKBACK_DAYS, DFLT_LOOKBACK_DAYS),
+                ): vol.All(int, vol.Range(min=1, max=365)),
                 vol.Optional(
-                    CONF_MAX_CALLS_PER_HOUR, default=DFLT_MAX_CALLS_PER_HOUR
+                    CONF_MAX_CALLS_PER_HOUR,
+                    default=self.config.get(
+                        CONF_MAX_CALLS_PER_HOUR, DFLT_MAX_CALLS_PER_HOUR
+                    ),
                 ): vol.All(int, vol.Range(min=0, max=600)),
                 vol.Optional(
-                    CONF_MAX_CALLS_PER_DAY, default=DFLT_MAX_CALLS_PER_DAY
+                    CONF_MAX_CALLS_PER_DAY,
+                    default=self.config.get(
+                        CONF_MAX_CALLS_PER_DAY, DFLT_MAX_CALLS_PER_DAY
+                    ),
                 ): vol.All(int, vol.Range(min=0, max=10000)),
             }
         )
