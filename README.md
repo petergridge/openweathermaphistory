@@ -1,32 +1,50 @@
 # OpenWeatherMapHistory
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?logo=homeassistantcommunitystore)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?logo=homeassistantcommunitystore)](https://github.com/hacs/integration)
+[![my_badge](https://img.shields.io/badge/Home%20Assistant-Community-41BDF5.svg?logo=homeassistant)](https://community.home-assistant.io/t/custom-component-to-retrieve-five-days-of-rain-history-from-openweathermap/310153)
 ![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/latest/total)
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-# Breaking Change: V1.1.0 to V1.2.0
-- Version 1.2 supports Open Weather Map API 3 functionally this version remains the same as version 1.1.
-- **A new registration is required for version 3**, but once configured the API Key remains the same.
-- Stay on version 1.1 until you have registered for API 3.
+# NEW to Version 2.0.0
+- A totally new way to access the data!
+- Supports Jinja templates to provide you control over how you utilise the data.
+- Current Observations
+- 8 days of forecast
+- Up to 30 days of history
+This is a big update, if you find an issue raise an issue on Github, If you like it give it a star.
+
+# Thanks
+A big thanks to @tsbernar for the work put into this release.
+
+# Breaking Change: V2.0.0
+- Existing yaml will no longer work, you will need to set up using the config flow.
 
 # Functionality
-A home assistant sensor that uses the OpenWeatherMap API to return the last 5 days rainfall, snow, min and max temperatures as attributes. The data is in 24 hour time slots, not date based, but data for the preceeding 24hrs.
+A home assistant sensor that uses the OpenWeatherMap API to return:
+- Up to 30 days of history data (rain, snow, min temp, max temp)
+- 7 days of forecast (pop, rain, snow, humidity, min temp, max temp)
+- Current observations (rain, snow, humidity, current temp, current pressure)
+- Status information (remaining backlog to load, current days API count)
 
-On the first installation of version 1.2, 120 API calls are made to populate the data. Data is persisted between starts and will require only 'catch up' calls to complete missing periods. The scan_interval is set at 60 minutes as OpenWeatherMap data only refreshes every hour. A 24 hour period will make 24 API calls.
+Any number sensors can be created using templates.
 
-Information is used to calculate a factor that can be used to reduce the watering time of the [Irrigation Program](https://github.com/petergridge/irrigation_component_V4) custom component.
+While HA recommends using individual sensors, you can assign additional attributes to a sensor.
 
-A OpenWeatherMap API Key is required see the [OpenWeatherMap](https://www.home-assistant.io/integrations/openweathermap/) custom component for more information.
+The data is in 24 hour time slots, not date based, but data for the preceeding 24hrs.
+
+Two API calls are used each hour, one to collect the new history data and another to collect the forecast and current observations.
+
+On the first installation of version 2 
+- Two API calls are made to collect the current observations and the last hour.
+- Every refresh cycle (defaults to 10 min) 24 calls (1 day) will be made to load the history data (default 5 days) until the API limit (default 500) has been reached or all data has been provisioned.
+
+You can configure the retention of the data so while you may choose to backload 5 days you can keep up to 30 days of data. This will be accumulated until the limit is reached.
+
+This integration was initially built to support the [Irrigation Program](https://github.com/petergridge/irrigation_component_V4) custom component and can be used to:
+- alter the watering time/volume
+- alter the watering frequency
 
 You need an API key, which is free, but requires a [registration](https://openweathermap.org/api). You do need to provide a payment method, however, the first 1000 calls are free and you can set an upper limit of calls. Setting this to 1000 will prevent you incurring any costs.
-
-## Attributes
-
-Attributes are returned for:
-* daily rainfall - day_0_rainfall ... day_4_rainfall
-* daily snow - day_0_snow ... day_4_snow
-* daily minimum temperature - day_0_min ... day_4_min
-* daily maximum temperature - day_0_max ... day_4_max
 
 ## Installation
 
@@ -36,67 +54,118 @@ Adding as a custom repository using HACS is the simplest approach, will be publi
 Manual Installation
 * Copy the openweathermaphistory folder to the ‘config/custom components/’ directory 
 
-## Configuration
-A minimal configuration. Latitude and Longitude are defaulted to your Home Assistant location
-```yaml
-sensor:
-  - platform: openweathermaphistory
-    name: 'rainfactor'
-    api_key: 'open weather map api key'
-```
+## Configuration Config Flow
+- Define the program using the UI. From Setting, Devices & Services choose 'ADD INTEGRATION'. Search for Open Weather Map History.
+- Add the integration multiple times if you want more than one location. The second location must be at least 1000m away from any previously configured location. Be aware that the API limit is for each location. Locations are not aware of what is being used by any other location configured.
 
-A fully specified configuration.
-```yaml
-sensor:
-  - platform: openweathermaphistory
-    name: 'rainfactor'
-    latitude: -33.8302547
-    longitude: 151.1516128
-    api_key: 'open weather map api key'
-    day0sig: 1
-    day1sig: 0.5
-    day2sig: 0.25
-    day3sig: 0.12
-    day4sig: 0.06
-    watertarget: 10
-    fine_icon: 'mdi:weather-sunny'
-    lightrain_icon: 'mdi:weather-rainy'
-    rain_icon: 'mdi:weather-pouring'
-```
-
+## Location
 |Key |Type|Optional|Description|Default|
 |---|---|---|---|---|
-|platform|string|Required|the sensor entityopenweathermaphistory|
-|name|string|Required|display name for the sensor|'rainfactor'|
-|api_key|string|Required|the OpenWeatherMap API key|
-|latitude|latitude|Optional|the location to obtain weather information for|home assistant configured Latitude and Longitude|
-|longitude|longitude|Optional|the location to obtain weather information for|home assistant configured Latitude and Longitude|
-|num_days|integer|Optional|the number of days to collect data for|4, 0 will return the lat 24 hours data only|
-|fine_icon|icon|Optional|the icon to use when the factor = 1|'mdi:weather-sunny'|
-|lightrain_icon|icon|Optional|the icon to use when the factor somewhere between 0 and 1|'mdi:weather-rainy'|
-|rain_icon|icon|Optional|the icon to use when the factor = 0|'mdi:weather-pouring'|
-|day0sig|float|Optional|Significance of the days rainfall|1|
-|day1sig|float|Optional|Significance of the days rainfall|0.5|
-|day2sig|float|Optional|Significance of the days rainfall|0.25|
-|day3sig|float|Optional|Significance of the days rainfall|0.12|
-|day4sig|float|Optional|Significance of the days rainfall|0.06|
-|watertarget|float|Optional|The desired watering to be applied|10|
+|Location Name|string|Required|Instance identifier, cannot be modified|Home Assistant configured name|
+|API Key|string|Required|OpenWeatherMap API key||
+|Location|location|Required|Select from the map, cannot be within 1000m of an already configured location|Home Assistant configure location|
+|Days to keep data|integer|Required|Retention period of the captured data|5 days|
+|Days to backload|integer|Required|Days for initial population|5 days|
+|Max API calls per day|integer|Required|The daily API limit for this instance|500|
+<img width="427" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/3aa18655-52e3-4b84-b9a8-7ceb75f320bd">
 
-## State Calculation
 
-The adjustment factor is calculated based on the the cumulative rainfall for each day.
+## Sensor
+Key |Type|Optional|Description|Default|
+|---|---|---|---|---|
+|Sensor name|string|Required|Sensor name, modify using HA once created||
+|Jinja2 Template|template|Required|A valid template that will define the sensor||
+|Attributes to expose|string|Optional|A comma seperated list of valid variables to add as attributes to the sensor||
+|Sensor Type|string|Optional|Select the type to define unit of measure|None|
 
-Each 24 hrs rain has a lower significance as it ages:
-- Rain in the last 24 hours has a weighting of 1
-- rain for the next 24 hours has a weighting of 0.5
-- rain for the next 24 hours has a weighting of 0.25
-- rain for the next 24 hours has a weighting of 0.12
-- rain for the next 24 hours has a weighting of 0.06
+<img width="287" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/ef095fee-67c5-4895-9e10-a81c33385206"><img width="286" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/ac77c8ed-d6e4-4621-a1b9-7bab956259c9">
 
-The adjusted total rainfall is compared to a target rainfall:
-- if the total adjusted rainfall is 2mm and the target rainfall is 10mm a factor of 0.8 will be returned
+## Units of measure
+All data is captured in metric measurements
+To ensure that you see the information in your local unit of measure:
+- Ensure you select the appropriate 'Type of sensor'. This will allow HA to display information in the unit of measure defined for your instance.
+- If you change the type of sensor you will see warnings in the log as the unit of measure will be inconsistent, go to the developers tools/statistics page to fix the issue.
+```
+WARNING (Recorder) [homeassistant.components.sensor.recorder] The unit of sensor.current_temp (°C) cannot be converted ...
+Go to https://my.home-assistant.io/redirect/developer_statistics to fix this
+```
+- You can change the unit of measure (°C to °F) for each sensor in the sensor settings.
+
+
+## Attribute example
+```
+day0rain, day1rain, day2rain, day3rain, day4rain, day0max, day1max, day2max, day3max, day4max, day0min, day1min, day2min, day3min, day4min
+```
+## Jinja2 Template 
+Calculations are performed in the native unit of measure, so all calculations are in mm, mm/hr, °C, hPa, %.
+
+###Examples
+Determine the watering frequency based on temperature
+```
+{% if current_temp < 10 %}
+Mon
+{% elif current_temp < 20 %}
+Mon, Fri
+{% else %}
+Mon, Thu, Sat
+{% endif %}
+```
+Display current temperature
+```
+{{current_temp}}
+```
+Version 1 factor, verifying to an expected 10mm rainfall
+```
+{{ 
+  [(10 
+  - day0rain 
+  - day1rain*0.5
+  - day2rain*0.25
+  - day3rain*0.12
+  - day4rain*0.06)/10
+  ,0]|max
+}}
+```
+
+## Available variables
+### For each day of history available, day 0 represent the past 24 hours
+|Variable|example|Description|
+|---|---|---|
+|day{i}rain|day0rain|Rainfall in the 24 hour period|
+|day{i}snow|day1snow|Snow in the 25-48 hour period|
+|day{i}max||Maximum temperature in the 24 hour period|
+|day{i}min||Minimum temperature in the 24 hour period|
+### Forecast provides 7 days of data, day 0 represent the future 24 hours
+|Variable|example|Description|
+|---|---|---|
+|forecast{i}pop|forecast0pop|Probobility of precipitation in the 24 hour period|
+|forecast{i}rain|forecast1rain|Forecast rain in the 25-48 hour period|
+|forecast{i}snow||Forecast snow in the 24 hour period|
+|forecast{i}humidity||Average humidity|
+|forecast{i}max||Maximum temperature in the 24 hour period|
+|forecast{i}min||Minimum temperature in the 24 hour period|
+### Current observations
+|Variable|Description|
+|---|---|
+|current_rain|Current hours rainfall|
+|current_snow|Current hours snow|
+|current_humidity|Current hours humifity|
+|current_temp|Current hours temperature|
+|current_pressure|Current hours pressure|
+### Status values
+|Variable|Description|
+|---|---|
+|remaining_backlog|Hours of data remaining to be gathered|
+|daily_count|Number of API calls for this location|
 
 ## REVISION HISTORY
+### 2.0.0
+- Add current and forecast information
+- Support the collection of more than 5 days of data
+- Monitor API usage
+- Move to config flow for configuration
+- Each attribute can be exposed as a sensor
+- Sensors are defined by Jinja templates
 ### 1.1.2
 - Version 1.2 supports Open Weather Map API 3 functionally this version remains the same as version 1.1
 - A new registration is required for version 3, but once configured the API Key remains the same.
