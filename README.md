@@ -34,7 +34,7 @@ The data is in 24 hour time slots, not date based, but data for the preceeding 2
 
 Two API calls are used each hour, one to collect the new history data and another to collect the forecast and current observations.
 
-On the first installation of version 2 
+When a new locations is created: 
 - Two API calls are made to collect the current observations and the last hour.
 - Every refresh cycle (defaults to 10 min) 24 calls (1 day) will be made to load the history data (default 5 days) until the API limit (default 500) has been reached or all data has been provisioned.
 
