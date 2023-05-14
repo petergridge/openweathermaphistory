@@ -11,6 +11,7 @@
 - Current Observations
 - 8 days of forecast
 - Up to 30 days of history
+
 This is a big update, if you find an issue raise an issue on Github, If you like it give it a star.
 
 # Thanks
