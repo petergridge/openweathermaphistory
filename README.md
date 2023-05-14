@@ -100,12 +100,13 @@ day0rain, day1rain, day2rain, day3rain, day4rain, day0max, day1max, day2max, day
 ## Jinja2 Template 
 Calculations are performed in the native unit of measure, so all calculations are in mm, mm/hr, °C, hPa, %.
 
-###Examples
+### Examples
 Determine the watering frequency based on temperature
 ```
-{% if current_temp < 10 %}
+{% set avgtemp = (forecast1max + forecast2max + forecast3max)/3 %}
+{% if avgtemp < 10 %}
 Mon
-{% elif current_temp < 20 %}
+{% elif avgtemp < 20 %}
 Mon, Fri
 {% else %}
 Mon, Thu, Sat
