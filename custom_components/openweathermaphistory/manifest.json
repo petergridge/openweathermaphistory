@@ -1,11 +1,12 @@
 {
   "domain": "openweathermaphistory",
-  "name": "Open Weather Map Rain History",
-  "codeowners": ["@petergridge"],
+  "name": "Open Weather Map History",
+  "codeowners": ["@petergridge","@tsbernar"],
+  "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/petergridge/openweathermaphistory",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/petergridge/openweathermaphistory/issues",
   "requirements": [],
-  "version": "1.2.0"
+  "version": "2.0.0"
 }

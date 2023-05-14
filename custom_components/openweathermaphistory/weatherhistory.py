@@ -8,18 +8,22 @@ import pickle
 import re
 import json
 import pytz
+from homeassistant.helpers import config_validation as cv
 from homeassistant.core import HomeAssistant
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_LATITUDE,
     CONF_LONGITUDE,
+    CONF_LOCATION,
     CONF_NAME,
     )
 from .const import (
     CONST_API_CALL,
     CONST_API_FORECAST,
+    CONST_CALLS,
     CONF_MAX_DAYS,
-    CONF_INTIAL_DAYS
+    CONF_INTIAL_DAYS,
+    CONF_MAX_CALLS
     )
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,15 +52,21 @@ class Weather():
         self._processed    = {}
 
         self._name      = config.get(CONF_NAME,DEFAULT_NAME)
-        self._lat       = config.get(CONF_LATITUDE,hass.config.latitude)
-        self._lon       = config.get(CONF_LONGITUDE,hass.config.longitude)
+#        self._location  = config[CONF_LOCATION]
+        self._lat       = config[CONF_LOCATION].get(CONF_LATITUDE,hass.config.latitude)
+        self._lon       = config[CONF_LOCATION].get(CONF_LONGITUDE,hass.config.longitude)
         self._key       = config[CONF_API_KEY]
-        self._initdays  = config.get(CONF_INTIAL_DAYS)
-        self._maxdays   = config.get(CONF_MAX_DAYS)
+        self._initdays  = config.get(CONF_INTIAL_DAYS,5)
+        self._maxdays   = config.get(CONF_MAX_DAYS,5)
+        self._maxcalls  = config.get(CONF_MAX_CALLS,1000)
+        self._backlog   = 0
+        self._processing_type = None
+        self._daily_count = 1
+
 
     def get_stored_data(self):
         """Return stored data."""
-        file = join(self._hass.config.path(), self._name  + '.pickle')
+        file = join(self._hass.config.path(), cv.slugify(self._name)  + '.pickle')
         if not exists(file):
             return {}
         with open(file, 'rb') as myfile:
@@ -71,7 +81,7 @@ class Weather():
         keys.sort()
         sorted_dict = {i: content[i] for i in keys}
 
-        file = join(self._hass.config.path(), self._name + '.pickle')
+        file = join(self._hass.config.path(), cv.slugify(self._name) + '.pickle')
         with open(file, 'wb') as myfile:
             pickle.dump(sorted_dict, myfile, pickle.HIGHEST_PROTOCOL)
         myfile.close()
@@ -86,19 +96,27 @@ class Weather():
         except KeyError:
             pass
 
+    def remaining_backlog(self):
+        "return remaining days to collect"
+        return self._backlog
+
     async def get_forecastdata(self):
         """get forecast data"""
         url = CONST_API_FORECAST % (self._lat,self._lon, self._key)
         rest = RestData()
         await rest.set_resource(self._hass, url)
-        await rest.async_update(log_errors=False)
-        data = json.loads(rest.data)
-        #check if the call was successful
+        await rest.async_update(log_errors=True)
+        self._daily_count += 1
+
         try:
+            data = json.loads(rest.data)
+            #check if the call was successful
             days = data.get('daily',{})
             current = data.get('current',{})
-        except KeyError:
-            _LOGGER.error('OpenWeatherMap forecast call failed data: %s', data)
+        except TypeError:
+            _LOGGER.error('OpenWeatherMap forecast call failed')
+            return
+
         #current observations
         currentdata = {"rain":current.get('rain',{}).get('1h',0)
                     , "snow":current.get('snow',{}).get('1h',0)
@@ -119,68 +137,6 @@ class Weather():
             forecastdaily.update({day.get('dt') : daydata})
 
         return currentdata, forecastdaily
-
-    async def get_historydata(self,num_hours,historydata):
-        """get history data"""
-        i=0
-        rest = RestData()
-        hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
-        expectedhour = int(datetime.timestamp(hour))
-        try:
-            lastdt = max(historydata)
-        except ValueError:
-            #backdate the required number of days
-            lastdt = expectedhour - 3600*24*self._initdays
-        #iterate until caught up to current hour
-        while lastdt < expectedhour :
-            #increment last date by an hour
-            lastdt += 3600
-            url = CONST_API_CALL % (self._lat,self._lon, lastdt, self._key)
-            rest = RestData()
-            await rest.set_resource(self._hass, url)
-            await rest.async_update(log_errors=False)
-            #limit the number of calls in a scan interval
-            i += 1
-            if i > num_hours:
-                self.store_data(historydata)
-                break
-            data = json.loads(rest.data)
-            #check if the call was successful
-            self.validate_data(data)
-            try:
-                current = data.get('data')[0]
-                if current is None:
-                    current = {}
-            except KeyError:
-                _LOGGER.error('OpenWeatherMap history call failed data: %s', data)
-            #build this hours data
-            precipval = {}
-            preciptypes = ['rain','snow']
-            for preciptype in preciptypes:
-                if preciptype in current:
-                    #get the rain/snow eg 'rain': {'1h':0.89}
-                    precip = current[preciptype]
-                    #get the first key eg 1h, 3h
-                    key = next(iter(precip))
-                    #get the number component assuming only a singe digit
-                    divby = float(re.search(r'\d+', key).group())
-                    try:
-                        volume = precip.get(key,0)/divby
-                    except ZeroDivisionError:
-                        volume = 0
-                    precipval.update({preciptype:volume})
-
-            rain = precipval.get('rain',0)
-            snow = precipval.get('snow',0)
-            hourdata = {"rain": rain
-                        ,"snow":snow
-                        ,"temp":current.get("temp",0)
-                        ,"humidity":current.get("humidity",0)
-                        ,"pressure":current.get("pressure",0)}
-            wdt = current["dt"]
-            historydata.update({wdt : hourdata })
-        #end rest loop
-        return historydata
 
     async def processcurrent(self,current):
         """process the currrent data"""
@@ -242,27 +198,80 @@ class Weather():
             historydata.pop(hour)
         return historydata,processed_data
 
-    async def async_update(self,num_hours):
+    def set_processing_type(self,option):
+        """allow setting of the processing type"""
+        self._processing_type = option
+
+    def num_days(self) -> int:
+        """ return how many days of data has been collected"""
+        return len(self._attrsrain)
+
+    def daily_count(self) -> int:
+        """ return how many days of data has been collected"""
+        return self._daily_count
+
+    def processed_value(self, period, value) -> float:
+        """return the days current rainfall"""
+        data = self._processed.get(period,{})
+        return data.get(value,0)
+
+    async def async_update(self):
         '''update the weather stats'''
         hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
         expectedhour = int(datetime.timestamp(hour))
+        day = datetime(date.today().year, date.today().month, date.today().day)
+        expectedday = int(datetime.timestamp(day))
         #restore saved data
         storeddata = self.get_stored_data()
         historydata = storeddata.get("history",{})
         currentdata = storeddata.get('current',{})
         dailydata = storeddata.get('dailyforecast',{})
-        #determine when the last update was done
-        try:
-            lastdt = max(historydata)
-        except ValueError:
-            #backdate the required number of days
-            lastdt = expectedhour - 3600*24*self._initdays
+        dailycalls = storeddata.get('dailycalls',{})
+
+        self._daily_count = dailycalls.get('count',0)
+        #reset the daily count on new UTC day
+        if dailycalls.get('time',0) < expectedday:
+            dailycalls = {'time':expectedhour,'count':0}
+            self._daily_count = 0
+            warning_issued = False
+        #do not process when no calls remaining
+        if self._daily_count > self._maxcalls:
+            #only issue a single warning each day
+            if not warning_issued:
+                _LOGGER.warning('Maximum daily allowance of API calls have been used')
+                warning_issued = True
+            return
+
+        warning_issued = False
+        match self._processing_type:
+            case 'initial':
+                #on start up just get the latest hour
+                try:
+                    lastdt = max(historydata)
+                except ValueError:
+                    #just get one hour
+                    lastdt = expectedhour - 3600
+            case 'backload':
+                #just process the history data
+                lastdt = expectedhour
+                historydata = await self.async_backload(historydata)
+            case _:
+                try:
+                    lastdt = max(historydata)
+                except ValueError:
+                    #backdate the required number of days
+                    lastdt = expectedhour - 3600*CONST_CALLS
+
         #get new data if requrired
         if lastdt < expectedhour:
             data = await self.get_forecastdata()
+            if data is None:
+                #httpx request failed
+                return
             currentdata = data[0]
             dailydata = data[1]
-            historydata = await self.get_historydata(num_hours,historydata)
+            historydata = await self.get_historydata(historydata)
+        self._backlog = max(0,(self._initdays*24) - len(historydata))
         #Process the available data
         processedcurrent = await self.processcurrent(currentdata)
         processeddaily = await  self.processdailyforecast(dailydata)
@@ -271,16 +280,89 @@ class Weather():
         processedweather = data[1]
         #build data to support template variables
         self._processed = {**processeddaily, **processedcurrent, **processedweather}
+        dailycalls = {'time':expectedhour,'count':self._daily_count}
         #write persistent data
-        self.store_data({'history':historydata, 'current':currentdata, 'dailyforecast':dailydata})
-#        _LOGGER.warning(self._processed)
+        self.store_data({'history':historydata, 'current':currentdata, 'dailyforecast':dailydata, 'dailycalls':dailycalls})
 
-    def num_days(self) -> int:
-        """ return how many days of data has been collected"""
-        return len(self._attrsrain)
+    async def get_historydata(self,historydata):
+        """get history data from the newest data forward"""
+        hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
+        expectedhour = int(datetime.timestamp(hour))
+        data = historydata
+        try:
+            lastdt = max(data)
+        except ValueError:
+            #no data yet just get this hours dataaset
+            lastdt = int(expectedhour - 3600)
+        #iterate until caught up to current hour
+        #or exceeded the call limit
+        target = min(expectedhour,expectedhour+CONST_CALLS*3600)
+        while lastdt < target:
+            #increment last date by an hour
+            lastdt += 3600
+            hourdata = await self.gethourdata(lastdt)
+            data.update({lastdt : hourdata })
+        #end rest loop
+        return data
 
-    def processed_value(self, period, value) -> float:
-        """return the days current rainfall"""
-        data = self._processed.get(period,{})
-        return data.get(value,0)
+    async def async_backload(self,historydata):
+        """backload data from the oldest data backward"""
+        data = historydata
+        #there can be more entries than required for intial load
+        self._backlog = max(0,(self._initdays*24) - len(historydata))
+        #the most recent data avaialble less on hour
+        startdp = min(data) - 3600
+        #the time required to back load until
+        targetdp = max(data) - (self._initdays*3600*24)
 
+        #determine last time to get data for in this iteration
+        end = max(targetdp, startdp-(3600*CONST_CALLS))
+        while startdp > end :
+            #decrement start data point time by an hour
+            self._backlog -= 1
+            startdp -= 3600
+            hourdata = await self.gethourdata(startdp)
+            data.update({startdp : hourdata })
+        return data
+
+    async def gethourdata(self,timestamp):
+        """get one hours data"""
+        url = CONST_API_CALL % (self._lat,self._lon, timestamp, self._key)
+        rest = RestData()
+        await rest.set_resource(self._hass, url)
+        await rest.async_update(log_errors=False)
+        self._daily_count += 1
+        data = json.loads(rest.data)
+        #check if the call was successful
+        self.validate_data(data)
+        try:
+            current = data.get('data')[0]
+            if current is None:
+                current = {}
+        except ValueError:
+            _LOGGER.error('OpenWeatherMap history call failed')
+        #build this hours data
+        precipval = {}
+        preciptypes = ['rain','snow']
+        for preciptype in preciptypes:
+            if preciptype in current:
+                #get the rain/snow eg 'rain': {'1h':0.89}
+                precip = current[preciptype]
+                #get the first key eg 1h, 3h
+                key = next(iter(precip))
+                #get the number component assuming only a singe digit
+                divby = float(re.search(r'\d+', key).group())
+                try:
+                    volume = precip.get(key,0)/divby
+                except ZeroDivisionError:
+                    volume = 0
+                precipval.update({preciptype:volume})
+
+        rain = precipval.get('rain',0)
+        snow = precipval.get('snow',0)
+        hourdata = {"rain": rain
+                    ,"snow":snow
+                    ,"temp":current.get("temp",0)
+                    ,"humidity":current.get("humidity",0)
+                    ,"pressure":current.get("pressure",0)}
+        return hourdata
