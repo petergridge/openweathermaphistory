@@ -56,8 +56,8 @@ Manual Installation
 * Copy the openweathermaphistory folder to the ‘config/custom components/’ directory 
 
 ## Configuration Config Flow
-- Define the program using the UI. From Setting, Devices & Services choose 'ADD INTEGRATION'. Search for Open Weather Map History.
-- Add the integration multiple times if you want more than one location. The second location must be at least 1000m away from any previously configured location. Be aware that the API limit is for each location. Locations are not aware of what is being used by any other location configured.
+- Define the program using the UI. From Setting, Devices & Services choose 'ADD INTEGRATION'. Search for OpenWeatherMap History.
+- Add the integration multiple times if you want more than one location. The second location must be at least 1000m away from any previously configured location to prevent accidental creation of 'duplicate' weather monitoring. Be aware that the API limit is for each location. Locations are not aware of API usage by any other location configured.
 
 ## Location
 |Key |Type|Optional|Description|Default|
@@ -65,7 +65,7 @@ Manual Installation
 |Location Name|string|Required|Instance identifier, cannot be modified|Home Assistant configured name|
 |API Key|string|Required|OpenWeatherMap API key||
 |Location|location|Required|Select from the map, cannot be within 1000m of an already configured location|Home Assistant configure location|
-|Days to keep data|integer|Required|Retention period of the captured data|5 days|
+|Days to keep data|integer|Required|Retention period of the captured data. Can be longer than initial download. Data will accumulate as collected until the limit is reached. Will default to backload days it is defined with a value less thant the backload days|5 days|
 |Days to backload|integer|Required|Days for initial population|5 days|
 |Max API calls per day|integer|Required|The daily API limit for this instance|500|
 <img width="427" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/3aa18655-52e3-4b84-b9a8-7ceb75f320bd">
@@ -162,7 +162,7 @@ Version 1 factor, verifying to an expected 10mm rainfall
 
 ## REVISION HISTORY
 ### 2.0.0
-- Add current and forecast information
+- Add current observation and forecast information
 - Support the collection of more than 5 days of data
 - Monitor API usage
 - Move to config flow for configuration
