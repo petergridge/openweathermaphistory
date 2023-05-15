@@ -1,14 +1,14 @@
 {
     "title": "OWM History",
-    "selector" : {
+    "selector": {
         "sensor_class": {
-            "options" :{
-                "HUMIDITY":"Humidity",
-                "PRECIPITATION": "Precipitation",
-                "PRECIPITATIONINTENSITY": "Precipitation Intensity",
-                "TEMPERATURE":"Temperature",
-                "PRESSURE":"Pressure",
-                "NONE": "None"
+            "options": {
+                "humidity": "Humidity",
+                "precipitation": "Precipitation",
+                "precipitation_intensity": "Precipitation Intensity",
+                "temperature": "Temperature",
+                "pressure": "Pressure",
+                "none": "None"
             }
         }
     },
@@ -75,15 +75,15 @@
         }
     },
     "options": {
-        "selector" : {
+        "selector": {
             "sensor_class": {
-                "options" :{
-                    "HUMIDITY":"Humidity",
-                    "PRECIPITATION": "Precipitation",
-                    "PRECIPITATIONINTENSITY": "Precipitation Intensity",
-                    "TEMPERATURE":"Temperature",
-                    "PRESSURE":"Pressure",
-                    "NONE": "None"
+                "options": {
+                    "humidity": "Humidity",
+                    "precipitation": "Precipitation",
+                    "precipitation_intensity": "Precipitation Intensity",
+                    "temperature": "Temperature",
+                    "pressure": "Pressure",
+                    "none": "None"
                 }
             }
         },
