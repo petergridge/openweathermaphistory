@@ -3,12 +3,12 @@
     "selector": {
         "sensor_class": {
             "options": {
-                "HUMIDITY": "Humidity",
-                "PRECIPITATION": "Precipitation",
-                "PRECIPITATIONINTENSITY": "Precipitation Intensity",
-                "TEMPERATURE": "Temperature",
-                "PRESSURE": "Pressure",
-                "NONE": "None"
+                "humidity": "Humidity",
+                "precipitation": "Precipitation",
+                "precipitation_intensity": "Precipitation Intensity",
+                "temperature": "Temperature",
+                "pressure": "Pressure",
+                "none": "None"
             }
         }
     },
@@ -78,12 +78,12 @@
         "selector": {
             "sensor_class": {
                 "options": {
-                    "HUMIDITY": "Humidity",
-                    "PRECIPITATION": "Precipitation",
-                    "PRECIPITATIONINTENSITY": "Precipitation Intensity",
-                    "TEMPERATURE": "Temperature",
-                    "PRESSURE": "Pressure",
-                    "NONE": "None"
+                    "humidity": "Humidity",
+                    "precipitation": "Precipitation",
+                    "precipitation_intensity": "Precipitation Intensity",
+                    "temperature": "Temperature",
+                    "pressure": "Pressure",
+                    "none": "None"
                 }
             }
         },

@@ -161,14 +161,14 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             vol.Optional(CONF_ATTRIBUTES,default=default_input.get(CONF_ATTRIBUTES,'')): cv.string,
             vol.Optional(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'NONE')): sel.SelectSelector(
                             sel.SelectSelectorConfig(
-                                        translation_key="sensor_class",
+                                        translation_key = "sensor_class",
                                         options=[
-                                                {"label":"None", "value":"NONE"},
-                                                {"label":"Humidity", "value":"HUMIDITY"},
-                                                {"label":"Precipitation", "value":"PRECIPITATION"},
-                                                {"label":"Precipitation Intensity", "value":"PRECIPITATIONINTENSITY"},
-                                                {"label":"Temperature", "value":"TEMPERATURE"},
-                                                {"label":"Pressure", "value":"PRESSURE"}
+                                                {"label":"None", "value":"none"},
+                                                {"label":"Humidity", "value":"humidity"},
+                                                {"label":"Precipitation", "value":"precipitation"},
+                                                {"label":"Precipitation Intensity", "value":"precipitation_intensity"},
+                                                {"label":"Temperature", "value":"temperature"},
+                                                {"label":"Pressure", "value":"pressure"}
                                                 ]
                                                 )),
             }
