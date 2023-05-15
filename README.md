@@ -105,7 +105,7 @@ Determine the watering frequency based on temperature
 ```
 {% set avgtemp = (forecast1max + forecast2max + forecast3max)/3 %}
 {% if avgtemp < 10 %}
-Mon
+Off
 {% elif avgtemp < 20 %}
 Mon, Fri
 {% else %}
