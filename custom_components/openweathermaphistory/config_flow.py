@@ -166,7 +166,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                                                 {"label":"None", "value":"NONE"},
                                                 {"label":"Humidity", "value":"HUMIDITY"},
                                                 {"label":"Precipitation", "value":"PRECIPITATION"},
-                                                {"label":"Precipitation Intensity", "value":"PRECIPITATION_INTENSITY"},
+                                                {"label":"Precipitation Intensity", "value":"PRECIPITATIONINTENSITY"},
                                                 {"label":"Temperature", "value":"TEMPERATURE"},
                                                 {"label":"Pressure", "value":"PRESSURE"}
                                                 ]
@@ -277,7 +277,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                                                             {"label":"None", "value":"NONE"},
                                                             {"label":"Humidity", "value":"HUMIDITY"},
                                                             {"label":"Precipitation", "value":"PRECIPITATION"},
-                                                            {"label":"Precipitation Intensity", "value":"PRECIPITATION_INTENSITY"},
+                                                            {"label":"Precipitation Intensity", "value":"PRECIPITATIONINTENSITY"},
                                                             {"label":"Temperature", "value":"TEMPERATURE"},
                                                             {"label":"Pressure", "value":"PRESSURE"}
                                                             ]
@@ -501,7 +501,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                                                                 {"label":"None", "value":"NONE"},
                                                                 {"label":"Humidity", "value":"HUMIDITY"},
                                                                 {"label":"Precipitation", "value":"PRECIPITATION"},
-                                                                {"label":"Precipitation Intensity", "value":"PRECIPITATION_INTENSITY"},
+                                                                {"label":"Precipitation Intensity", "value":"PRECIPITATIONINTENSITY"},
                                                                 {"label":"Temperature", "value":"TEMPERATURE"},
                                                                 {"label":"Pressure", "value":"PRESSURE"}
                                                                 ]
@@ -567,7 +567,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                                                 {"label":"None", "value":"NONE"},
                                                 {"label":"Humidity", "value":"HUMIDITY"},
                                                 {"label":"Precipitation", "value":"PRECIPITATION"},
-                                                {"label":"Precipitation Intensity", "value":"PRECIPITATION_INTENSITY"},
+                                                {"label":"Precipitation Intensity", "value":"PRECIPITATIONINTENSITY"},
                                                 {"label":"Temperature", "value":"TEMPERATURE"},
                                                 {"label":"Pressure", "value":"PRESSURE"}
                                                 ]

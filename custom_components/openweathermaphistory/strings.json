@@ -5,7 +5,7 @@
             "options" :{
                 "HUMIDITY":"Humidity",
                 "PRECIPITATION": "Precipitation",
-                "PRECIPITATION_INTENSITY": "Precipitation Intensity",
+                "PRECIPITATIONINTENSITY": "Precipitation Intensity",
                 "TEMPERATURE":"Temperature",
                 "PRESSURE":"Pressure",
                 "NONE": "None"
@@ -80,7 +80,7 @@
                 "options" :{
                     "HUMIDITY":"Humidity",
                     "PRECIPITATION": "Precipitation",
-                    "PRECIPITATION_INTENSITY": "Precipitation Intensity",
+                    "PRECIPITATIONINTENSITY": "Precipitation Intensity",
                     "TEMPERATURE":"Temperature",
                     "PRESSURE":"Pressure",
                     "NONE": "None"
