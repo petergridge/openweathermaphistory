@@ -77,7 +77,7 @@ Key |Type|Optional|Description|Default|
 |Sensor name|string|Required|Sensor name, modify using HA once created||
 |Jinja2 Template|template|Required|A valid template that will define the sensor||
 |Attributes to expose|string|Optional|A comma seperated list of valid variables to add as attributes to the sensor||
-|Sensor Type|string|Optional|Select the type to define unit of measure|None|
+|Sensor Type|string|Optional|Select the type to define unit of measure. A template that returns a text value must be set to None|None|
 
 <img width="287" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/ef095fee-67c5-4895-9e10-a81c33385206"><img width="286" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/ac77c8ed-d6e4-4621-a1b9-7bab956259c9">
 
