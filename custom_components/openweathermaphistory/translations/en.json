@@ -127,17 +127,18 @@
             "list_modify": {
                 "title": "Select Sensor to Modify"
             }
-        }
-    },
-    "selector": {
-        "sensor_class": {
-            "options": {
-                "humidity": "Humidity",
-                "precipitation": "Precipitation",
-                "precipitation_intensity": "Precipitation Intensity",
-                "temperature": "Temperature",
-                "pressure": "Pressure",
-                "none": "None"
+        },
+        "selector": {
+            "sensor_class": {
+                "options": {
+                    "humidity": "Humidity",
+                    "precipitation": "Precipitation",
+                    "precipitation_intensity": "Precipitation Intensity",
+                    "temperature": "Temperature",
+                    "pressure": "Pressure",
+                    "none": "None"
+                }
             }
         }
-    }}
+    }
+}
