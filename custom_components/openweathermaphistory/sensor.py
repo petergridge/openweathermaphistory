@@ -34,8 +34,7 @@ from .const import (
     DOMAIN
     )
 
-SCAN_INTERVAL = timedelta(seconds=90)
-DEFAULT_NAME = "Home"
+SCAN_INTERVAL = timedelta(seconds=600)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -175,7 +174,7 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
                 return 'mm/h'
             case 'TEMPERATURE':
                 return  '°C'
-            case 'TEMPERATURE':
+            case 'PRESSURE':
                 return  'hPa'
 
     @property

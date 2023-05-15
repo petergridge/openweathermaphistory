@@ -52,7 +52,6 @@ class Weather():
         self._processed    = {}
 
         self._name      = config.get(CONF_NAME,DEFAULT_NAME)
-#        self._location  = config[CONF_LOCATION]
         self._lat       = config[CONF_LOCATION].get(CONF_LATITUDE,hass.config.latitude)
         self._lon       = config[CONF_LOCATION].get(CONF_LONGITUDE,hass.config.longitude)
         self._key       = config[CONF_API_KEY]
@@ -64,9 +63,9 @@ class Weather():
         self._daily_count = 1
 
 
-    def get_stored_data(self):
+    def get_stored_data(self, name):
         """Return stored data."""
-        file = join(self._hass.config.path(), cv.slugify(self._name)  + '.pickle')
+        file = join(self._hass.config.path(), cv.slugify(name)  + '.pickle')
         if not exists(file):
             return {}
         with open(file, 'rb') as myfile:
@@ -74,14 +73,14 @@ class Weather():
         myfile.close()
         return content
 
-    def store_data(self, content):
+    def store_data(self, content, name):
         """Store uri timestamp to file."""
 
         keys = list(content.keys())
         keys.sort()
         sorted_dict = {i: content[i] for i in keys}
 
-        file = join(self._hass.config.path(), cv.slugify(self._name) + '.pickle')
+        file = join(self._hass.config.path(), cv.slugify(name) + '.pickle')
         with open(file, 'wb') as myfile:
             pickle.dump(sorted_dict, myfile, pickle.HIGHEST_PROTOCOL)
         myfile.close()
@@ -222,7 +221,7 @@ class Weather():
         day = datetime(date.today().year, date.today().month, date.today().day)
         expectedday = int(datetime.timestamp(day))
         #restore saved data
-        storeddata = self.get_stored_data()
+        storeddata = self.get_stored_data(self._name)
         historydata = storeddata.get("history",{})
         currentdata = storeddata.get('current',{})
         dailydata = storeddata.get('dailyforecast',{})
@@ -230,8 +229,8 @@ class Weather():
 
         self._daily_count = dailycalls.get('count',0)
         #reset the daily count on new UTC day
-        if dailycalls.get('time',0) < expectedday:
-            dailycalls = {'time':expectedhour,'count':0}
+        if dailycalls.get('time',0) <= expectedday:
+            dailycalls = {'time':expectedday,'count':0}
             self._daily_count = 0
             warning_issued = False
         #do not process when no calls remaining
@@ -280,9 +279,9 @@ class Weather():
         processedweather = data[1]
         #build data to support template variables
         self._processed = {**processeddaily, **processedcurrent, **processedweather}
-        dailycalls = {'time':expectedhour,'count':self._daily_count}
+        dailycalls = {'time':expectedday,'count':self._daily_count}
         #write persistent data
-        self.store_data({'history':historydata, 'current':currentdata, 'dailyforecast':dailydata, 'dailycalls':dailycalls})
+        self.store_data({'history':historydata, 'current':currentdata, 'dailyforecast':dailydata, 'dailycalls':dailycalls},self._name)
 
     async def get_historydata(self,historydata):
         """get history data from the newest data forward"""

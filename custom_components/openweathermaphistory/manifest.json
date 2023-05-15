@@ -1,6 +1,6 @@
 {
   "domain": "openweathermaphistory",
-  "name": "Open Weather Map History",
+  "name": "OpenWeatherMap History",
   "codeowners": ["@petergridge","@tsbernar"],
   "config_flow": true,
   "dependencies": [],

@@ -30,7 +30,6 @@ from .const import (
     CONF_STATECLASS,
     CONF_SENSORCLASS,
     DOMAIN,
-    CONF_DEVICE_CLASS,
     CONST_PROXIMITY,
     CONF_UID
     )
@@ -65,6 +64,8 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                     errors[CONF_NAME] = "duplicate_name"
                 if errors:
                     break
+            if user_input[CONF_MAX_DAYS] < user_input[CONF_INTIAL_DAYS]:
+                user_input[CONF_MAX_DAYS] = user_input[CONF_INTIAL_DAYS]
 
             lat = user_input[CONF_LOCATION][CONF_LATITUDE]
             lon = user_input[CONF_LOCATION][CONF_LONGITUDE]
@@ -158,7 +159,18 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             vol.Required(CONF_NAME,default=default_input.get(CONF_NAME,'')): cv.string,
             vol.Required(CONF_FORMULA,default=''): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default=default_input.get(CONF_ATTRIBUTES,'')): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'None')): vol.In(CONF_DEVICE_CLASS),
+            vol.Optional(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'NONE')): sel.SelectSelector(
+                            sel.SelectSelectorConfig(
+                                        translation_key="sensor_class",
+                                        options=[
+                                                {"label":"None", "value":"NONE"},
+                                                {"label":"Humidity", "value":"HUMIDITY"},
+                                                {"label":"Precipitation", "value":"PRECIPITATION"},
+                                                {"label":"Precipitation Intensity", "value":"PRECIPITATION_INTENSITY"},
+                                                {"label":"Temperature", "value":"TEMPERATURE"},
+                                                {"label":"Pressure", "value":"PRESSURE"}
+                                                ]
+                                                )),
             }
         )
 
@@ -256,9 +268,20 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
 
         schema = vol.Schema(
             {
-            vol.Required(CONF_FORMULA,default = this_sensor.get(CONF_FORMULA,this_sensor.get(CONF_FORMULA))): sel.TemplateSelector({}),
-            vol.Optional(CONF_ATTRIBUTES,default = this_sensor.get(CONF_ATTRIBUTES,this_sensor.get(CONF_ATTRIBUTES,None))): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default = this_sensor.get(CONF_SENSORCLASS,this_sensor.get(CONF_SENSORCLASS,'None'))): vol.In(CONF_DEVICE_CLASS),
+            vol.Required(CONF_FORMULA,default = this_sensor.get(CONF_FORMULA,None)): sel.TemplateSelector({}),
+            vol.Optional(CONF_ATTRIBUTES,default = this_sensor.get(CONF_ATTRIBUTES,None)): cv.string,
+            vol.Optional(CONF_SENSORCLASS,default = this_sensor.get(CONF_SENSORCLASS,'None')): sel.SelectSelector(
+                                        sel.SelectSelectorConfig(
+                                                    translation_key="sensor_class",
+                                                    options=[
+                                                            {"label":"None", "value":"NONE"},
+                                                            {"label":"Humidity", "value":"HUMIDITY"},
+                                                            {"label":"Precipitation", "value":"PRECIPITATION"},
+                                                            {"label":"Precipitation Intensity", "value":"PRECIPITATION_INTENSITY"},
+                                                            {"label":"Temperature", "value":"TEMPERATURE"},
+                                                            {"label":"Pressure", "value":"PRESSURE"}
+                                                            ]
+                                                            )),
             }
         )
 
@@ -285,8 +308,6 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
         return self.async_create_entry(
             title=self._data.get(CONF_NAME), data=self._data
         )
-
-
 
 #--- Options Flow ----------------------------------------------
     @staticmethod
@@ -357,6 +378,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 errors[CONF_API_KEY] = "invalid_api_key"
             except APIRequestError:
                 errors[CONF_API_KEY] = "cannot_connect"
+            if user_input[CONF_MAX_DAYS] < user_input[CONF_INTIAL_DAYS]:
+                user_input[CONF_MAX_DAYS] = user_input[CONF_INTIAL_DAYS]
 
             if not errors:
                 newdata[CONF_NAME] = self._data.get(CONF_NAME)
@@ -471,8 +494,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             {
             vol.Required(CONF_FORMULA,default = this_sensor.get(CONF_FORMULA,this_sensor.get(CONF_FORMULA))): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default = this_sensor.get(CONF_ATTRIBUTES,this_sensor.get(CONF_ATTRIBUTES,None))): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default = this_sensor.get(CONF_SENSORCLASS,this_sensor.get(CONF_SENSORCLASS,'None'))): vol.In(CONF_DEVICE_CLASS),
-            }
+            vol.Optional(CONF_SENSORCLASS,default=this_sensor.get(CONF_SENSORCLASS,'None')): sel.SelectSelector(
+                                            sel.SelectSelectorConfig(
+                                                        translation_key="sensor_class",
+                                                        options=[
+                                                                {"label":"None", "value":"NONE"},
+                                                                {"label":"Humidity", "value":"HUMIDITY"},
+                                                                {"label":"Precipitation", "value":"PRECIPITATION"},
+                                                                {"label":"Precipitation Intensity", "value":"PRECIPITATION_INTENSITY"},
+                                                                {"label":"Temperature", "value":"TEMPERATURE"},
+                                                                {"label":"Pressure", "value":"PRESSURE"}
+                                                                ]
+                                                                )),
+                }
         )
 
         return self.async_show_form(
@@ -526,7 +560,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(CONF_NAME,default=default_input.get(CONF_NAME,'')): cv.string,
             vol.Required(CONF_FORMULA,default=default_input.get(CONF_FORMULA,'')): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default=default_input.get(CONF_ATTRIBUTES,'')): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'None')): vol.In(CONF_DEVICE_CLASS),
+            vol.Optional(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'NONE')): sel.SelectSelector(
+                            sel.SelectSelectorConfig(
+                                        translation_key="sensor_class",
+                                        options=[
+                                                {"label":"None", "value":"NONE"},
+                                                {"label":"Humidity", "value":"HUMIDITY"},
+                                                {"label":"Precipitation", "value":"PRECIPITATION"},
+                                                {"label":"Precipitation Intensity", "value":"PRECIPITATION_INTENSITY"},
+                                                {"label":"Temperature", "value":"TEMPERATURE"},
+                                                {"label":"Pressure", "value":"PRESSURE"}
+                                                ]
+                                                )),
             }
         )
 

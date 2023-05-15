@@ -12,8 +12,7 @@ CONF_PRECISION          = "numeric_precision"
 CONF_STATECLASS         = "state_class"
 CONF_SENSORCLASS        = "sensor_class"
 CONF_UID                = "unique_id"
-CONF_DEVICE_CLASS       = ["HUMIDITY","PRECIPITATION","PRECIPITATION_INTENSITY","TEMPERATURE","PRESSURE","None"]
-CONF_STATE_CLASS        = ["MEASUREMENT","TOTAL","TOTAL_INCREASING"]
+#CONF_STATE_CLASS        = ["MEASUREMENT","TOTAL","TOTAL_INCREASING"]
 
 #prevent accidental duplicate instances
 CONST_PROXIMITY         = 1000
