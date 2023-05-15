@@ -2,14 +2,14 @@
     "title": "OWM History",
     "selector": {
         "sensor_class": {
-            "options": {
+
                 "humidity": "Humidity",
                 "precipitation": "Precipitation",
                 "precipitation_intensity": "Precipitation Intensity",
                 "temperature": "Temperature",
                 "pressure": "Pressure",
                 "none": "None"
-            }
+
         }
     },
     "config": {
@@ -77,14 +77,14 @@
     "options": {
         "selector": {
             "sensor_class": {
-                "options": {
+
                     "humidity": "Humidity",
                     "precipitation": "Precipitation",
                     "precipitation_intensity": "Precipitation Intensity",
                     "temperature": "Temperature",
                     "pressure": "Pressure",
                     "none": "None"
-                }
+
             }
         },
        "error": {
