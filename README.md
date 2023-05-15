@@ -158,7 +158,7 @@ Version 1 factor, verifying to an expected 10mm rainfall
 |Variable|Description|
 |---|---|
 |remaining_backlog|Hours of data remaining to be gathered|
-|daily_count|Number of API calls for this location|
+|daily_count|Number of API calls for this location, resets midnight GMT|
 
 ## REVISION HISTORY
 ### 2.0.0
