@@ -1,17 +1,6 @@
 {
     "title": "OWM History",
-    "selector": {
-        "sensor_class": {
 
-                "humidity": "Humidity",
-                "precipitation": "Precipitation",
-                "precipitation_intensity": "Precipitation Intensity",
-                "temperature": "Temperature",
-                "pressure": "Pressure",
-                "none": "None"
-
-        }
-    },
     "config": {
         "abort": {
             "already_configured": "Location is already configured"
@@ -72,21 +61,21 @@
             "list_modify": {
                 "title": "Select Sensor to Modify"
             }
-        }
-    },
-    "options": {
+        },
         "selector": {
             "sensor_class": {
-
+                "options": {
                     "humidity": "Humidity",
                     "precipitation": "Precipitation",
                     "precipitation_intensity": "Precipitation Intensity",
                     "temperature": "Temperature",
                     "pressure": "Pressure",
                     "none": "None"
-
+                }
             }
-        },
+        }
+     },
+    "options": {
        "error": {
             "invalid_api_key": "Cannot connect, possible invalid_api_key",
             "formula": "Invalid formula, check the log for details",
@@ -139,5 +128,16 @@
                 "title": "Select Sensor to Modify"
             }
         }
-    }
-}
+    },
+    "selector": {
+        "sensor_class": {
+            "options": {
+                "humidity": "Humidity",
+                "precipitation": "Precipitation",
+                "precipitation_intensity": "Precipitation Intensity",
+                "temperature": "Temperature",
+                "pressure": "Pressure",
+                "none": "None"
+            }
+        }
+    }}
