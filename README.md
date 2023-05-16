@@ -67,9 +67,9 @@ Manual Installation
 |Location|location|Required|Select from the map, cannot be within 1000m of an already configured location|Home Assistant configure location|
 |Days to keep data|integer|Required|Retention period of the captured data. Can be longer than initial download. Data will accumulate as collected until the limit is reached. Will default to backload days it is defined with a value less thant the backload days|5 days|
 |Days to backload|integer|Required|Days for initial population, can be increased after the initial load, a new backload will commence|5 days|
-|Max API calls per day|integer|Required|The daily API limit for this instance|500|
-<img width="427" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/3aa18655-52e3-4b84-b9a8-7ceb75f320bd">
+|Max API calls per day|integer|Required|The daily API limit, the count is accumulated across all instances of the integration|500|
 
+<img width="427" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/3aa18655-52e3-4b84-b9a8-7ceb75f320bd">
 
 ## Sensor
 Key |Type|Optional|Description|Default|
@@ -92,6 +92,10 @@ Go to https://my.home-assistant.io/redirect/developer_statistics to fix this
 ```
 - You can change the unit of measure (°C to °F) for each sensor in the sensor settings.
 
+## Resources
+Two files are created in the config directory:
+- One named for the instance of the integration with a '.pickle' extension
+- The other is 'owm_api_count.pickle' that retains the daily API cound across all instances of the integration
 
 ## Attribute example
 ```
@@ -158,7 +162,7 @@ Version 1 factor, verifying to an expected 10mm rainfall
 |Variable|Description|
 |---|---|
 |remaining_backlog|Hours of data remaining to be gathered|
-|daily_count|Number of API calls for this location, resets midnight GMT|
+|daily_count|Number of API calls for all instances of the integration, resets midnight GMT. This will not always match between instance of the integration due to the update frequency|
 
 ## REVISION HISTORY
 ### 2.0.0
