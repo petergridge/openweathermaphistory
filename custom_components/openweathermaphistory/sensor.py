@@ -26,7 +26,6 @@ from .const import (
     CONF_FORMULA,
     CONF_ATTRIBUTES,
     CONF_INTIAL_DAYS,
-    CONF_PRECISION,
     CONF_STATECLASS,
     CONF_SENSORCLASS,
     CONF_UID,
@@ -34,7 +33,7 @@ from .const import (
     DOMAIN
     )
 
-SCAN_INTERVAL = timedelta(seconds=600)
+SCAN_INTERVAL = timedelta(minutes=10)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -112,19 +111,16 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         super().__init__(coordinator)
 
         self._hass               = hass
-        self._config             = config
         self._state              = 1
         self._weather            = weather
         self._extra_attributes   = None
         self._name               = resource[CONF_NAME]
         self._formula            = resource[CONF_FORMULA]
         self._attributes         = resource.get(CONF_ATTRIBUTES)
-        self._precision          = resource.get(CONF_PRECISION,None)
         self._initdays           = config.get(CONF_INTIAL_DAYS)
         self._sensor_class       = resource.get(CONF_SENSORCLASS,None)
         self._state_class        = resource.get(CONF_STATECLASS,None)
         self._uuid               = resource.get(CONF_UID)
-        self._coordinator        = coordinator
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -156,40 +152,36 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
     def state_class(self) -> SensorStateClass:
         """handle string instances"""
         match self._state_class:
-            case 'MEASUREMENT':
+            case 'measurement':
                 return SensorStateClass.MEASUREMENT
-            case 'TOTAL':
-                return SensorStateClass.TOTAL
-            case 'TOTAL_INCREASING':
-                return SensorStateClass.TOTAL_INCREASING
 
     @property
     def native_unit_of_measurement(self):
         match self._sensor_class:
-            case 'HUMIDITY':
+            case 'humidity':
                 return '%'
-            case 'PRECIPITATION':
+            case 'precipitation':
                 return 'mm'
-            case 'PRECIPITATION_INTENSITY':
+            case 'precipitaton_intensity':
                 return 'mm/h'
-            case 'TEMPERATURE':
+            case 'temperature':
                 return  '°C'
-            case 'PRESSURE':
+            case 'pressure':
                 return  'hPa'
 
     @property
     def device_class(self) -> SensorDeviceClass:
         """handle string instances"""
         match self._sensor_class:
-            case 'HUMIDITY':
+            case 'humidity':
                 return SensorDeviceClass.HUMIDITY
-            case 'PRECIPITATION':
+            case 'precipitation':
                 return SensorDeviceClass.PRECIPITATION
-            case 'PRECIPITATION_INTENSITY':
+            case 'precipitaton_intensity':
                 return SensorDeviceClass.PRECIPITATION_INTENSITY
-            case 'TEMPERATURE':
+            case 'temperature':
                 return SensorDeviceClass.TEMPERATURE
-            case 'PRESSURE':
+            case 'pressure':
                 return SensorDeviceClass.PRESSURE
 
     @property

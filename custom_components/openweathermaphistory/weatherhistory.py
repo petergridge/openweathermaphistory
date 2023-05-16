@@ -41,15 +41,8 @@ class Weather():
         self._timezone     = hass.config.time_zone
         self._hass         = hass
         self._config       = config
-        self._attrsrain    = {}
-        self._attrssnow    = {}
-        self._attrshum     = {}
-        self._mintemp      = {}
-        self._maxtemp      = {}
-        self._yesterdays   = {}
-        self._tomorrow     = {}
-        self._day_after    = {}
         self._processed    = {}
+        self._num_days     = 0
 
         self._name      = config.get(CONF_NAME,DEFAULT_NAME)
         self._lat       = config[CONF_LOCATION].get(CONF_LATITUDE,hass.config.latitude)
@@ -175,6 +168,7 @@ class Weather():
             localday = datetime.utcfromtimestamp(hour).replace(tzinfo=timezone.utc).astimezone(tz=localtimezone)
             localnow = datetime.now(localtimezone)
             localdaynum = (localnow - localday).days
+            self._num_days = max(self._num_days,localdaynum)
             if localdaynum > self._maxdays-1:
                 #identify data to age out
                 removehours.append(hour)
@@ -203,7 +197,7 @@ class Weather():
 
     def num_days(self) -> int:
         """ return how many days of data has been collected"""
-        return len(self._attrsrain)
+        return self._num_days
 
     def daily_count(self) -> int:
         """ return how many days of data has been collected"""
@@ -217,22 +211,28 @@ class Weather():
     async def async_update(self):
         '''update the weather stats'''
         hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
-        expectedhour = int(datetime.timestamp(hour))
+        thishour = int(datetime.timestamp(hour))
         day = datetime(date.today().year, date.today().month, date.today().day)
-        expectedday = int(datetime.timestamp(day))
+        #GMT midnight
+        midnight = int(datetime.timestamp(day))
         #restore saved data
         storeddata = self.get_stored_data(self._name)
         historydata = storeddata.get("history",{})
         currentdata = storeddata.get('current',{})
         dailydata = storeddata.get('dailyforecast',{})
-        dailycalls = storeddata.get('dailycalls',{})
 
+        dailycalls = self.get_stored_data('owm_api_count').get('dailycalls',{})
         self._daily_count = dailycalls.get('count',0)
+
         #reset the daily count on new UTC day
-        if dailycalls.get('time',0) <= expectedday:
-            dailycalls = {'time':expectedday,'count':0}
+        if dailycalls.get('time',0) < midnight:
+            #it is a new day
             self._daily_count = 0
+            dailycalls = {'time': midnight,'count':self._daily_count}
+            self.store_data({ 'dailycalls':dailycalls},'owm_api_count')
+            _LOGGER.warning('daily count reset')
             warning_issued = False
+
         #do not process when no calls remaining
         if self._daily_count > self._maxcalls:
             #only issue a single warning each day
@@ -240,8 +240,8 @@ class Weather():
                 _LOGGER.warning('Maximum daily allowance of API calls have been used')
                 warning_issued = True
             return
-
         warning_issued = False
+
         match self._processing_type:
             case 'initial':
                 #on start up just get the latest hour
@@ -249,20 +249,20 @@ class Weather():
                     lastdt = max(historydata)
                 except ValueError:
                     #just get one hour
-                    lastdt = expectedhour - 3600
+                    lastdt = thishour - 3600
             case 'backload':
                 #just process the history data
-                lastdt = expectedhour
+                lastdt = thishour
                 historydata = await self.async_backload(historydata)
             case _:
                 try:
                     lastdt = max(historydata)
                 except ValueError:
                     #backdate the required number of days
-                    lastdt = expectedhour - 3600*CONST_CALLS
+                    lastdt = thishour - 3600*CONST_CALLS
 
         #get new data if requrired
-        if lastdt < expectedhour:
+        if lastdt < thishour:
             data = await self.get_forecastdata()
             if data is None:
                 #httpx request failed
@@ -279,23 +279,24 @@ class Weather():
         processedweather = data[1]
         #build data to support template variables
         self._processed = {**processeddaily, **processedcurrent, **processedweather}
-        dailycalls = {'time':expectedday,'count':self._daily_count}
+        dailycalls = {'time':midnight,'count':self._daily_count}
         #write persistent data
+        self.store_data({ 'dailycalls':dailycalls},'owm_api_count')
         self.store_data({'history':historydata, 'current':currentdata, 'dailyforecast':dailydata, 'dailycalls':dailycalls},self._name)
 
     async def get_historydata(self,historydata):
         """get history data from the newest data forward"""
         hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
-        expectedhour = int(datetime.timestamp(hour))
+        thishour = int(datetime.timestamp(hour))
         data = historydata
         try:
             lastdt = max(data)
         except ValueError:
             #no data yet just get this hours dataaset
-            lastdt = int(expectedhour - 3600)
+            lastdt = int(thishour - 3600)
         #iterate until caught up to current hour
         #or exceeded the call limit
-        target = min(expectedhour,expectedhour+CONST_CALLS*3600)
+        target = min(thishour,thishour+CONST_CALLS*3600)
         while lastdt < target:
             #increment last date by an hour
             lastdt += 3600

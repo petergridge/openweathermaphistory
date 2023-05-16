@@ -116,7 +116,8 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
         '''add zone'''
         errors = {}
         newdata = {}
-        measurement = None
+        measurement = False
+        string = False
         newdata.update(self._data)
         if user_input is not None:
             for sensor in self._data.get(CONF_RESOURCES):
@@ -125,8 +126,10 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                     break
             evalform = evaluate_custom_formula(user_input.get(CONF_FORMULA),self._data.get(CONF_MAX_DAYS,0))
             match evalform:
-                case 'MEASUREMENT':
+                case 'measurement':
                     measurement = True
+                case 'string':
+                    string = True
                 case 'syntax':
                     errors[CONF_FORMULA] = "formula"
                 case 'undefined':
@@ -141,9 +144,11 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 data[CONF_NAME] = user_input[CONF_NAME]
                 data[CONF_FORMULA] = user_input[CONF_FORMULA]
                 data[CONF_ATTRIBUTES] = user_input.get(CONF_ATTRIBUTES,None)
-                data[CONF_SENSORCLASS] = user_input.get(CONF_SENSORCLASS,'None')
+                data[CONF_SENSORCLASS] = user_input.get(CONF_SENSORCLASS,',one')
                 if measurement is True:
-                    data[CONF_STATECLASS] = 'MEASUREMENT'
+                    data[CONF_STATECLASS] = 'measurement'
+                if string is True:
+                    data[CONF_SENSORCLASS] = 'none'
                 data[CONF_UID] = str(uuid.uuid4())
                 newdata[CONF_RESOURCES].append(data)
                 self._data = newdata
@@ -235,14 +240,17 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
         errors = {}
         newdata = {}
         measurement = False
+        string = False
         newdata.update(self._data)
         this_sensor = newdata.get(CONF_RESOURCES)[self.selected]
 
         if user_input is not None:
             evalform = evaluate_custom_formula(user_input.get(CONF_FORMULA),self._data.get(CONF_MAX_DAYS,0))
             match evalform:
-                case 'MEASUREMENT':
+                case 'measurement':
                     measurement = True
+                case 'string':
+                    string = True
                 case 'syntax':
                     errors[CONF_FORMULA] = "formula"
                 case 'undefined':
@@ -257,7 +265,9 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 data[CONF_SENSORCLASS] = user_input[CONF_SENSORCLASS]
                 data[CONF_UID] = this_sensor[CONF_UID]
                 if measurement is True:
-                    data[CONF_STATECLASS] = 'MEASUREMENT'
+                    data[CONF_STATECLASS] = 'measurement'
+                if string is True:
+                    data[CONF_SENSORCLASS] = 'none'
                 newdata[CONF_RESOURCES][self.selected] = data
                 self._data = newdata
                 return await self.async_step_menu()
@@ -270,18 +280,18 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             {
             vol.Required(CONF_FORMULA,default = this_sensor.get(CONF_FORMULA,None)): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default = this_sensor.get(CONF_ATTRIBUTES,None)): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default = this_sensor.get(CONF_SENSORCLASS,'None')): sel.SelectSelector(
+            vol.Optional(CONF_SENSORCLASS,default = this_sensor.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                                         sel.SelectSelectorConfig(
-                                                    translation_key="sensor_class",
-                                                    options=[
-                                                            {"label":"None", "value":"NONE"},
-                                                            {"label":"Humidity", "value":"HUMIDITY"},
-                                                            {"label":"Precipitation", "value":"PRECIPITATION"},
-                                                            {"label":"Precipitation Intensity", "value":"PRECIPITATIONINTENSITY"},
-                                                            {"label":"Temperature", "value":"TEMPERATURE"},
-                                                            {"label":"Pressure", "value":"PRESSURE"}
-                                                            ]
-                                                            )),
+                                            translation_key="sensor_class",
+                                            options=[
+                                                {"label":"None", "value":"none"},
+                                                {"label":"Humidity", "value":"humidity"},
+                                                {"label":"Precipitation", "value":"precipitation"},
+                                                {"label":"Precipitation Intensity", "value":"precipitation_intensity"},
+                                                {"label":"Temperature", "value":"temperature"},
+                                                {"label":"Pressure", "value":"pressure"}
+                                            ]
+                                        )),
             }
         )
 
@@ -459,14 +469,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         errors = {}
         newdata = {}
         measurement = False
+        string = False
         newdata.update(self._data)
         this_sensor = newdata.get(CONF_RESOURCES)[self.selected]
 
         if user_input is not None:
             evalform = evaluate_custom_formula(user_input.get(CONF_FORMULA),self._data.get(CONF_MAX_DAYS,0))
             match evalform:
-                case 'MEASUREMENT':
+                case 'measurement':
                     measurement = True
+                case 'string':
+                    string = True
                 case 'syntax':
                     errors[CONF_FORMULA] = "formula"
                 case 'undefined':
@@ -480,7 +493,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 data[CONF_ATTRIBUTES] = user_input[CONF_ATTRIBUTES]
                 data[CONF_SENSORCLASS] = user_input[CONF_SENSORCLASS]
                 if measurement is True:
-                    data[CONF_STATECLASS] = 'MEASUREMENT'
+                    data[CONF_STATECLASS] = 'measurement'
+                if string is True:
+                    data[CONF_SENSORCLASS] = 'none'
                 data[CONF_UID] = this_sensor[CONF_UID]
                 newdata[CONF_RESOURCES][self.selected] = data
                 self._data = newdata
@@ -494,18 +509,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             {
             vol.Required(CONF_FORMULA,default = this_sensor.get(CONF_FORMULA,this_sensor.get(CONF_FORMULA))): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default = this_sensor.get(CONF_ATTRIBUTES,this_sensor.get(CONF_ATTRIBUTES,None))): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default=this_sensor.get(CONF_SENSORCLASS,'None')): sel.SelectSelector(
-                                            sel.SelectSelectorConfig(
-                                                        translation_key="sensor_class",
-                                                        options=[
-                                                                {"label":"None", "value":"NONE"},
-                                                                {"label":"Humidity", "value":"HUMIDITY"},
-                                                                {"label":"Precipitation", "value":"PRECIPITATION"},
-                                                                {"label":"Precipitation Intensity", "value":"PRECIPITATIONINTENSITY"},
-                                                                {"label":"Temperature", "value":"TEMPERATURE"},
-                                                                {"label":"Pressure", "value":"PRESSURE"}
-                                                                ]
-                                                                )),
+            vol.Optional(CONF_SENSORCLASS,default=this_sensor.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
+                                        sel.SelectSelectorConfig(
+                                            translation_key="sensor_class",
+                                            options=[
+                                                {"label":"None", "value":"none"},
+                                                {"label":"Humidity", "value":"humidity"},
+                                                {"label":"Precipitation", "value":"precipitation"},
+                                                {"label":"Precipitation Intensity", "value":"precipitation_intensity"},
+                                                {"label":"Temperature", "value":"temperature"},
+                                                {"label":"Pressure", "value":"pressure"}
+                                                ]
+                                        )),
                 }
         )
 
@@ -519,7 +534,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         '''add zone'''
         errors = {}
         newdata = {}
-        measurement = None
+        measurement = False
+        string = False
         newdata.update(self._data)
         if user_input is not None:
             for sensor in self._data.get(CONF_RESOURCES):
@@ -528,8 +544,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     break
             evalform = evaluate_custom_formula(user_input.get(CONF_FORMULA),self._data.get(CONF_MAX_DAYS,0))
             match evalform:
-                case 'MEASUREMENT':
+                case 'measurement':
                     measurement = True
+                case 'string':
+                    string = True
                 case 'syntax':
                     errors[CONF_FORMULA] = "formula"
                 case 'undefined':
@@ -543,7 +561,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 data[CONF_ATTRIBUTES] = user_input.get(CONF_ATTRIBUTES,None)
                 data[CONF_SENSORCLASS] = user_input.get(CONF_SENSORCLASS,None)
                 if measurement is True:
-                    data[CONF_STATECLASS] = 'MEASUREMENT'
+                    data[CONF_STATECLASS] = 'measurement'
+                if string is True:
+                    data[CONF_SENSORCLASS] = 'none'
                 data[CONF_UID] = str(uuid.uuid4())
                 newdata[CONF_RESOURCES].append(data)
 
@@ -628,10 +648,10 @@ def evaluate_custom_formula(formula, max_days):
     try:
         templatevalue = int(templatevalue)
         if isinstance(templatevalue, int):
-            return 'MEASUREMENT'
+            return 'measurement'
     except ValueError:
         #not a number
-        return
+        return 'string'
 
 async def _is_owm_api_online(hass:HomeAssistant, api_key, lat, lon):
     owm = OWM(api_key).weather_manager()
