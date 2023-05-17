@@ -28,7 +28,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Open Weather Map History"
+DEFAULT_NAME = "OpenWeatherMap History"
 
 class Weather():
     """weather class"""
@@ -53,8 +53,7 @@ class Weather():
         self._maxcalls  = config.get(CONF_MAX_CALLS,1000)
         self._backlog   = 0
         self._processing_type = None
-        self._daily_count = 1
-
+        self._daily_count     = 1
 
     def get_stored_data(self, name):
         """Return stored data."""
@@ -97,8 +96,7 @@ class Weather():
         url = CONST_API_FORECAST % (self._lat,self._lon, self._key)
         rest = RestData()
         await rest.set_resource(self._hass, url)
-        await rest.async_update(log_errors=True)
-        self._daily_count += 1
+        await rest.async_update(log_errors=False)
 
         try:
             data = json.loads(rest.data)
@@ -106,8 +104,9 @@ class Weather():
             days = data.get('daily',{})
             current = data.get('current',{})
         except TypeError:
-            _LOGGER.error('OpenWeatherMap forecast call failed')
+            _LOGGER.warning('OpenWeatherMap forecast call failed')
             return
+        self._daily_count += 1
 
         #current observations
         currentdata = {"rain":current.get('rain',{}).get('1h',0)
@@ -230,7 +229,6 @@ class Weather():
             self._daily_count = 0
             dailycalls = {'time': midnight,'count':self._daily_count}
             self.store_data({ 'dailycalls':dailycalls},'owm_api_count')
-            _LOGGER.warning('daily count reset')
             warning_issued = False
 
         #do not process when no calls remaining
@@ -301,6 +299,9 @@ class Weather():
             #increment last date by an hour
             lastdt += 3600
             hourdata = await self.gethourdata(lastdt)
+            if hourdata == {}:
+                return historydata
+
             data.update({lastdt : hourdata })
         #end rest loop
         return data
@@ -322,6 +323,8 @@ class Weather():
             self._backlog -= 1
             startdp -= 3600
             hourdata = await self.gethourdata(startdp)
+            if hourdata == {}:
+                return
             data.update({startdp : hourdata })
         return data
 
@@ -331,16 +334,17 @@ class Weather():
         rest = RestData()
         await rest.set_resource(self._hass, url)
         await rest.async_update(log_errors=False)
-        self._daily_count += 1
-        data = json.loads(rest.data)
-        #check if the call was successful
-        self.validate_data(data)
+
         try:
+            data = json.loads(rest.data)
             current = data.get('data')[0]
             if current is None:
                 current = {}
-        except ValueError:
-            _LOGGER.error('OpenWeatherMap history call failed')
+        except TypeError:
+            _LOGGER.warning('OpenWeatherMap history call failed')
+            return {}
+        self._daily_count += 1
+
         #build this hours data
         precipval = {}
         preciptypes = ['rain','snow']
