@@ -82,7 +82,8 @@ Key |Type|Optional|Description|Default|
 <img width="287" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/ef095fee-67c5-4895-9e10-a81c33385206"><img width="286" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/ac77c8ed-d6e4-4621-a1b9-7bab956259c9">
 
 ## Units of measure
-All data is captured in metric measurements
+All data is captured in metric measurements.
+
 To ensure that you see the information in your local unit of measure:
 - Ensure you select the appropriate 'Type of sensor'. This will allow HA to display information in the unit of measure defined for your instance.
 - If you change the type of sensor you will see warnings in the log as the unit of measure will be inconsistent, go to the developers tools/statistics page to fix the issue.
