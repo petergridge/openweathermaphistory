@@ -5,6 +5,9 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
+## Coming Soon
+- Cumulative rain and snow data to allow use of utility meter to better visualise daily, weekly, monthly precipitation
+
 # NEW to Version 2.0.0
 - A totally new way to access the data!
 - Supports Jinja templates to provide you control over how you utilise the data.
