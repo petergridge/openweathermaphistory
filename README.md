@@ -189,6 +189,17 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 ### 2.0.4 under development
 - Add cummulative rain and snow to support meter sensor
 - fix issue with sensor class 'none'
+### 2.0.3
+- Handle API call failure more gracefully
+- Accumulate API call counts across multiple instances
+### 2.0.2
+- Fix strings.json and en.json for selectors
+- fix daily API count reset
+- Accumulate API count across all instance of the integration
+### 2.0.1
+- Fix issue 18 - Max days can be less than backload days
+- Fix issue 15 - Daily API count not resetting
+- Fix issue 16 - Sensor Type not included in translation
 ### 2.0.0
 - Add current observation and forecast information
 - Support the collection of more than 5 days of data
