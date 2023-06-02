@@ -191,6 +191,7 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 ### 2.0.4 under development
 - Add cummulative rain and snow to support meter sensor
 - fix issue with sensor class 'none'
+- correct where some numerics are recognised as string preventing modification of the display precision
 ### 2.0.3
 - Handle API call failure more gracefully
 - Accumulate API call counts across multiple instances
