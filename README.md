@@ -177,6 +177,8 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |current_temp|Current hours temperature|
 |current_pressure|Current hours pressure|
 ### Cumulative totals (under development)
+|Variable|Description|
+|---|---|
 |cumulative_rain|Continually increasing total of all rainfall recorded|
 |cumulative_snow|Continually increasing total of all snowfall recorded|
 ### Status values
