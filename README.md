@@ -133,6 +133,8 @@ Version 1 factor, verifying to an expected 10mm rainfall
   ,0]|max
 }}
 ```
+## Using the cumulative data (under development)
+A common usecase is to show daily/monthly rainfall. Using the cumulative data elements this can be achieved with the [Utility Meter sensor](https://www.home-assistant.io/integrations/utility_meter/)
 
 ## Available variables
 ### For each day of history available, day 0 represent the past 24 hours
@@ -156,9 +158,12 @@ Version 1 factor, verifying to an expected 10mm rainfall
 |---|---|
 |current_rain|Current hours rainfall|
 |current_snow|Current hours snow|
-|current_humidity|Current hours humifity|
+|current_humidity|Current hours humidity|
 |current_temp|Current hours temperature|
 |current_pressure|Current hours pressure|
+### Cumulative totals (under development)
+|cumulative_rain|Continually increasing total of all rainfall recorded|
+|cumulative_snow|Continually increasing total of all snowfall recorded|
 ### Status values
 |Variable|Description|
 |---|---|
@@ -166,6 +171,9 @@ Version 1 factor, verifying to an expected 10mm rainfall
 |daily_count|Number of API calls for all instances of the integration, resets midnight GMT. This will not always match between instance of the integration due to the update frequency|
 
 ## REVISION HISTORY
+### 2.0.4 under development
+- Add cummulative rain and snow to support meter sensor
+- fix issue with sensor class 'none'
 ### 2.0.0
 - Add current observation and forecast information
 - Support the collection of more than 5 days of data
