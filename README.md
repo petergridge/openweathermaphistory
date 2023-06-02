@@ -133,6 +133,18 @@ Version 1 factor, verifying to an expected 10mm rainfall
   ,0]|max
 }}
 ```
+Factor utilising forecast rain and probability of precipitation
+```
+{{ 
+  [(10 
+  - day0rain 
+  - day1rain*0.5
+  - day2rain*0.25
+  - forecast1rain*forecast1pop*0.5
+  - forecast2rain*forecast1pop*0.25)/10
+  ,0]|max
+}}
+```
 ## Using the cumulative data (under development)
 A common usecase is to show daily/monthly rainfall. Using the cumulative data elements this can be achieved with the [Utility Meter sensor](https://www.home-assistant.io/integrations/utility_meter/)
 
