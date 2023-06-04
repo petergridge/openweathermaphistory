@@ -144,7 +144,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 data[CONF_NAME] = user_input[CONF_NAME]
                 data[CONF_FORMULA] = user_input[CONF_FORMULA]
                 data[CONF_ATTRIBUTES] = user_input.get(CONF_ATTRIBUTES,None)
-                data[CONF_SENSORCLASS] = user_input.get(CONF_SENSORCLASS,',one')
+                data[CONF_SENSORCLASS] = user_input.get(CONF_SENSORCLASS,'none')
                 if measurement is True:
                     data[CONF_STATECLASS] = 'measurement'
                 if string is True:
@@ -164,7 +164,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             vol.Required(CONF_NAME,default=default_input.get(CONF_NAME,'')): cv.string,
             vol.Required(CONF_FORMULA,default=''): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default=default_input.get(CONF_ATTRIBUTES,'')): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'NONE')): sel.SelectSelector(
+            vol.Required(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                             sel.SelectSelectorConfig(
                                         translation_key = "sensor_class",
                                         options=[
@@ -280,7 +280,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             {
             vol.Required(CONF_FORMULA,default = this_sensor.get(CONF_FORMULA,None)): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default = this_sensor.get(CONF_ATTRIBUTES,None)): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default = this_sensor.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
+            vol.Required(CONF_SENSORCLASS,default = this_sensor.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                                         sel.SelectSelectorConfig(
                                             translation_key="sensor_class",
                                             options=[
@@ -509,7 +509,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             {
             vol.Required(CONF_FORMULA,default = this_sensor.get(CONF_FORMULA,this_sensor.get(CONF_FORMULA))): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default = this_sensor.get(CONF_ATTRIBUTES,this_sensor.get(CONF_ATTRIBUTES,None))): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default=this_sensor.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
+            vol.Required(CONF_SENSORCLASS,default = this_sensor.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                                         sel.SelectSelectorConfig(
                                             translation_key="sensor_class",
                                             options=[
@@ -580,7 +580,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(CONF_NAME,default=default_input.get(CONF_NAME,'')): cv.string,
             vol.Required(CONF_FORMULA,default=default_input.get(CONF_FORMULA,'')): sel.TemplateSelector({}),
             vol.Optional(CONF_ATTRIBUTES,default=default_input.get(CONF_ATTRIBUTES,'')): cv.string,
-            vol.Optional(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'NONE')): sel.SelectSelector(
+            vol.Required(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                             sel.SelectSelectorConfig(
                                         translation_key="sensor_class",
                                         options=[
@@ -628,6 +628,8 @@ def evaluate_custom_formula(formula, max_days):
     wvars["current_pressure"]    = 0
     wvars["remaining_backlog"]   = 0
     wvars["daily_count"]         = 0
+    wvars["cumulative_rain"]     = 0
+    wvars["cumulative_snow"]     = 0
 
     environment = jinja2.Environment()
     template = environment.from_string(formula)
@@ -646,9 +648,8 @@ def evaluate_custom_formula(formula, max_days):
         return 'syntax'
 
     try:
-        templatevalue = int(templatevalue)
-        if isinstance(templatevalue, int):
-            return 'measurement'
+        templatevalue = float(templatevalue)
+        return 'measurement'
     except ValueError:
         #not a number
         return 'string'

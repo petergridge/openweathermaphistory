@@ -54,6 +54,8 @@ class Weather():
         self._backlog   = 0
         self._processing_type = None
         self._daily_count     = 1
+        self._cumulative_rain = 0
+        self._cumulative_snow = 0
 
     def get_stored_data(self, name):
         """Return stored data."""
@@ -202,6 +204,15 @@ class Weather():
         """ return how many days of data has been collected"""
         return self._daily_count
 
+
+    def cumulative_rain(self) -> float:
+        """ return how many days of data has been collected"""
+        return self._cumulative_rain
+
+    def cumulative_snow(self) -> float:
+        """ return how many days of data has been collected"""
+        return self._cumulative_snow
+
     def processed_value(self, period, value) -> float:
         """return the days current rainfall"""
         data = self._processed.get(period,{})
@@ -219,6 +230,8 @@ class Weather():
         historydata = storeddata.get("history",{})
         currentdata = storeddata.get('current',{})
         dailydata = storeddata.get('dailyforecast',{})
+        self._cumulative_rain = storeddata.get('cumulativerain',0)
+        self._cumulative_snow = storeddata.get('cumulativesnow',0)
 
         dailycalls = self.get_stored_data('owm_api_count').get('dailycalls',{})
         self._daily_count = dailycalls.get('count',0)
@@ -280,7 +293,12 @@ class Weather():
         dailycalls = {'time':midnight,'count':self._daily_count}
         #write persistent data
         self.store_data({ 'dailycalls':dailycalls},'owm_api_count')
-        self.store_data({'history':historydata, 'current':currentdata, 'dailyforecast':dailydata, 'dailycalls':dailycalls},self._name)
+        self.store_data({'history':historydata,
+                         'current':currentdata,
+                         'dailyforecast':dailydata,
+                         'dailycalls':dailycalls,
+                         'cumulativerain':self._cumulative_rain,
+                         'cumulativesnow':self._cumulative_snow},self._name)
 
     async def get_historydata(self,historydata):
         """get history data from the newest data forward"""
@@ -299,6 +317,9 @@ class Weather():
             #increment last date by an hour
             lastdt += 3600
             hourdata = await self.gethourdata(lastdt)
+            self._cumulative_rain += hourdata.get("rain")
+            self._cumulative_snow += hourdata.get("snow")
+
             if hourdata == {}:
                 return historydata
 

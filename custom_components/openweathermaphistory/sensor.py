@@ -162,7 +162,7 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
                 return '%'
             case 'precipitation':
                 return 'mm'
-            case 'precipitaton_intensity':
+            case 'precipitation_intensity':
                 return 'mm/h'
             case 'temperature':
                 return  '°C'
@@ -177,7 +177,7 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
                 return SensorDeviceClass.HUMIDITY
             case 'precipitation':
                 return SensorDeviceClass.PRECIPITATION
-            case 'precipitaton_intensity':
+            case 'precipitation_intensity':
                 return SensorDeviceClass.PRECIPITATION_INTENSITY
             case 'temperature':
                 return SensorDeviceClass.TEMPERATURE
@@ -208,7 +208,6 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         """evaluate the formula/template"""
         environment = jinja2.Environment()
         template = environment.from_string(formula)
-
         #process the template and handle errors
         try:
             return template.render(wvars)
@@ -231,6 +230,9 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
     def _update_vars(self, weather:Weather):
         wvars = {}
         #default to initial days variable
+        #need to define 'dummy' versions in the config flow as well
+        wvars["cumulative_rain"]    = weather.cumulative_rain()
+        wvars["cumulative_snow"]    = weather.cumulative_snow()
         for i in range(int(max(weather.num_days(),self._initdays))):
             wvars[f"day{i}rain"]        = weather.processed_value(i,'rain')
             wvars[f"day{i}snow"]        = weather.processed_value(i,'snow')
