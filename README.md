@@ -5,7 +5,7 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## Coming Soon
+## V2.0.4
 - Cumulative rain and snow data to allow use of utility meter to better visualise daily, weekly, monthly precipitation
 
 # NEW to Version 2.0.0
@@ -148,7 +148,7 @@ Factor utilising forecast rain and probability of precipitation
   ,0]|max
 }}
 ```
-## Using the cumulative data (under development)
+## Using the cumulative data
 A common usecase is to show daily/monthly rainfall. Using the cumulative data elements this can be achieved with the [Utility Meter sensor](https://www.home-assistant.io/integrations/utility_meter/)
 
 ## Available variables
@@ -188,7 +188,7 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |daily_count|Number of API calls for all instances of the integration, resets midnight GMT. This will not always match between instance of the integration due to the update frequency|
 
 ## REVISION HISTORY
-### 2.0.4 under development
+### 2.0.4
 - Add cummulative rain and snow to support meter sensor
 - fix issue with sensor class 'none'
 - correct where some numerics are recognised as string preventing modification of the display precision
