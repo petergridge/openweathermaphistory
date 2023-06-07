@@ -144,7 +144,7 @@ Factor utilising forecast rain and probability of precipitation
   - day1rain*0.5
   - day2rain*0.25
   - forecast1rain*forecast1pop*0.5
-  - forecast2rain*forecast1pop*0.25)/10
+  - forecast2rain*forecast2pop*0.25)/10
   ,0]|max
 }}
 ```
