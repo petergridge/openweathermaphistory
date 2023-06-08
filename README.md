@@ -5,7 +5,7 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2.0.7
+## V2.0.8
 - Add api_call service to support testing/debugging
 - Add better tests for API version
 - Improve messaging for API issues
@@ -192,7 +192,7 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |daily_count|Number of API calls for all instances of the integration, resets midnight GMT. This will not always match between instance of the integration due to the update frequency|
 
 ## REVISION HISTORY
-### 2.0.7
+### 2.0.8
 - Add api_call service to support testing/debugging
 - Add better tests for API version
 - Improve messaging for API issues
