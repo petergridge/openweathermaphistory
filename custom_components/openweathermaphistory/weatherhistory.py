@@ -225,7 +225,7 @@ class Weather():
         """call the api and show the result"""
         hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
         thishour = int(datetime.timestamp(hour))
-        url = CONST_API_CALL % (self._lat,self._lon, thishour, '6e5dd5b87a55018adee10ab2c7ed6f96') #self._key
+        url = CONST_API_CALL % (self._lat,self._lon, thishour, self._key) #self._key
         rest = RestData()
         await rest.set_resource(self._hass, url)
         await rest.async_update(log_errors=True)
