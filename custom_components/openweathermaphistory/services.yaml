@@ -1,0 +1,12 @@
+
+api_call:
+  description: Test the api call, check the log for results
+  fields:
+    entity_id:
+      name: Entity ID
+      description: the OWM history instance
+      required: true
+      selector:
+        entity:
+            integration: openweathermaphistory
+

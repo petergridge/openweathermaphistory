@@ -17,6 +17,9 @@ from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
+from homeassistant.helpers import (
+    entity_platform,
+)
 from homeassistant.const import (
     CONF_NAME,
     CONF_RESOURCES,
@@ -69,6 +72,17 @@ async def async_setup_entry(
     weather.set_processing_type ('initial')
     await weather.async_update()
     async_add_entities(await _async_create_entities(hass, config, weather))
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        "api_call",
+        {
+
+        },
+        "api_call",
+    )
+
+
 
 class WeatherCoordinator(DataUpdateCoordinator):
     """Weather API data coordinator
@@ -132,6 +146,9 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
     async def async_added_to_hass(self):
         self._hass.async_create_task(self.async_update())
         await super().async_added_to_hass()
+
+    async def api_call(self):
+        await self._weather.show_call_data()
 
     async def async_update(self):
         ''' update the sensor'''

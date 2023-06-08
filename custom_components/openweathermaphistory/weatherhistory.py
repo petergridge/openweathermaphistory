@@ -3,6 +3,7 @@
 from .data import RestData
 from datetime import datetime, date, timezone
 from os.path import exists , join
+#from pyowm import OWM
 import logging
 import pickle
 import re
@@ -43,7 +44,6 @@ class Weather():
         self._config       = config
         self._processed    = {}
         self._num_days     = 0
-
         self._name      = config.get(CONF_NAME,DEFAULT_NAME)
         self._lat       = config[CONF_LOCATION].get(CONF_LATITUDE,hass.config.latitude)
         self._lon       = config[CONF_LOCATION].get(CONF_LONGITUDE,hass.config.longitude)
@@ -79,15 +79,18 @@ class Weather():
             pickle.dump(sorted_dict, myfile, pickle.HIGHEST_PROTOCOL)
         myfile.close()
 
-    def validate_data(self,data) -> bool:
+    def validate_data(self, data) -> bool:
         """check if the call was successful"""
+        jdata = json.loads(data)
         try:
-            code    = data["cod"]
-            message = data["message"]
-            _LOGGER.error('OpenWeatherMap call failed code: %s message: %s', code, message)
-            return None
+            code    = jdata["cod"]
+            message = jdata["message"]
+            _LOGGER.error('OpenWeatherMap call failed code: %s: %s', code, message)
+            return data
+        except TypeError:
+            return data
         except KeyError:
-            pass
+            return data
 
     def remaining_backlog(self):
         "return remaining days to collect"
@@ -98,15 +101,15 @@ class Weather():
         url = CONST_API_FORECAST % (self._lat,self._lon, self._key)
         rest = RestData()
         await rest.set_resource(self._hass, url)
-        await rest.async_update(log_errors=False)
-
+        await rest.async_update(log_errors=True)
+        data = self.validate_data(rest.data)
         try:
-            data = json.loads(rest.data)
+            data = json.loads(data)
             #check if the call was successful
             days = data.get('daily',{})
             current = data.get('current',{})
         except TypeError:
-            _LOGGER.warning('OpenWeatherMap forecast call failed')
+            _LOGGER.warning('OpenWeatherMap forecast call failed %s', rest.data)
             return
         self._daily_count += 1
 
@@ -217,6 +220,17 @@ class Weather():
         """return the days current rainfall"""
         data = self._processed.get(period,{})
         return data.get(value,0)
+
+    async def show_call_data(self):
+        """call the api and show the result"""
+        hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
+        thishour = int(datetime.timestamp(hour))
+        url = CONST_API_CALL % (self._lat,self._lon, thishour, '6e5dd5b87a55018adee10ab2c7ed6f96') #self._key
+        rest = RestData()
+        await rest.set_resource(self._hass, url)
+        await rest.async_update(log_errors=True)
+
+        _LOGGER.warning(self.validate_data(rest.data))
 
     async def async_update(self):
         '''update the weather stats'''
@@ -343,8 +357,11 @@ class Weather():
             #no data yet just get this hours dataaset
             startdp = int(thishour - 3600)
 
-        #the time required to back load until
-        targetdp = max(data) - (self._initdays*3600*24)
+        if data == {}:
+            targetdp = thishour - (self._initdays*3600*24)
+        else:
+            #the time required to back load until
+            targetdp = max(data) - (self._initdays*3600*24)
 
         #determine last time to get data for in this iteration
         end = max(targetdp, startdp-(3600*CONST_CALLS))
@@ -363,10 +380,11 @@ class Weather():
         url = CONST_API_CALL % (self._lat,self._lon, timestamp, self._key)
         rest = RestData()
         await rest.set_resource(self._hass, url)
-        await rest.async_update(log_errors=False)
+        await rest.async_update(log_errors=True)
+        data = self.validate_data(rest.data)
 
         try:
-            data = json.loads(rest.data)
+            data = json.loads(data)
             current = data.get('data')[0]
             if current is None:
                 current = {}

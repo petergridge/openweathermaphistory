@@ -5,7 +5,7 @@
             "already_configured": "Location is already configured"
         },
         "error": {
-            "invalid_api_key": "Cannot connect, possible invalid_api_key",
+            "invalid_api_key": "Cannot connect, possible invalid api_key or you have not subscribed to One Call API 3.0, check the log for details",
             "formula": "Invalid formula, check the log for details",
             "formula_variable": "A variable used is undefined, check the log for details",
             "duplicate_name": "This name has already been used",
@@ -64,8 +64,8 @@
     },
     "options": {
        "error": {
-            "invalid_api_key": "Cannot connect, possible invalid_api_key",
-            "formula": "Invalid formula, check the log for details",
+            "invalid_api_key": "Cannot connect, possible invalid api_key or you have not subscribed to One Call API 3.0, check the log for details",
+            "formula": "Cannot connect, possible invalid api_key, check the log for details",
             "formula_variable": "A variable used is undefined, check the log for details",
             "duplicate_name": "This name has already been used",
             "close_proximity": "A location is already configured with 1km",
