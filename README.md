@@ -5,8 +5,10 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2.0.4
-- Cumulative rain and snow data to allow use of utility meter to better visualise daily, weekly, monthly precipitation
+## V2.0.7
+- Add api_call service to support testing/debugging
+- Add better tests for API version
+- Improve messaging for API issues
 
 # NEW to Version 2.0.0
 - A totally new way to access the data!
@@ -190,6 +192,10 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |daily_count|Number of API calls for all instances of the integration, resets midnight GMT. This will not always match between instance of the integration due to the update frequency|
 
 ## REVISION HISTORY
+### 2.0.7
+- Add api_call service to support testing/debugging
+- Add better tests for API version
+- Improve messaging for API issues
 ### 2.0.4
 - Add cummulative rain and snow to support meter sensor
 - fix issue with sensor class 'none'
