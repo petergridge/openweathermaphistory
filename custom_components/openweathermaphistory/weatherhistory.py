@@ -309,7 +309,7 @@ class Weather():
             lastdt = max(data)
         except ValueError:
             #no data yet just get this hours dataaset
-            lastdt = int(thishour - 3600)
+            lastdt = int(thishour)
         #iterate until caught up to current hour
         #or exceeded the call limit
         target = min(thishour,thishour+CONST_CALLS*3600)
@@ -331,10 +331,18 @@ class Weather():
     async def async_backload(self,historydata):
         """backload data from the oldest data backward"""
         data = historydata
+
         #there can be more entries than required for intial load
         self._backlog = max(0,(self._initdays*24) - len(historydata))
         #the most recent data avaialble less on hour
-        startdp = min(data) - 3600
+        try:
+            startdp = min(data) - 3600
+        except ValueError:
+            hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
+            thishour = int(datetime.timestamp(hour))
+            #no data yet just get this hours dataaset
+            startdp = int(thishour - 3600)
+
         #the time required to back load until
         targetdp = max(data) - (self._initdays*3600*24)
 
