@@ -30,7 +30,7 @@ A home assistant sensor that uses the OpenWeatherMap API to return:
 - Current observations (rain, snow, humidity, current temp, current pressure)
 - Status information (remaining backlog to load, current days API count)
 
-Any number sensors can be created using templates.
+Any number of sensors can be created using templates.
 
 While HA recommends using individual sensors, you can assign additional attributes to a sensor.
 
@@ -49,6 +49,8 @@ This integration was initially built to support the [Irrigation Program](https:/
 - alter the watering frequency
 
 You need an API key, which is free, but requires a [registration](https://openweathermap.org/api). You do need to provide a payment method, however, the first 1000 calls are free and you can set an upper limit of calls. Setting this to 1000 will prevent you incurring any costs.
+
+**Note** If you have an existing key you will still need to subscribe to the One Call 3.0 API, follow the instructions above.
 
 ## Installation
 
