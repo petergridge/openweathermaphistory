@@ -317,11 +317,12 @@ class Weather():
             #increment last date by an hour
             lastdt += 3600
             hourdata = await self.gethourdata(lastdt)
-            self._cumulative_rain += hourdata.get("rain")
-            self._cumulative_snow += hourdata.get("snow")
 
             if hourdata == {}:
                 return historydata
+
+            self._cumulative_rain += hourdata.get("rain",0)
+            self._cumulative_snow += hourdata.get("snow",0)
 
             data.update({lastdt : hourdata })
         #end rest loop

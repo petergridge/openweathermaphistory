@@ -113,7 +113,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
         )
 
     async def async_step_add(self, user_input=None):
-        '''add zone'''
+        '''add sensor'''
         errors = {}
         newdata = {}
         measurement = False
@@ -153,8 +153,6 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 newdata[CONF_RESOURCES].append(data)
                 self._data = newdata
                 return await self.async_step_menu()
-
-        errors = {}
         if user_input is None:
             default_input = {}
         else:
@@ -570,7 +568,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 self._data = newdata
                 return await self.async_step_init()
 
-        errors = {}
         if user_input is None:
             default_input = {}
         else:
