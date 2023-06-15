@@ -115,14 +115,14 @@ Calculations are performed in the native unit of measure, so all calculations ar
 ### Examples
 Determine the watering frequency based on temperature
 ```
-{% set avgtemp = (forecast1max + forecast2max + forecast3max)/3 %}
-{% if avgtemp < 10 %}
+{% set avgtemp = (forecast1max + forecast2max + forecast3max)/3 -%}
+{% if avgtemp < 10 -%}
 Off
-{% elif avgtemp < 20 %}
+{% elif avgtemp < 20 -%}
 Mon, Fri
-{% else %}
+{% else -%}
 Mon, Thu, Sat
-{% endif %}
+{% endif -%}
 ```
 Display current temperature
 ```
