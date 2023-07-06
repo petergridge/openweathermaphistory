@@ -191,6 +191,9 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |remaining_backlog|Hours of data remaining to be gathered|
 |daily_count|Number of API calls for all instances of the integration, resets midnight GMT. This will not always match between instance of the integration due to the update frequency|
 
+## Tutorial
+Tristan created a german video about this integration: https://youtu.be/cXtVMJZU_ho
+
 ## REVISION HISTORY
 ### 2.0.8
 - Add api_call service to support testing/debugging
