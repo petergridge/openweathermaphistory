@@ -100,6 +100,9 @@ Go to https://my.home-assistant.io/redirect/developer_statistics to fix this
 ```
 - You can change the unit of measure (°C to °F) for each sensor in the sensor settings.
 
+### Note
+Unit of measure is not applied to attributes only to the sensor state. Attribute values are supplied as metric values
+
 ## Resources
 Two files are created in the config directory:
 - One named for the instance of the integration with a '.pickle' extension
