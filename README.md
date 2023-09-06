@@ -6,7 +6,7 @@
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
 ## V2.0.9
-- Add api_call service list available attributes
+- Add api_call service to list available attributes
 - Deploy custom card with the component, no need to install seperately, please uninstall the old version
 - Round attributes to 2 decimal places
 - Performance fixes
