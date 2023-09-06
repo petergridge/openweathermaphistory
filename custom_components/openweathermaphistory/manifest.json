@@ -3,7 +3,7 @@
   "name": "OpenWeatherMap History",
   "codeowners": ["@petergridge","@tsbernar"],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": ["lovelace"],
   "documentation": "https://github.com/petergridge/openweathermaphistory",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/petergridge/openweathermaphistory/issues",
