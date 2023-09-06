@@ -31,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_setup(hass:HomeAssistant, config):
     '''setup the card'''
-
+    hass.data.setdefault(DOMAIN, {})
 
     # 1. Serve lovelace card
     path = Path(__file__).parent / "www"
