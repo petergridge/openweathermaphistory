@@ -5,10 +5,11 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2.0.8
-- Add api_call service to support testing/debugging
-- Add better tests for API version
-- Improve messaging for API issues
+## V2.0.9
+- Add api_call service list available attributes
+- Deploy custom card with the component, no need to install seperately, please ininstall the old version
+- Round attributes to 2 decimal places
+- Performance fixes
 
 # NEW to Version 2.0.0
 - A totally new way to access the data!
