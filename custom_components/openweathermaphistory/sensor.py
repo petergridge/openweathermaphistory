@@ -81,8 +81,13 @@ async def async_setup_entry(
         },
         "api_call",
     )
+    platform.async_register_entity_service(
+        "list_vars",
+        {
 
-
+        },
+        "list_vars",
+    )
 
 class WeatherCoordinator(DataUpdateCoordinator):
     """Weather API data coordinator
@@ -248,29 +253,38 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         wvars = {}
         #default to initial days variable
         #need to define 'dummy' versions in the config flow as well
-        wvars["cumulative_rain"]    = weather.cumulative_rain()
-        wvars["cumulative_snow"]    = weather.cumulative_snow()
+        wvars["cumulative_rain"]    = round(weather.cumulative_rain(),2)
+        wvars["cumulative_snow"]    = round(weather.cumulative_snow(),2)
         for i in range(int(max(weather.num_days(),self._initdays))):
-            wvars[f"day{i}rain"]        = weather.processed_value(i,'rain')
-            wvars[f"day{i}snow"]        = weather.processed_value(i,'snow')
-            wvars[f"day{i}max"]         = weather.processed_value(i,'max_temp')
-            wvars[f"day{i}min"]         = weather.processed_value(i,'min_temp')
+            wvars[f"day{i}rain"]        = round(weather.processed_value(i,'rain'),2)
+            wvars[f"day{i}snow"]        = round(weather.processed_value(i,'snow'),2)
+            wvars[f"day{i}max"]         = round(weather.processed_value(i,'max_temp'),2)
+            wvars[f"day{i}min"]         = round(weather.processed_value(i,'min_temp'),2)
         #forecast provides 7 days of data
         for i in range(0,6):
-            wvars[f"forecast{i}pop"]      = weather.processed_value(f'f{i}','pop')
-            wvars[f"forecast{i}rain"]     = weather.processed_value(f'f{i}','rain')
-            wvars[f"forecast{i}snow"]     = weather.processed_value(f'f{i}','snow')
-            wvars[f"forecast{i}humidity"] = weather.processed_value(f'f{i}','humidity')
-            wvars[f"forecast{i}max"]      = weather.processed_value(f'f{i}','max_temp')
-            wvars[f"forecast{i}min"]      = weather.processed_value(f'f{i}','min_temp')
+            wvars[f"forecast{i}pop"]      = round(weather.processed_value(f'f{i}','pop'),2)
+            wvars[f"forecast{i}rain"]     = round(weather.processed_value(f'f{i}','rain'),2)
+            wvars[f"forecast{i}snow"]     = round(weather.processed_value(f'f{i}','snow'),2)
+            wvars[f"forecast{i}humidity"] = round(weather.processed_value(f'f{i}','humidity'),2)
+            wvars[f"forecast{i}max"]      = round(weather.processed_value(f'f{i}','max_temp'),2)
+            wvars[f"forecast{i}min"]      = round(weather.processed_value(f'f{i}','min_temp'),2)
         #current observations
-        wvars["current_rain"]        = weather.processed_value('current', 'rain')
-        wvars["current_snow"]        = weather.processed_value('current', 'snow')
-        wvars["current_humidity"]    = weather.processed_value('current', 'humidity')
-        wvars["current_temp"]        = weather.processed_value('current', 'temp')
-        wvars["current_pressure"]    = weather.processed_value('current', 'pressure')
+        wvars["current_rain"]        = round(weather.processed_value('current', 'rain'),2)
+        wvars["current_snow"]        = round(weather.processed_value('current', 'snow'),2)
+        wvars["current_humidity"]    = round(weather.processed_value('current', 'humidity'),2)
+        wvars["current_temp"]        = round(weather.processed_value('current', 'temp'),2)
+        wvars["current_pressure"]    = round(weather.processed_value('current', 'pressure'),2)
         #special values
         wvars["remaining_backlog"]   = weather.remaining_backlog()
         wvars["daily_count"]         = weather.daily_count()
 
         return wvars
+
+    def list_vars(self):
+        """list all available variables"""
+        wvars = self._update_vars(self._weather)
+        _LOGGER.warning('Configured max days : %s',self._maxdays)
+        _LOGGER.warning('Configured initial days: %s', self._initdays)
+
+        for name, value in wvars.items():
+            _LOGGER.warning('%s : %s',name, value)

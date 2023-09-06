@@ -1,7 +1,8 @@
 """ Init """
 from __future__ import annotations
 import logging
-
+from . import utils
+from pathlib import Path
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     Platform,
@@ -26,6 +27,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
+    return True
+
+async def async_setup(hass:HomeAssistant, config):
+    '''setup the card'''
+
+
+    # 1. Serve lovelace card
+    path = Path(__file__).parent / "www"
+    utils.register_static_path(hass.http.app, "/openweathermaphistory/openweathermaphistory.js", path / "openweathermaphistory.js")
+
+    # 2. Add card to resources
+    version = getattr(hass.data["integrations"][DOMAIN], "version", 0)
+    await utils.init_resource(hass, "/openweathermaphistory/openweathermaphistory.js", str(version))
+
     return True
 
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:

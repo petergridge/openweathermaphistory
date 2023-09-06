@@ -87,8 +87,6 @@ class Weather():
             message = jdata["message"]
             _LOGGER.error('OpenWeatherMap call failed code: %s: %s', code, message)
             return data
-        except TypeError:
-            return data
         except KeyError:
             return data
 
@@ -286,7 +284,7 @@ class Weather():
                     #backdate the required number of days
                     lastdt = thishour - 3600*CONST_CALLS
 
-        #get new data if requrired
+        #get new data if required
         if lastdt < thishour:
             data = await self.get_forecastdata()
             if data is None:
@@ -295,7 +293,17 @@ class Weather():
             currentdata = data[0]
             dailydata = data[1]
             historydata = await self.get_historydata(historydata)
-        self._backlog = max(0,(self._initdays*24) - len(historydata))
+
+        #recaculate the backlog
+        data = historydata
+        hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
+        thishour = int(datetime.timestamp(hour))
+        try:
+            earliestdata = min(data)
+        except ValueError:
+            earliestdata = thishour
+
+        self._backlog = max(0,((self._initdays*24*3600) - (thishour - earliestdata))/3600)
         #Process the available data
         processedcurrent = await self.processcurrent(currentdata)
         processeddaily = await  self.processdailyforecast(dailydata)
@@ -346,8 +354,17 @@ class Weather():
         """backload data from the oldest data backward"""
         data = historydata
 
-        #there can be more entries than required for intial load
-        self._backlog = max(0,(self._initdays*24) - len(historydata))
+        hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
+        thishour = int(datetime.timestamp(hour))
+        try:
+            earliestdata = min(data)
+        except ValueError:
+            earliestdata = thishour
+        self._backlog = max(0,((self._initdays*24*3600) - (thishour - earliestdata))/3600)
+        #no data yet just get this hours dataaset
+        if  self._backlog < 1:
+            return
+
         #the most recent data avaialble less on hour
         try:
             startdp = min(data) - 3600
@@ -361,7 +378,7 @@ class Weather():
             targetdp = thishour - (self._initdays*3600*24)
         else:
             #the time required to back load until
-            targetdp = max(data) - (self._initdays*3600*24)
+            targetdp = max(data) - ((self._initdays*3600*24)+1)
 
         #determine last time to get data for in this iteration
         end = max(targetdp, startdp-(3600*CONST_CALLS))
