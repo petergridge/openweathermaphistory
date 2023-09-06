@@ -7,7 +7,7 @@
 
 ## V2.0.9
 - Add api_call service list available attributes
-- Deploy custom card with the component, no need to install seperately, please ininstall the old version
+- Deploy custom card with the component, no need to install seperately, please uninstall the old version
 - Round attributes to 2 decimal places
 - Performance fixes
 
