@@ -10,3 +10,13 @@ api_call:
         entity:
             integration: openweathermaphistory
 
+list_vars:
+  description: list available variables, check the log for results
+  fields:
+    entity_id:
+      name: Entity ID
+      description: the OWM history instance
+      required: true
+      selector:
+        entity:
+            integration: openweathermaphistory

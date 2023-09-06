@@ -1,5 +1,27 @@
 {
     "title": "OWM History",
+    "services":{
+		"api_call":{
+			"name": "API call",
+			"description": "Test the api call, check the log for results.",
+			"fields": {
+				"entity_id": {
+					"name": "Entity ID",
+					"description": "the OWM history instance"
+				}
+			}
+		},
+		"list_vars":{
+			"name": "List Variable",
+			"description": "List available variables, check the log for results.",
+			"fields": {
+				"entity_id": {
+					"name": "Entity ID",
+					"description": "the OWM history instance"
+				}
+			}
+		}
+    },
     "config": {
         "abort": {
             "already_configured": "Location is already configured"

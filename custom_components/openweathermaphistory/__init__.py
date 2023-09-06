@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from . import utils
 from pathlib import Path
+from homeassistant.helpers import config_validation as cv
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     Platform,
@@ -11,6 +12,8 @@ from homeassistant.core import HomeAssistant
 from .const import (
     DOMAIN,
     )
+
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +34,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_setup(hass:HomeAssistant, config):
     '''setup the card'''
-    hass.data.setdefault(DOMAIN, {})
 
     # 1. Serve lovelace card
     path = Path(__file__).parent / "www"
