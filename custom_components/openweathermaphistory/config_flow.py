@@ -340,6 +340,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         else:
             self._data = self.config_entry.options
 
+    async def async_step_user(self, user_input=None):
+        '''initial step? work around from HA v23 11'''
+        return
+
     async def async_step_init(self, user_input=None):
         '''initial step'''
         if self.config_entry.options == {}:
