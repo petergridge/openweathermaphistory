@@ -1,40 +1,38 @@
 """Platform for historical rain factor Sensor integration."""
 from __future__ import annotations
 
-from .weatherhistory import Weather
+from datetime import timedelta
 import logging
-from datetime import  timedelta
+
 import jinja2
-from homeassistant.core import HomeAssistant, callback
+
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
-    SensorDeviceClass
 )
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_NAME, CONF_RESOURCES
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_platform
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
-from homeassistant.helpers import (
-    entity_platform,
-)
-from homeassistant.const import (
-    CONF_NAME,
-    CONF_RESOURCES,
 
-    )
 from .const import (
-    CONF_FORMULA,
-    CONF_ATTRIBUTES,
-    CONF_INTIAL_DAYS,
-    CONF_STATECLASS,
-    CONF_SENSORCLASS,
-    CONF_UID,
     ATTRIBUTION,
-    DOMAIN
-    )
+    CONF_ATTRIBUTES,
+    CONF_FORMULA,
+    CONF_INTIAL_DAYS,
+    CONF_MAX_DAYS,
+    CONF_SENSORCLASS,
+    CONF_STATECLASS,
+    CONF_UID,
+    DOMAIN,
+)
+from .weatherhistory import Weather
 
 SCAN_INTERVAL = timedelta(minutes=10)
 
@@ -105,7 +103,7 @@ class WeatherCoordinator(DataUpdateCoordinator):
         self._weather = weather
 
     async def _async_update_data(self):
-        """Fetch data from API endpoint"""
+        """Fetch data from API endpoint."""
         #process n records every cycle
         await self._weather.async_update()
         if self._weather.remaining_backlog() > 0:
@@ -113,7 +111,8 @@ class WeatherCoordinator(DataUpdateCoordinator):
             await self._weather.async_update()
 
 class WeatherHistory(CoordinatorEntity,SensorEntity):
-    ''' Rain factor class defn'''
+    '''Rain factor class defn.'''
+
     _attr_has_entity_name = True
     _attr_should_poll = False
     _attr_attribution = ATTRIBUTION
@@ -137,6 +136,7 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         self._formula            = resource[CONF_FORMULA]
         self._attributes         = resource.get(CONF_ATTRIBUTES)
         self._initdays           = config.get(CONF_INTIAL_DAYS)
+        self._maxdays           = config.get(CONF_MAX_DAYS)
         self._sensor_class       = resource.get(CONF_SENSORCLASS,None)
         self._state_class        = resource.get(CONF_STATECLASS,None)
         self._uuid               = resource.get(CONF_UID)

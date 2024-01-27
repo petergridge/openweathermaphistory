@@ -2,41 +2,44 @@
 
 from __future__ import annotations
 
-import logging
-import jinja2
-import uuid
-import json
 #from pyowm import OWM
-from datetime import datetime, date
-from .data import RestData
+from datetime import date, datetime
+import json
+import logging
+import uuid
+
+import jinja2
 from pyowm.commons.exceptions import APIRequestError, UnauthorizedError
 import voluptuous as vol
+
 from homeassistant import config_entries
-from homeassistant.util import location
-from homeassistant.core import HomeAssistant,callback
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import selector as sel
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_LATITUDE,
-    CONF_LONGITUDE,
     CONF_LOCATION,
+    CONF_LONGITUDE,
     CONF_NAME,
-    CONF_RESOURCES
-    )
+    CONF_RESOURCES,
+)
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv, selector as sel
+from homeassistant.util import location
+
 from .const import (
-    CONF_FORMULA,
     CONF_ATTRIBUTES,
-    CONF_MAX_DAYS,
+    CONF_FORMULA,
     CONF_INTIAL_DAYS,
     CONF_MAX_CALLS,
-    CONF_STATECLASS,
+    CONF_MAX_DAYS,
     CONF_SENSORCLASS,
-    DOMAIN,
-    CONST_PROXIMITY,
+    CONF_STATECLASS,
     CONF_UID,
-    CONST_API_CALL
-    )
+    CONST_API_CALL,
+    CONST_PROXIMITY,
+    DOMAIN,
+)
+from .data import RestData
+
 DEFAULT_NAME = 'Home'
 _LOGGER = logging.getLogger(__name__)
 

@@ -1,38 +1,43 @@
 """define the weather class"""
 
-from .data import RestData
-from datetime import datetime, date, timezone
-from os.path import exists , join
+from datetime import date, datetime, timezone
+import json
+
 #from pyowm import OWM
 import logging
+from os.path import exists, join
 import pickle
 import re
-import json
+
 import pytz
-from homeassistant.helpers import config_validation as cv
-from homeassistant.core import HomeAssistant
+
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_LATITUDE,
-    CONF_LONGITUDE,
     CONF_LOCATION,
+    CONF_LONGITUDE,
     CONF_NAME,
-    )
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
+
 from .const import (
+    CONF_INTIAL_DAYS,
+    CONF_MAX_CALLS,
+    CONF_MAX_DAYS,
     CONST_API_CALL,
     CONST_API_FORECAST,
     CONST_CALLS,
-    CONF_MAX_DAYS,
-    CONF_INTIAL_DAYS,
-    CONF_MAX_CALLS
-    )
+)
+from .data import RestData
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "OpenWeatherMap History"
 
 class Weather():
-    """weather class"""
+    """weather class."""
+    
     def __init__(
         self,
         hass: HomeAssistant,
