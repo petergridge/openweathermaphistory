@@ -5,11 +5,8 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2.0.9
-- Add api_call service to list available attributes
-- Deploy custom card with the component, no need to install seperately, please uninstall the old version
-- Round attributes to 2 decimal places
-- Performance fixes
+## V2.0.12
+- add 'pyowm' to dependencies.
 
 # NEW to Version 2.0.0
 - A totally new way to access the data!
@@ -199,6 +196,11 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 Tristan created a german video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
+### 2.0.09
+- Add api_call service to list available attribut
+- Deploy custom card with the component, no need to install seperately, please uninstall the old version
+- Round attributes to 2 decimal places
+- Performance fixes
 ### 2.0.8
 - Add api_call service to support testing/debugging
 - Add better tests for API version
