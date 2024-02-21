@@ -1,9 +1,9 @@
 {
   "domain": "openweathermaphistory",
   "name": "OpenWeatherMap History",
-  "codeowners": ["@petergridge","@tsbernar"],
+  "codeowners": ["@petergridge"],
   "config_flow": true,
-  "dependencies": ["lovelace"],
+  "dependencies": ["lovelace","pyowm"],
   "documentation": "https://github.com/petergridge/openweathermaphistory",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/petergridge/openweathermaphistory/issues",
