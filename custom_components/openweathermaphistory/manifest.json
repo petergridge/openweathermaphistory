@@ -3,10 +3,10 @@
   "name": "OpenWeatherMap History",
   "codeowners": ["@petergridge"],
   "config_flow": true,
-  "dependencies": ["lovelace","pyowm"],
+  "dependencies": ["lovelace"],
   "documentation": "https://github.com/petergridge/openweathermaphistory",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/petergridge/openweathermaphistory/issues",
-  "requirements": [],
+  "requirements": ["pyowm==3.2.0"],
   "version": "2.0.12"
 }
