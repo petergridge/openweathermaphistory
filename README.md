@@ -5,8 +5,9 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2.0.12
-- add 'pyowm' to dependencies.
+## V2.0.14 - coming soon
+- change from pickle for persisted data to using HomeAssistant Store
+- remove store resources when removing the configuration
 
 # NEW to Version 2.0.0
 - A totally new way to access the data!
@@ -196,6 +197,8 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 Tristan created a german video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
+## V2.0.13
+- add 'pyowm' to dependencies.
 ### 2.0.09
 - Add api_call service to list available attribut
 - Deploy custom card with the component, no need to install seperately, please uninstall the old version
