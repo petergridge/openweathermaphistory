@@ -6,8 +6,10 @@
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
 ## V2.0.14 - coming soon
-- change from pickle for persisted data to using HomeAssistant Store
+- change from pickle for persisted data to using HomeAssistant Store, **DATA RELOAD REQUIRED** existing data will not be carried over to the new data structure
+- restrucure of data storage
 - remove store resources when removing the configuration
+- Reduce impact on startup of HA
 
 # NEW to Version 2.0.0
 - A totally new way to access the data!
