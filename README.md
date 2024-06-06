@@ -75,7 +75,7 @@ Manual Installation
 |Location|location|Required|Select from the map, cannot be within 1000m of an already configured location|Home Assistant configure location|
 |Days to keep data|integer|Required|Retention period of the captured data. Can be longer than initial download. Data will accumulate as collected until the limit is reached. Will default to backload days it is defined with a value less thant the backload days|5 days|
 |Days to backload|integer|Required|Days for initial population, can be increased after the initial load, a new backload will commence|5 days|
-|Max API calls per day|integer|Required|The daily API limit, the count is accumulated across all instances of the integration|500|
+|Max API calls per day|integer|Required|The daily API limit, the count is for one integration, if you have two instances with 500 then each can use 500 api calls|500|
 
 <img width="427" alt="image" src="https://github.com/petergridge/Irrigation-V5/assets/40281772/3aa18655-52e3-4b84-b9a8-7ceb75f320bd">
 
