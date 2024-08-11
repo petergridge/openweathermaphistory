@@ -2,11 +2,7 @@
 
 from datetime import date, datetime
 import json
-
-#from pyowm import OWM
 import logging
-from os.path import exists, join
-import pickle
 import re
 from zoneinfo import ZoneInfo
 
@@ -18,8 +14,9 @@ from homeassistant.const import (
     CONF_NAME,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import storage as store
 
+#from homeassistant.helpers import config_validation as cv, storage as store
 from .const import (
     CONF_INTIAL_DAYS,
     CONF_MAX_CALLS,
@@ -60,60 +57,81 @@ class Weather:
         self._daily_count     = 1
         self._cumulative_rain = 0
         self._cumulative_snow = 0
+        self._warning_issued  = False
 
-    def get_stored_data(self, name):
-        """Return stored data."""
-        file = join(self._hass.config.path(), cv.slugify(name)  + '.pickle')
-        if not exists(file):
-            return {}
-        with open(file, 'rb') as myfile:
-            content = pickle.load(myfile)
-        myfile.close()
-        return content
+    async def async_get_stored_data(self, key):
+        """Get data from .storage."""
+        data = {}
+        x = store.Store[dict[any]](self._hass,1,key)
+        data = await x.async_load()
+        if data is None:
+            data = {}
+        return data
 
-    def store_data(self, content, name):
-        """Store uri timestamp to file."""
-
-        keys = list(content.keys())
-        keys.sort()
-        sorted_dict = {i: content[i] for i in keys}
-
-        file = join(self._hass.config.path(), cv.slugify(name) + '.pickle')
-        with open(file, 'wb') as myfile:
-            pickle.dump(sorted_dict, myfile, pickle.HIGHEST_PROTOCOL)
-        myfile.close()
+    async def async_store_data(self,content,key):
+        """Put data into .storage."""
+        x = store.Store[dict[any]](self._hass,1,key)
+        await x.async_save(content)
 
     def validate_data(self, data) -> bool:
         """Check if the call was successful."""
-        jdata = json.loads(data)
+
+        if data is None:
+            _LOGGER.error('OpenWeatherMap call failed')
+            return {}
+
+        try:
+            jdata = json.loads(data)
+        except TypeError:
+            _LOGGER.error('OpenWeatherMap call failed')
+            return {}
+
         try:
             code    = jdata["cod"]
             message = jdata["message"]
             _LOGGER.error('OpenWeatherMap call failed code: %s: %s', code, message)
-            return data
+            return {}
         except KeyError:
+            return {}
+        else:
             return data
 
     def remaining_backlog(self):
         "Return remaining days to collect."
         return self._backlog
 
+    def remaining_calls(self):
+        """Return remaining call count."""
+        return self._maxcalls - self._daily_count
+
+    def call_limit_warning(self):
+        """Issue a warning when the call limit is exceeded."""
+        if not self._warning_issued:
+            _LOGGER.warning('Maximum daily allowance of API calls have been used')
+            self._warning_issued = True
+
     async def get_forecastdata(self):
         """Get forecast data."""
+        #do not process when no calls remaining
+        if self.remaining_calls() < 1:
+            #only issue a single warning each day
+            self.call_limit_warning()
+            return {}
+
         url = CONST_API_FORECAST % (self._lat,self._lon, self._key)
         rest = RestData()
         await rest.set_resource(self._hass, url)
         await rest.async_update(log_errors=True)
         data = self.validate_data(rest.data)
+        self._daily_count += 1
+
         try:
             data = json.loads(data)
             #check if the call was successful
             days = data.get('daily',{})
             current = data.get('current',{})
         except TypeError:
-            _LOGGER.warning('OpenWeatherMap forecast call failed %s', rest.data)
             return
-        self._daily_count += 1
 
         #current observations
         currentdata = {"rain":current.get('rain',{}).get('1h',0)
@@ -138,19 +156,17 @@ class Weather:
 
     async def processcurrent(self,current):
         """Process the currrent data."""
-        current_data ={ 'current': {'rain': current.get('rain')
+        return { 'current': {'rain': current.get('rain')
                                    , 'snow': current.get('snow')
                                    , 'humidity': current.get('humidity')
                                    , 'temp': current.get('temp')
                                    , 'pressure': current.get('pressure')}
                                    }
-        return current_data
 
     async def processdailyforecast(self,dailydata):
         "Process daily forecast data."
         processed_data = {}
-        i = 0
-        for data in dailydata.values():
+        for i, data in enumerate(dailydata.values()):
             #get the days data
             day = {}
             #update the days data
@@ -162,18 +178,14 @@ class Weather:
             day.update({"humidity":data.get('humidity',0)})
             day.update({"pressure":data.get('pressure',0)})
             processed_data.update({f'f{i}':day})
-            i += 1
         return processed_data
 
     async def processhistory(self,historydata):
         """Process history data."""
         removehours = []
-#        localtimezone = pytz.timezone(self._timezone)
-#        localtimezone = ZoneInfo(self._timezone)
         processed_data = {}
         for hour, data in historydata.items():
-#            localday = datetime.utcfromtimestamp(hour).replace(tzinfo=timezone.utc).astimezone(tz=localtimezone)
-            localday = datetime.fromtimestamp(hour,tz=ZoneInfo(self._timezone))
+            localday = datetime.fromtimestamp(int(hour),tz=ZoneInfo(self._timezone))
             localnow = datetime.now(ZoneInfo(self._timezone))
             localdaynum = (localnow - localday).days
             self._num_days = max(self._num_days,localdaynum)
@@ -202,15 +214,21 @@ class Weather:
     def set_processing_type(self,option):
         """Allow setting of the processing type."""
         self._processing_type = option
+    def get_processing_type(self):
+        """Allow setting of the processing type."""
+        return self._processing_type
 
     def num_days(self) -> int:
         """Return how many days of data has been collected."""
         return self._num_days
 
+    def max_days(self) -> int:
+        """Return how many days of data has been collected."""
+        return self._maxdays
+
     def daily_count(self) -> int:
         """Return daily of data has been collected."""
         return self._daily_count
-
 
     def cumulative_rain(self) -> float:
         """Return data has been collected."""
@@ -233,7 +251,8 @@ class Weather:
         rest = RestData()
         await rest.set_resource(self._hass, url)
         await rest.async_update(log_errors=True)
-
+        self._daily_count += 1
+        _LOGGER.warning(url)
         _LOGGER.warning(self.validate_data(rest.data))
 
     async def async_update(self):
@@ -244,70 +263,60 @@ class Weather:
         #GMT midnight
         midnight = int(datetime.timestamp(day))
         #restore saved data
-        storeddata = self.get_stored_data(self._name)
+        storeddata = await self.async_get_stored_data("OWMH_" + self._name)
         historydata = storeddata.get("history",{})
         currentdata = storeddata.get('current',{})
         dailydata = storeddata.get('dailyforecast',{})
-        self._cumulative_rain = storeddata.get('cumulativerain',0)
-        self._cumulative_snow = storeddata.get('cumulativesnow',0)
-
-        dailycalls = self.get_stored_data('owm_api_count').get('dailycalls',{})
-        self._daily_count = dailycalls.get('count',0)
-
+        cumulative = storeddata.get('dailyforecast',{})
+        self._cumulative_rain = cumulative.get('cumulativerain',0)
+        self._cumulative_snow = cumulative.get('cumulativesnow',0)
+        dailycalls = storeddata.get('dailycalls',{})
+        self._daily_count = dailycalls.get("count",0)
         #reset the daily count on new UTC day
         if dailycalls.get('time',0) < midnight:
-            #it is a new day
-            self._daily_count = 0
-            dailycalls = {'time': midnight,'count':self._daily_count}
-            self.store_data({ 'dailycalls':dailycalls},'owm_api_count')
-            warning_issued = False
+            self._daily_count = 1
+            self._warning_issued = False
 
-        #do not process when no calls remaining
-        if self._daily_count > self._maxcalls:
-            #only issue a single warning each day
-            if not warning_issued:
-                _LOGGER.warning('Maximum daily allowance of API calls have been used')
-                warning_issued = True
-            return
-        warning_issued = False
+        dailycalls = {'time': midnight,'count':self._daily_count}
 
         match self._processing_type:
             case 'initial':
                 #on start up just get the latest hour
-                try:
-                    lastdt = max(historydata)
-                except ValueError:
-                    #just get one hour
+                lastdt = self.maxdict(historydata)
+                if lastdt is None:
                     lastdt = thishour - 3600
-            case 'backload':
-                #just process the history data
-                lastdt = thishour
+                _LOGGER.debug(lastdt)
                 historydata = await self.async_backload(historydata)
             case _:
-                try:
-                    lastdt = max(historydata)
-                except ValueError:
-                    #backdate the required number of days
-                    lastdt = thishour - 3600*CONST_CALLS
+                lastdt = self.maxdict(historydata)
+                historydata = await self.async_backload(historydata)
+
+        #empty file
+        if lastdt is None:
+            lastdt = thishour - 3600
 
         #get new data if required
         if lastdt < thishour:
             data = await self.get_forecastdata()
-            if data is None:
+            if data is None or data == {}:
                 #httpx request failed
                 return
             currentdata = data[0]
             dailydata = data[1]
-            historydata = await self.get_historydata(historydata)
+            historydata = await self.get_data(historydata)
 
         #recaculate the backlog
         data = historydata
         hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
         thishour = int(datetime.timestamp(hour))
-        try:
-            earliestdata = min(data)
-        except ValueError:
+        if data == {}:
             earliestdata = thishour
+        else:
+            try:
+                earliestdata = self.mindict(data)
+                #earliestdata = int(self.mindict(data))
+            except ValueError:
+                earliestdata = thishour
 
         self._backlog = max(0,((self._initdays*24*3600) - (thishour - earliestdata))/3600)
         #Process the available data
@@ -319,35 +328,44 @@ class Weather:
         #build data to support template variables
         self._processed = {**processeddaily, **processedcurrent, **processedweather}
         dailycalls = {'time':midnight,'count':self._daily_count}
-        #write persistent data
-        self.store_data({ 'dailycalls':dailycalls},'owm_api_count')
-        self.store_data({'history':historydata,
-                         'current':currentdata,
-                         'dailyforecast':dailydata,
-                         'dailycalls':dailycalls,
-                         'cumulativerain':self._cumulative_rain,
-                         'cumulativesnow':self._cumulative_snow},self._name)
 
-    async def get_historydata(self,historydata):
-        """Get history data from the newest data forward."""
+        zone_data = {'history':historydata,
+                    'current':currentdata,
+                    'dailyforecast':dailydata,
+                    'dailycalls':dailycalls,
+                    'cumlative':{
+                    'cumulativerain':self._cumulative_rain,
+                    'cumulativesnow':self._cumulative_snow
+                    }
+        }
+        await self.async_store_data(zone_data,"OWMH_" + self._name)
+
+    async def get_data(self,historydata):
+        """Get data from the newest timestamp forward."""
         hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
         thishour = int(datetime.timestamp(hour))
         data = historydata
-        try:
-            lastdt = max(data)
-        except ValueError:
+        #on startup only get one hour of data to not impact HA start
+        if self._processing_type == 'intial':
+            hours = 1
+        else:
+            hours = CONST_CALLS
+
+        lastdt = self.maxdict(data)
+        if lastdt is None:
             #no data yet just get this hours dataaset
-            lastdt = int(thishour)
+            lastdt = thishour - 3600
         #iterate until caught up to current hour
         #or exceeded the call limit
-        target = min(thishour,thishour+CONST_CALLS*3600)
+        target = min(thishour,thishour+hours*3600)
+
         while lastdt < target:
             #increment last date by an hour
             lastdt += 3600
             hourdata = await self.gethourdata(lastdt)
 
             if hourdata == {}:
-                return historydata
+                break
 
             self._cumulative_rain += hourdata.get("rain",0)
             self._cumulative_snow += hourdata.get("snow",0)
@@ -356,38 +374,58 @@ class Weather:
         #end rest loop
         return data
 
+    def mindict(self,data):
+        """Find minimum dictionary key."""
+        if data == {}:
+            return
+        mini = int(next(iter(data)))
+        for x in data:
+            if int(x) < mini:
+                mini = int(x)
+        return mini
+
+    def maxdict(self,data):
+        """Find minimum dictionary key."""
+        if data == {}:
+            return
+        maxi = int(next(iter(data)))
+        for x in data:
+            if int(x) > maxi:
+                maxi = int(x)
+        return maxi
+
     async def async_backload(self,historydata):
         """Backload data from the oldest data backward."""
         data = historydata
-
         hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
         thishour = int(datetime.timestamp(hour))
-        try:
-            earliestdata = min(data)
-        except ValueError:
-            earliestdata = thishour
-        self._backlog = max(0,((self._initdays*24*3600) - (thishour - earliestdata))/3600)
-        #no data yet just get this hours dataaset
-        if  self._backlog < 1:
-            return
-
-        #the most recent data avaialble less on hour
-        try:
-            startdp = min(data) - 3600
-        except ValueError:
-            hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
-            thishour = int(datetime.timestamp(hour))
-            #no data yet just get this hours dataaset
-            startdp = int(thishour - 3600)
+        if self._processing_type == 'initial':
+            hours = 1
+        else:
+            hours = CONST_CALLS
 
         if data == {}:
-            targetdp = thishour - (self._initdays*3600*24)
+            earliestdata = thishour
+            startdp = thishour - 3600
+            targetdp = thishour - (self._initdays*3600*hours)
         else:
+            try:
+                earliestdata = self.mindict(data)
+            except ValueError:
+                earliestdata = thishour
+
+            self._backlog = max(0,((self._initdays*hours*3600) - (thishour - earliestdata))/3600)
+            if  self._backlog < 1:
+                return data
+
+            #the most recent data avaialble less one hour
+            startdp = self.mindict(data) - 3600
             #the time required to back load until
-            targetdp = max(data) - ((self._initdays*3600*24)+1)
+            targetdp = self.maxdict(data) - ((self._initdays*3600*hours)+1)
 
         #determine last time to get data for in this iteration
-        end = max(targetdp, startdp-(3600*CONST_CALLS))
+        end = max(targetdp, startdp-(3600*hours))
+        _LOGGER.debug('start %s, end %s',startdp,end)
         while startdp > end :
             #decrement start data point time by an hour
             self._backlog -= 1
@@ -395,16 +433,24 @@ class Weather:
             hourdata = await self.gethourdata(startdp)
             if hourdata == {}:
                 return
-            data.update({startdp : hourdata })
+            data.update({str(startdp) : hourdata })
+        _LOGGER.debug(data)
         return data
 
     async def gethourdata(self,timestamp):
         """Get one hours data."""
+        #do not process when no calls remaining
+        if self.remaining_calls() < 1:
+            #only issue a single warning each day
+            self.call_limit_warning()
+            return {}
+
         url = CONST_API_CALL % (self._lat,self._lon, timestamp, self._key)
         rest = RestData()
         await rest.set_resource(self._hass, url)
         await rest.async_update(log_errors=True)
         data = self.validate_data(rest.data)
+        self._daily_count += 1
 
         try:
             data = json.loads(data)
@@ -414,7 +460,6 @@ class Weather:
         except TypeError:
             _LOGGER.warning('OpenWeatherMap history call failed')
             return {}
-        self._daily_count += 1
 
         #build this hours data
         precipval = {}
@@ -435,9 +480,8 @@ class Weather:
 
         rain = precipval.get('rain',0)
         snow = precipval.get('snow',0)
-        hourdata = {"rain": rain
-                    ,"snow":snow
-                    ,"temp":current.get("temp",0)
-                    ,"humidity":current.get("humidity",0)
-                    ,"pressure":current.get("pressure",0)}
-        return hourdata
+        return {"rain": rain
+                ,"snow":snow
+                ,"temp":current.get("temp",0)
+                ,"humidity":current.get("humidity",0)
+                ,"pressure":current.get("pressure",0)}

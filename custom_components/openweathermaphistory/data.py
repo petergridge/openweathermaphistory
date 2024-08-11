@@ -52,7 +52,7 @@ class RestData:
                 _LOGGER.warning(
                     "Response is not json: %s.  Headers: %s", response, response.headers
                 )
-                self.data = None
+                self.data = {}
                 return
 
             self.data = response.text
@@ -63,7 +63,7 @@ class RestData:
                     "TimeoutException fetching data: %s failed with %s", self._resource, ex
                 )
             self.last_exception = ex
-            self.data = None
+            self.data = {}
 
         except httpx.RequestError as ex:
             if log_errors:
@@ -71,7 +71,7 @@ class RestData:
                     "RequestError fetching data: %s failed with %s", self._resource, ex
                 )
             self.last_exception = ex
-            self.data = None
+            self.data = {}
 
         except Exception as ex:
             if log_errors:
@@ -79,4 +79,4 @@ class RestData:
                     "Unexpected Error fetching data: %s failed with %s", self._resource, ex
                 )
             self.last_exception = ex
-            self.data = None
+            self.data = {}

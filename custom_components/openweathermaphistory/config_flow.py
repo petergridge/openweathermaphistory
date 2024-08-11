@@ -49,7 +49,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
     """FLow handler."""
 
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self) -> None:  # noqa: D107
         self._errors = {}
@@ -112,7 +112,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                         ),
             ): sel.LocationSelector(),
             vol.Required(CONF_MAX_DAYS,default=default_input.get(CONF_MAX_DAYS,5)): sel.NumberSelector({"min":1,"max":30}),
-            vol.Required(CONF_INTIAL_DAYS,default=default_input.get(CONF_INTIAL_DAYS,5)): sel.NumberSelector({"min":1,"max":30}),
+            vol.Required(CONF_INTIAL_DAYS,default=default_input.get(CONF_INTIAL_DAYS,5)): sel.NumberSelector({"min":1,"max":5}),
             vol.Required(CONF_MAX_CALLS,default=default_input.get(CONF_MAX_CALLS,500)): sel.NumberSelector({"min":500,"max":5000,"step":500}),
             }
         )
@@ -208,9 +208,9 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             self._data = newdata
             return await self.async_step_menu()
         # build the list
-        selection = 0
-        for sensor in self._data.get(CONF_RESOURCES):
-            selection += 1
+        #selection = 0
+        for selection, sensor in enumerate(self._data.get(CONF_RESOURCES)):
+            #selection += 1
             sensors.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(sensors)})
 
@@ -231,9 +231,9 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             self.selected = int(user_input.get(CONF_NAME).split(".")[0]) - 1
             return await self.async_step_modify()
         #build the list for display
-        selection = 0
-        for sensor in self._data.get(CONF_RESOURCES):
-            selection += 1
+        #selection = 0
+        for selection, sensor in enumerate(self._data.get(CONF_RESOURCES)):
+            #selection += 1
             items.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(items)})
 
@@ -334,7 +334,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
 class OptionsFlowHandler(config_entries.OptionsFlow):
     '''Option flow.'''
 
-    VERSION = 1
+    VERSION = 2
     def __init__(self, config_entry) -> None:  # noqa: D107
 
         self.config_entry = config_entry
@@ -442,9 +442,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             self._data = newdata
             return await self.async_step_init()
         # build the list
-        selection = 0
-        for sensor in self._data.get(CONF_RESOURCES):
-            selection += 1
+        #selection = 0
+        for selection,sensor in enumerate(self._data.get(CONF_RESOURCES)):
+            #selection += 1
             sensors.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(sensors)})
 
@@ -465,9 +465,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             self.selected = int(user_input.get(CONF_NAME).split(".")[0]) - 1
             return await self.async_step_modify()
         #build the list for display
-        selection = 0
-        for sensor in self._data.get(CONF_RESOURCES):
-            selection += 1
+        #selection = 0
+        for selection,sensor in enumerate(self._data.get(CONF_RESOURCES)):
+            #selection += 1
             items.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(items)})
 
@@ -623,7 +623,7 @@ def evaluate_custom_formula(formula, max_days):
         wvars[f"day{i}max"]         = 0
         wvars[f"day{i}min"]         = 0
     #forecast provides 7 days of data
-    for i in range(0,6):
+    for i in range(6):
         wvars[f"forecast{i}pop"]      = 0
         wvars[f"forecast{i}rain"]     = 0
         wvars[f"forecast{i}snow"]     = 0
@@ -659,10 +659,12 @@ def evaluate_custom_formula(formula, max_days):
 
     try:
         templatevalue = float(templatevalue)
-        return 'measurement'
+
     except ValueError:
         #not a number
         return 'string'
+    else:
+        return 'measurement'
 
 async def _is_owm_api_online(hass:HomeAssistant, api_key, lat, lon):
     """Call the api and show the result."""
@@ -677,8 +679,9 @@ async def _is_owm_api_online(hass:HomeAssistant, api_key, lat, lon):
         code    = data["cod"]
         message = data["message"]
         _LOGGER.error('OpenWeatherMap call failed code: %s message: %s', code, message)
-        return False
     except TypeError:
         return True
     except KeyError:
         return True
+    else:
+        return False
