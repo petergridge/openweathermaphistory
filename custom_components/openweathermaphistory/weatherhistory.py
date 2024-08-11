@@ -77,13 +77,13 @@ class Weather:
         """Check if the call was successful."""
 
         if data is None:
-            _LOGGER.error('OpenWeatherMap call failed')
+            _LOGGER.error('OpenWeatherMap call failed 1')
             return {}
 
         try:
             jdata = json.loads(data)
         except TypeError:
-            _LOGGER.error('OpenWeatherMap call failed')
+            _LOGGER.error('OpenWeatherMap call failed 2')
             return {}
 
         try:
@@ -92,9 +92,10 @@ class Weather:
             _LOGGER.error('OpenWeatherMap call failed code: %s: %s', code, message)
             return {}
         except KeyError:
-            return {}
+           return data
         else:
-            return data
+            _LOGGER.error('OpenWeatherMap call failed 3')
+            return {}
 
     def remaining_backlog(self):
         "Return remaining days to collect."
@@ -254,6 +255,8 @@ class Weather:
         self._daily_count += 1
         _LOGGER.warning(url)
         _LOGGER.warning(self.validate_data(rest.data))
+        _LOGGER.warning(rest.data)
+
 
     async def async_update(self):
         '''Update the weather stats.'''

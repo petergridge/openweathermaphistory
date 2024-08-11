@@ -67,7 +67,7 @@ async def async_setup_entry(
     else:
         config = config_entry.data
     weather = Weather(hass,config)
-    #initailise the weather data
+    #initialise the weather data
     weather.set_processing_type ('initial')
     await weather.async_update()
     async_add_entities(await _async_create_entities(hass, config, weather))
