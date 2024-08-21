@@ -35,7 +35,7 @@ from .const import (
 )
 from .weatherhistory import Weather
 
-SCAN_INTERVAL = timedelta(minutes=5)
+SCAN_INTERVAL = timedelta(minutes=30)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -157,6 +157,7 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         self._weather.set_processing_type ('general')
         self.determine_state()
         self.async_write_ha_state()
+        _LOGGER.debug('handle coordinator')
 
     async def async_added_to_hass(self):
         """Add to Hass."""
@@ -171,6 +172,7 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         '''Update the sensor.'''
         self.determine_state()
         self.async_write_ha_state()
+        _LOGGER.debug('async update')
 
     @property
     def name(self):
@@ -233,11 +235,14 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         """Determine the sensor state."""
         try:
             self._state = float(self._evaluate_custom_formula(self._formula ,  self._update_vars(self._weather)))
+            _LOGGER.debug('determine state 1 %s', self._state)
         except ValueError:
             self._state = self._evaluate_custom_formula(self._formula ,  self._update_vars(self._weather))
+            _LOGGER.debug('determine state 2 %s', self._state)
         #return the attributes if requested
         if self._attributes is not None:
             self._extra_attributes = self._evaluate_custom_attr(self._attributes, self._update_vars(self._weather))
+            _LOGGER.debug('determine state 3')
 
     def _evaluate_custom_formula(self, formula: str, wvars: dict):
         """Evaluate the formula/template."""
