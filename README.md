@@ -5,7 +5,7 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2.0.15 - Beta Released
+## V2.0.15
 - change from pickle for persisted data to using HomeAssistant Store, **DATA RELOAD REQUIRED** existing data will not be carried over to the new data structure
 - restrucure of data storage
 - remove store resources when removing the configuration
