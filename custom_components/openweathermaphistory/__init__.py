@@ -28,12 +28,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     PLATFORMS: list[str] = ["sensor"]
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # hass.async_create_task(
-    #     hass.config_entries.async_forward_entry_setup(
-    #         entry, Platform.SENSOR
-    #     )
-    # )
-
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
 
@@ -68,7 +62,9 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     if config_entry.version == 1:
         new = {**config_entry.data}
-        name = config_entry.options.get(CONF_NAME)
+        dname = config_entry.data.get(CONF_NAME,'unknown')
+#        name = config_entry.options.get(CONF_NAME)
+        name = config_entry.options.get(CONF_NAME,dname)
         try:
             file = os.path.join(hass.config.path(), cv.slugify(name)  + '.pickle')
             if exists(file):

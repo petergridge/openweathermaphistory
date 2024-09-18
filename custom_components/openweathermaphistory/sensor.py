@@ -31,11 +31,12 @@ from .const import (
     CONF_SENSORCLASS,
     CONF_STATECLASS,
     CONF_UID,
+    CONST_INITIAL,
     DOMAIN,
 )
 from .weatherhistory import Weather
 
-SCAN_INTERVAL = timedelta(minutes=30)
+SCAN_INTERVAL = timedelta(minutes=5)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ async def async_setup_entry(
         config = config_entry.data
     weather = Weather(hass,config)
     #initialise the weather data
-    weather.set_processing_type ('initial')
+    weather.set_processing_type (CONST_INITIAL)
     await weather.async_update()
     async_add_entities(await _async_create_entities(hass, config, weather))
 
@@ -114,11 +115,7 @@ class WeatherCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         #process n records every cycle
-
         await self._weather.async_update()
-        if self._weather.remaining_backlog() > 0 and self._weather.get_processing_type() != 'initial':
-            self._weather.set_processing_type ('backload')
-            await self._weather.async_update()
 
 class WeatherHistory(CoordinatorEntity,SensorEntity):
     '''Rain factor class defn.'''
@@ -154,7 +151,6 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._weather.set_processing_type ('general')
         self.determine_state()
         self.async_write_ha_state()
         _LOGGER.debug('handle coordinator')

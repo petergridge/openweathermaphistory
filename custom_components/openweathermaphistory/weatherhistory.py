@@ -24,6 +24,7 @@ from .const import (
     CONST_API_CALL,
     CONST_API_FORECAST,
     CONST_CALLS,
+    CONST_INITIAL,
 )
 from .data import RestData
 
@@ -132,7 +133,7 @@ class Weather:
             days = data.get('daily',{})
             current = data.get('current',{})
         except TypeError:
-            return
+            return None
 
         #current observations
         currentdata = {"rain":current.get('rain',{}).get('1h',0)
@@ -282,30 +283,30 @@ class Weather:
 
         dailycalls = {'time': midnight,'count':self._daily_count}
 
-        match self._processing_type:
-            case 'initial':
-                #on start up just get the latest hour
-                lastdt = self.maxdict(historydata)
-                if lastdt is None:
-                    lastdt = thishour - 3600
-                _LOGGER.debug(lastdt)
-                historydata = await self.async_backload(historydata)
-            case _:
-                lastdt = self.maxdict(historydata)
-                historydata = await self.async_backload(historydata)
+        if self._processing_type == CONST_INITIAL:
+            #on start up just get the latest hour
+            last_data_point = self.maxdict(historydata)
+            if last_data_point is None:
+                last_data_point = thishour - 3600
+            _LOGGER.debug('initial %s',last_data_point)
+            historydata = await self.async_backload(historydata)
+        else:
+            last_data_point = self.maxdict(historydata)
+            historydata = await self.async_backload(historydata)
 
         #empty file
-        if lastdt is None:
-            lastdt = thishour - 3600
-
+        if last_data_point is None:
+            last_data_point = thishour - 3600
+        _LOGGER.debug('update %s',self._processing_type)
         #get new data if required
-        if lastdt < thishour:
+        if last_data_point < thishour:
             data = await self.get_forecastdata()
             if data is None or data == {}:
                 #httpx request failed
                 return
             currentdata = data[0]
             dailydata = data[1]
+            _LOGGER.debug('get data %s',self._processing_type)
             historydata = await self.get_data(historydata)
 
         #recaculate the backlog
@@ -349,95 +350,93 @@ class Weather:
         thishour = int(datetime.timestamp(hour))
         data = historydata
         #on startup only get one hour of data to not impact HA start
-        if self._processing_type == 'intial':
+        if self._processing_type == CONST_INITIAL:
             hours = 1
         else:
             hours = CONST_CALLS
 
-        lastdt = self.maxdict(data)
-        if lastdt is None:
+        last_data_point = self.maxdict(data)
+        if last_data_point is None:
             #no data yet just get this hours dataaset
-            lastdt = thishour - 3600
+            last_data_point = thishour - 3600
         #iterate until caught up to current hour
         #or exceeded the call limit
-        target = min(thishour,thishour+hours*3600)
+        target = min(thishour,last_data_point+hours*3600)
 
-        while lastdt < target:
+        while last_data_point < target:
             #increment last date by an hour
-            lastdt += 3600
-            hourdata = await self.gethourdata(lastdt)
-
+            last_data_point += 3600
+            hourdata = await self.gethourdata(last_data_point)
             if hourdata == {}:
                 break
-
             self._cumulative_rain += hourdata.get("rain",0)
             self._cumulative_snow += hourdata.get("snow",0)
-
-            data.update({lastdt : hourdata })
+            data.update({last_data_point : hourdata })
         #end rest loop
         return data
 
     def mindict(self,data):
         """Find minimum dictionary key."""
         if data == {}:
-            return
+            return None
         mini = int(next(iter(data)))
         for x in data:
-            if int(x) < mini:
-                mini = int(x)
+            mini = min(int(x), mini)
         return mini
 
     def maxdict(self,data):
         """Find minimum dictionary key."""
         if data == {}:
-            return
+            return None
         maxi = int(next(iter(data)))
         for x in data:
-            if int(x) > maxi:
-                maxi = int(x)
+            maxi = max(int(x), maxi)
         return maxi
 
     async def async_backload(self,historydata):
-        """Backload data from the oldest data backward."""
+        """Backload data."""
+        #from the oldest recieved data backward
+        #until all the backlog is processed
         data = historydata
         hour = datetime(date.today().year, date.today().month, date.today().day,datetime.now().hour)
         thishour = int(datetime.timestamp(hour))
-        if self._processing_type == 'initial':
+        #limit the number of API calls in a single execution
+        if self._processing_type == CONST_INITIAL:
             hours = 1
         else:
             hours = CONST_CALLS
 
-        if data == {}:
+        if data == {}: #new location
+            #the oldest data collected so far
             earliestdata = thishour
-            startdp = thishour - 3600
-            targetdp = thishour - (self._initdays*3600*hours)
         else:
             try:
                 earliestdata = self.mindict(data)
             except ValueError:
                 earliestdata = thishour
 
-            self._backlog = max(0,((self._initdays*hours*3600) - (thishour - earliestdata))/3600)
-            if  self._backlog < 1:
-                return data
+        expected_earliest_data = thishour - (self._initdays*24*3600)
+        backlog = earliestdata - expected_earliest_data - 3600
+        self._backlog = max(0,backlog/3600)
+        if  self._backlog < 1:
+            return data
 
-            #the most recent data avaialble less one hour
-            startdp = self.mindict(data) - 3600
-            #the time required to back load until
-            targetdp = self.maxdict(data) - ((self._initdays*3600*hours)+1)
-
-        #determine last time to get data for in this iteration
-        end = max(targetdp, startdp-(3600*hours))
-        _LOGGER.debug('start %s, end %s',startdp,end)
-        while startdp > end :
-            #decrement start data point time by an hour
-            self._backlog -= 1
-            startdp -= 3600
-            hourdata = await self.gethourdata(startdp)
+        x = 1
+        while x <= hours:
+            #get the data for the hour
+            data_piont_time = earliestdata-(3600*x)
+            hourdata = await self.gethourdata(data_piont_time)
             if hourdata == {}:
-                return
-            data.update({str(startdp) : hourdata })
-        _LOGGER.debug(data)
+                #no data found so abort the loop
+                break
+            #Add the data collected oected to the weather history
+            data.update({str(data_piont_time) : hourdata })
+            #decrement the backlog
+            self._backlog -= 1
+            if self._backlog < 1:
+                break
+            x+=1
+
         return data
 
     async def gethourdata(self,timestamp):
@@ -463,7 +462,6 @@ class Weather:
         except TypeError:
             _LOGGER.warning('OpenWeatherMap history call failed')
             return {}
-
         #build this hours data
         precipval = {}
         preciptypes = ['rain','snow']

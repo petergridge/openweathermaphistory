@@ -17,6 +17,7 @@ CONF_UID                = "unique_id"
 CONST_PROXIMITY         = 1000
 #max calls in a single refresh
 CONST_CALLS             = 24
+CONST_INITIAL           = 'initial'
 #max calls in any 24 hour period
 CONF_MAX_CALLS          = "max_calls"
 
