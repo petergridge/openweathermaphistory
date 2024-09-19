@@ -5,6 +5,11 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
+## V2024.09.01 Beta available
+- If you recently downloaded this Prior to 19th September 6pm AustralianEST you will need to redownload (only 10 downloads impacted)
+- Some improved performance
+- Handle data/option mismatch on upgrading
+
 ## V2.0.15
 - change from pickle for persisted data to using HomeAssistant Store, **DATA RELOAD REQUIRED** existing data will not be carried over to the new data structure
 - restrucure of data storage
