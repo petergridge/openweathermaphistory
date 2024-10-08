@@ -95,36 +95,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 options = user_input.get(CONF_CREATE_SENSORS)
 
                 # now process the create sensor options to build the required sensors
-                for i in range(6):
-                    if 'forecast_rain' in options:
-                        resources.append(create_formula(f"forecast{i}rain", 'precipitation','measurement'))
-                    if 'forecast_snow' in options:
-                        resources.append(create_formula(f"forecast{i}snow", 'precipitation','measurement'))
-                    if 'forecast_max' in options:
-                        resources.append(create_formula(f"forecast{i}max", 'temperature','measurement'))
-                    if 'forecast_min' in options:
-                        resources.append(create_formula(f"forecast{i}min", 'temperature','measurement'))
-                    if 'forecast_humidity' in options:
-                        resources.append(create_formula(f"forecast{i}humidity", 'humidity','measurement'))
-                    if 'forecast_pop' in options:
-                        resources.append(create_formula(f"forecast{i}pop",'none','none'))
-
-                for i in range(int(max(user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS]))):
-                    if 'hist_rain' in options:
-                        resources.append(create_formula(f"day{i}rain",'precipitation','measurement'))
-                    if 'hist_snow' in options:
-                        resources.append(create_formula(f"day{i}snow",'precipitation','measurement'))
-                    if 'hist_max' in options:
-                        resources.append(create_formula(f"day{i}max",'temperature','measurement'))
-                    if 'hist_min' in options:
-                        resources.append(create_formula(f"day{i}min",'temperature','measurement'))
-
-                if 'current_obs' in options:
-                    resources.append(create_formula("current_rain",'precipitation','measurement'))
-                    resources.append(create_formula("current_snow", 'precipitation','measurement'))
-                    resources.append(create_formula("current_humidity", 'humidity','measurement'))
-                    resources.append(create_formula("current_temp", 'temperature','measurement'))
-                    resources.append(create_formula("current_pressure", 'pressure','measurement'))
+                resources=process_options(options,resources,int(max(user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS])))
 
                 self._data[CONF_RESOURCES]=resources
 
@@ -439,7 +410,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Create the program config."""
         newdata = {}
         newdata.update(self._data)
-
         #the top level of the dictionary needs to change
         #for HA update to trigger, bug?
         if newdata.get('xx') == 'x':
@@ -477,70 +447,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 newdata[CONF_MAX_DAYS] = int(user_input.get(CONF_MAX_DAYS))
                 newdata[CONF_INTIAL_DAYS] = int(user_input.get(CONF_INTIAL_DAYS))
                 newdata[CONF_MAX_CALLS] = int(user_input.get(CONF_MAX_CALLS))
-
                 # Input is valid, set data.
                 resources =[]
                 resources=self._data[CONF_RESOURCES]
                 options = user_input.get(CONF_CREATE_SENSORS)
-
-            # now process the create sensor options to build the required sensors
-                for i in range(6):
-                    if 'forecast_rain' in options:
-                        resources=add_to_list(resources,create_formula(f"forecast{i}rain", 'precipitation','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"forecast{i}rain", 'precipitation','measurement'))
-                    if 'forecast_snow' in options:
-                        resources=add_to_list(create_formula(f"forecast{i}snow", 'precipitation','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"forecast{i}snow", 'precipitation','measurement'))
-                    if 'forecast_max' in options:
-                        resources=add_to_list(create_formula(f"forecast{i}max", 'temperature','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"forecast{i}max", 'precipitation','measurement'))
-                    if 'forecast_min' in options:
-                        resources=add_to_list(create_formula(f"forecast{i}min", 'temperature','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"forecast{i}min", 'precipitation','measurement'))
-                    if 'forecast_humidity' in options:
-                        resources=add_to_list(create_formula(f"forecast{i}humidity", 'humidity','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"forecast{i}humidity", 'precipitation','measurement'))
-                    if 'forecast_pop' in options:
-                        resources=add_to_list(resources,create_formula(f"forecast{i}pop",'none','none'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"forecast{i}pop", 'precipitation','measurement'))
-
-                for i in range(int(max(user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS]))):
-                    if 'hist_rain' in options:
-                        resources=add_to_list(resources,create_formula(f"day{i}rain",'precipitation','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"day{i}rain", 'precipitation','measurement'))
-                    if 'hist_snow' in options:
-                        resources=add_to_list(resources,create_formula(f"day{i}snow",'precipitation','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"day{i}snow", 'precipitation','measurement'))
-                    if 'hist_max' in options:
-                        add_to_list(resources,create_formula(f"day{i}max",'temperature','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"day{i}max", 'precipitation','measurement'))
-                    if 'hist_min' in options:
-                        resources=add_to_list(resources,create_formula(f"day{i}min",'temperature','measurement'))
-                    else:
-                        resources=remove_from_list(resources,create_formula(f"day{i}min", 'precipitation','measurement'))
-
-                if 'current_obs' in options:
-                    resources=add_to_list(resources,create_formula("current_rain",'precipitation','measurement'))
-                    resources=add_to_list(resources,create_formula("current_snow", 'precipitation','measurement'))
-                    resources=add_to_list(resources,create_formula("current_humidity", 'humidity','measurement'))
-                    resources=add_to_list(resources,create_formula("current_temp", 'temperature','measurement'))
-                    resources=add_to_list(resources,create_formula("current_pressure", 'pressure','measurement'))
-                else:
-                    resources=remove_from_list(resources,create_formula("current_rain",'precipitation','measurement'))
-                    resources=remove_from_list(resources,create_formula("current_snow", 'precipitation','measurement'))
-                    resources=remove_from_list(resources,create_formula("current_humidity", 'humidity','measurement'))
-                    resources=remove_from_list(resources,create_formula("current_temp", 'temperature','measurement'))
-                    resources=remove_from_list(resources,create_formula("current_pressure", 'pressure','measurement'))
-
+                # now process the create sensor options to build the required sensors
+                resources=process_options(options,resources,int(max(user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS])))
+                #update the configuation
                 newdata[CONF_RESOURCES]=resources
                 newdata[CONF_CREATE_SENSORS]=options
                 self._data.update(newdata)
@@ -585,7 +498,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             self._data = newdata
             return await self.async_step_init()
         # build the list
-        #selection = 0
         for selection,sensor in enumerate(self._data.get(CONF_RESOURCES)):
             sensors.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(sensors)})
@@ -609,7 +521,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             return await self.async_step_modify()
         #build the list for display
         for selection,sensor in enumerate(self._data.get(CONF_RESOURCES)):
-
             items.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(items)})
 
@@ -625,7 +536,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         string = False
         newdata.update(self._data)
         this_sensor = newdata.get(CONF_RESOURCES)[self.selected]
-
 
         if user_input is not None:
             evalform = evaluate_custom_formula(user_input.get(CONF_FORMULA),self._data.get(CONF_MAX_DAYS,0))
@@ -669,7 +579,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                                         options=["none","humidity","precipitation","precipitation_intensity","temperature","pressure"]
                                         )
                         ),
-                }
+            }
         )
 
         return self.async_show_form(
@@ -744,10 +654,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
 #---- Helpers ----
 
-def create_formula(sensor,sensorclass,stateclass):
+def create_formula(sensor,sensorclass,stateclass,instance="Home"):
     """Create formula dictionary."""
     formula = {}
-    formula[CONF_NAME] = sensor
+    formula[CONF_NAME] = "OWMH_"+instance+"_"+sensor
     formula[CONF_FORMULA] = "{{ " + sensor + " }}"
     formula[CONF_ATTRIBUTES]  = ''
     formula[CONF_SENSORCLASS] = sensorclass
@@ -772,6 +682,69 @@ def remove_from_list(list, item):
             list.pop(n)
             break
     return list
+
+
+def process_options(options,resource_list,days):
+    """Process the selected aut create options."""
+    resources = resource_list
+    for i in range(6):
+        if 'forecast_rain' in options:
+            resources=add_to_list(resources,create_formula(f"forecast{i}rain", 'precipitation','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"forecast{i}rain", 'precipitation','measurement'))
+        if 'forecast_snow' in options:
+            resources=add_to_list(create_formula(f"forecast{i}snow", 'precipitation','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"forecast{i}snow", 'precipitation','measurement'))
+        if 'forecast_max' in options:
+            resources=add_to_list(create_formula(f"forecast{i}max", 'temperature','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"forecast{i}max", 'precipitation','measurement'))
+        if 'forecast_min' in options:
+            resources=add_to_list(create_formula(f"forecast{i}min", 'temperature','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"forecast{i}min", 'precipitation','measurement'))
+        if 'forecast_humidity' in options:
+            resources=add_to_list(create_formula(f"forecast{i}humidity", 'humidity','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"forecast{i}humidity", 'precipitation','measurement'))
+        if 'forecast_pop' in options:
+            resources=add_to_list(resources,create_formula(f"forecast{i}pop",'none','none'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"forecast{i}pop", 'precipitation','measurement'))
+
+    for i in range(days):
+        if 'hist_rain' in options:
+            resources=add_to_list(resources,create_formula(f"day{i}rain",'precipitation','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"day{i}rain", 'precipitation','measurement'))
+        if 'hist_snow' in options:
+            resources=add_to_list(resources,create_formula(f"day{i}snow",'precipitation','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"day{i}snow", 'precipitation','measurement'))
+        if 'hist_max' in options:
+            add_to_list(resources,create_formula(f"day{i}max",'temperature','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"day{i}max", 'precipitation','measurement'))
+        if 'hist_min' in options:
+            resources=add_to_list(resources,create_formula(f"day{i}min",'temperature','measurement'))
+        else:
+            resources=remove_from_list(resources,create_formula(f"day{i}min", 'precipitation','measurement'))
+
+    if 'current_obs' in options:
+        resources=add_to_list(resources,create_formula("current_rain",'precipitation','measurement'))
+        resources=add_to_list(resources,create_formula("current_snow", 'precipitation','measurement'))
+        resources=add_to_list(resources,create_formula("current_humidity", 'humidity','measurement'))
+        resources=add_to_list(resources,create_formula("current_temp", 'temperature','measurement'))
+        resources=add_to_list(resources,create_formula("current_pressure", 'pressure','measurement'))
+    else:
+        resources=remove_from_list(resources,create_formula("current_rain",'precipitation','measurement'))
+        resources=remove_from_list(resources,create_formula("current_snow", 'precipitation','measurement'))
+        resources=remove_from_list(resources,create_formula("current_humidity", 'humidity','measurement'))
+        resources=remove_from_list(resources,create_formula("current_temp", 'temperature','measurement'))
+        resources=remove_from_list(resources,create_formula("current_pressure", 'pressure','measurement'))
+
+    return resources
 
 def evaluate_custom_formula(formula, max_days):
     """Evaluate the formula/template."""
