@@ -1,20 +1,18 @@
 # OpenWeatherMapHistory
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?logo=homeassistantcommunitystore)](https://github.com/hacs/integration)
 [![my_badge](https://img.shields.io/badge/Home%20Assistant-Community-41BDF5.svg?logo=homeassistant)](https://community.home-assistant.io/t/custom-component-to-retrieve-five-days-of-rain-history-from-openweathermap/310153)
-![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/latest/total) ![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/V2024.09.01/total)
+![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/latest/total) ![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/V2024.10.02/total)
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2024.09.01 Beta available
+## V2024.10.02 Beta available
+- Fix issue with index out of sequence when updating sensors.
+- Add new feature to auto create sensors. Currently accessed from the API page.
+
+## V2024.09.01 available
 - If you recently downloaded this Prior to 19th September 6pm AustralianEST you will need to redownload (only 10 downloads impacted)
 - Some improved performance
 - Handle data/option mismatch on upgrading
-
-## V2.0.15
-- change from pickle for persisted data to using HomeAssistant Store, **DATA RELOAD REQUIRED** existing data will not be carried over to the new data structure
-- restrucure of data storage
-- remove store resources when removing the configuration
-- Reduce impact on startup of HA
 
 # NEW to Version 2.0.0
 - A totally new way to access the data!
@@ -204,7 +202,18 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 Tristan created a german video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
-## V2.0.13
+## V2024.10.02 Beta available
+- Fix issue with index out of sequence when updating sensors.
+- Add new feature to auto create sensors. Currently accessed from the API page.
+## V2024.09.01 available
+- If you recently downloaded this Prior to 19th September 6pm AustralianEST you will need to redownload (only 10 downloads impacted)
+- Some improved performance
+- Handle data/option mismatch on upgrading
+## V2.0.15
+- change from pickle for persisted data to using HomeAssistant Store, **DATA RELOAD REQUIRED** existing data will not be carried over to the new data structure
+- restrucure of data storage
+- remove store resources when removing the configuration
+- Reduce impact on startup of HA## V2.0.13
 - add 'pyowm' to dependencies.
 ### 2.0.09
 - Add api_call service to list available attribut
@@ -237,42 +246,4 @@ Tristan created a german video about this integration: https://youtu.be/cXtVMJZU
 - Move to config flow for configuration
 - Each attribute can be exposed as a sensor
 - Sensors are defined by Jinja templates
-### 1.1.2
-- Version 1.2 supports Open Weather Map API 3 functionally this version remains the same as version 1.1
-- A new registration is required for version 3, but once configured the API Key remains the same.
-- **Upgrade only after registering for API version 3**
-- Implement Pickle to store data to limit api calls when when restarting
-### 1.1.1
-- For HACS
-### 1.1.0
-- Breaking Change - remove num_days configuration option.
-- Breaking Change - Modify the factor to a simpler model
-- Optimised API calls
-- Handle missing time zone issue for new OpenWeather registrations. Timezone defaults to HomeAssistant configuration value
-- Only return five full 24hr periods
-### 1.0.11
-* Deprecate unit_system and derive units from HA config.
-### 1.0.10
-* Minor bug fix
-### 1.0.9
-* present rainfall in inches when imperial unit system selected
-### 1.0.6
-* refactor to present data based on the last 24 hours
-* Added custom card
-### 1.0.5
-* Add unique id
-* round factor to 2 decimal places
-### 1.0.4
-* Reduce refresh time to 30 minutes
-* Remove cumulative rain from the attributes
-### 1.0.3
-* Refactored the logic into a class
-* Fixed issue with daily refresh - changed to UTC time
-* Expanded attributes to include min and max temperature
-* Unit system (metric, imperial) config option
-### 1.0.2
-* fix remaining bug
-### 1.0.1
-* fix refresh issues, reduce API calls
-### 1.0.0
 * Initial Release.
