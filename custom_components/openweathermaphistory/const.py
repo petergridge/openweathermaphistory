@@ -3,6 +3,7 @@
 DOMAIN                  = 'openweathermaphistory'
 CONST_API_CALL          = 'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=metric'
 CONST_API_FORECAST      = 'https://api.openweathermap.org/data/3.0/onecall?lat=%s&lon=%s&exclude=minutely,alerts&appid=%s&units=metric'
+CONF_CREATE_SENSORS     = 'create_sensors'
 CONF_FORMULA            = "formula"
 CONF_DATA               = "data"
 CONF_ATTRIBUTES         = "attributes"

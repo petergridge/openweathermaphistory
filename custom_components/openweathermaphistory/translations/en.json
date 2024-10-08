@@ -44,8 +44,8 @@
                     "location": "Location",
                     "max_days": "Days to keep data",
                     "initial_days": "Days to backload",
-                    "max_calls": "Max API calls per day"
-                    }
+                    "max_calls": "Max API calls per day",
+                    "create_sensors": "Auto create sensors"                    }
             },
             "menu": {
                 "title": "",
@@ -87,7 +87,7 @@
     "options": {
        "error": {
             "invalid_api_key": "Cannot connect, possible invalid api_key or you have not subscribed to One Call API 3.0, check the log for details",
-            "formula": "Cannot connect, possible invalid api_key, check the log for details",
+            "formula": "Invalid formula, check the log for details",
             "formula_variable": "A variable used is undefined, check the log for details",
             "duplicate_name": "This name has already been used",
             "close_proximity": "A location is already configured with 1km",
@@ -109,7 +109,8 @@
                     "api_key": "API key",
                     "max_days": "Days to keep data",
                     "initial_days": "Days to backload",
-                    "max_calls": "Max API calls per day"
+                    "max_calls": "Max API calls per day",
+                    "create_sensors": "Auto create sensors"
                 }
                 },
             "add": {
@@ -147,6 +148,21 @@
                 "temperature": "Temperature",
                 "pressure": "Pressure",
                 "none": "None"
+            }
+        },
+        "create_sensors": {
+            "options": {
+                "hist_rain": "Historical rain",
+                "hist_snow": "Historical snow",
+                "hist_max": "Historical max temperature",
+                "hist_min": "Historical min temperature",
+                "current_obs": "Current observations",
+                "forecast_rain": "Forecast rain",
+                "forecast_snow": "Forecast snow",
+                "forecast_max": "Forecast max temperature",
+                "forecast_min": "Forecast min temperature",
+                "forecast_humidity": "Forecast humidity",
+                "forecast_pop": "Forecast probability"
             }
         }
     }
