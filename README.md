@@ -5,7 +5,7 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2024.10.03 Beta available
+## V2024.10.04 Beta available
 - Fix issue with index out of sequence when updating sensors.
 - Add new feature to auto create sensors. Currently accessed from the API page.
 - Modify Naming of sensors to support multiple instances more transparently
