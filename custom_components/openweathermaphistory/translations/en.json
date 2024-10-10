@@ -30,7 +30,7 @@
             "invalid_api_key": "Cannot connect, possible invalid api_key or you have not subscribed to One Call API 3.0, check the log for details",
             "formula": "Invalid formula, check the log for details",
             "formula_variable": "A variable used is undefined, check the log for details",
-            "duplicate_name": "This name has already been used",
+            "duplicate_name": "This name has already been used to define a sensor",
             "close_proximity": "A location is already configured with 1km",
             "cannot_connect": "Could not connect to OpenWeatherMap"
         },
@@ -51,10 +51,17 @@
                 "title": "",
                 "menu_options": {
                     "user":"Location",
+                    "bulk":"Bulk Sensors",
                     "add":"Add Sensor",
                     "list_modify":"Modify Sensor",
                     "delete":"Delete Sensor",
                     "finalise":"Save changes"
+                }
+            },
+            "bulk": {
+                "title": "Bulk Sensors",
+                "data": {
+                    "create_sensors": "Select or deselect sensor groups"
                 }
             },
             "add": {
@@ -89,7 +96,7 @@
             "invalid_api_key": "Cannot connect, possible invalid api_key or you have not subscribed to One Call API 3.0, check the log for details",
             "formula": "Invalid formula, check the log for details",
             "formula_variable": "A variable used is undefined, check the log for details",
-            "duplicate_name": "This name has already been used",
+            "duplicate_name": "This name has already been used to define a sensor",
             "close_proximity": "A location is already configured with 1km",
             "cannot_connect": "Could not connect to OpenWeatherMap"
         },
@@ -97,6 +104,7 @@
             "user": {
             "menu_options": {
                 "update":"Update API",
+                "bulk":"Bulk Sensors ",
                 "add":"Add Sensor",
                 "list_modify":"Modify Sensor",
                 "delete":"Delete Sensor",
@@ -113,7 +121,13 @@
                     "create_sensors": "Auto create sensors"
                 }
                 },
-            "add": {
+                "bulk": {
+                    "title": "Bulk Sensors",
+                    "data": {
+                        "create_sensors": "Select or deselect sensor groups"
+                    }
+                },
+                "add": {
                 "title": "Add Sensor",
                 "data": {
                     "name": "Sensor name",

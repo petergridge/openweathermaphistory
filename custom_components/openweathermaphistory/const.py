@@ -23,3 +23,8 @@ CONST_INITIAL           = 'initial'
 CONF_MAX_CALLS          = "max_calls"
 
 ATTRIBUTION             = "Data provided by OpenWeatherMap"
+
+OPTIONS_SENSOR_CLASS=["none","humidity","precipitation","precipitation_intensity","temperature","pressure"]
+OPTIONS_BULK=['current_obs','hist_rain','hist_snow', 'hist_max','hist_min',
+            'forecast_rain', 'forecast_snow','forecast_max',
+            'forecast_min', 'forecast_humidity','forecast_pop']

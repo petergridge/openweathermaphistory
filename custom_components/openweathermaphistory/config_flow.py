@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 #from pyowm import OWM
 from datetime import date, datetime
 import json
@@ -22,7 +24,11 @@ from homeassistant.const import (
     CONF_RESOURCES,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv, selector as sel
+from homeassistant.helpers import (
+    config_validation as cv,
+    entity_registry as er,
+    selector as sel,
+)
 from homeassistant.util import location
 
 from .const import (
@@ -38,6 +44,8 @@ from .const import (
     CONST_API_CALL,
     CONST_PROXIMITY,
     DOMAIN,
+    OPTIONS_BULK,
+    OPTIONS_SENSOR_CLASS,
 )
 from .data import RestData
 
@@ -92,11 +100,6 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 resources = []
                 self._data.update(user_input)
                 resources.append(create_formula('daily_count','none','none'))
-                options = user_input.get(CONF_CREATE_SENSORS)
-
-                # now process the create sensor options to build the required sensors
-                resources=process_options(options,resources,int(max(user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS])))
-
                 self._data[CONF_RESOURCES]=resources
 
                 return await self.async_step_menu()
@@ -122,20 +125,48 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             vol.Required(CONF_MAX_DAYS,default=default_input.get(CONF_MAX_DAYS,5)): sel.NumberSelector({"min":1,"max":30}),
             vol.Required(CONF_INTIAL_DAYS,default=default_input.get(CONF_INTIAL_DAYS,5)): sel.NumberSelector({"min":1,"max":5}),
             vol.Required(CONF_MAX_CALLS,default=default_input.get(CONF_MAX_CALLS,500)): sel.NumberSelector({"min":500,"max":5000,"step":500}),
-            vol.Optional(CONF_CREATE_SENSORS, default=default_input.get(CONF_CREATE_SENSORS)): sel.SelectSelector(
-                            sel.SelectSelectorConfig(
-                                        translation_key=CONF_CREATE_SENSORS,
-                                        options=['hist_rain','hist_snow', 'hist_max','hist_min', 'current_obs',
-                                                'forecast_rain', 'forecast_snow','forecast_max',
-                                                'forecast_min', 'forecast_humidity','forecast_pop'],
-                                        multiple=True
-                                                    )
-                        )
             }
         )
         return self.async_show_form(
             step_id="user", data_schema=schema, errors=errors
         )
+
+    async def async_step_bulk(self, user_input=None):
+        """Invoke when a user initiates a flow via the user interface."""
+        errors = {}
+        newdata = {}
+        newdata.update(self._data)
+        if user_input is not None:
+            if not errors:
+                # Input is valid, set data.
+                resources =[]
+                resources=self._data[CONF_RESOURCES]
+                options = user_input.get(CONF_CREATE_SENSORS)
+                # now process the create sensor options to build the required sensors
+                resources=process_options(self.hass,options,resources,int(max(newdata[CONF_MAX_DAYS], newdata[CONF_INTIAL_DAYS])))
+                #update the configuation
+                newdata[CONF_RESOURCES]=resources
+                newdata[CONF_CREATE_SENSORS]=options
+                self._data.update(newdata)
+                # Return the form of the next step.
+                return await self.async_step_menu()
+
+        schema = vol.Schema(
+            {
+            vol.Optional(CONF_CREATE_SENSORS, default=self._data.get(CONF_CREATE_SENSORS)): sel.SelectSelector(
+                            sel.SelectSelectorConfig(
+                                        translation_key=CONF_CREATE_SENSORS,
+                                        options=OPTIONS_BULK,
+                                        multiple=True,
+                                        mode="list"
+                                                    )
+                        )
+            }
+        )
+        return self.async_show_form(
+            step_id="bulk", data_schema=schema, errors=errors
+        )
+
 
     async def async_step_update(self, user_input=None):
         """Invoke when a user initiates a flow via the user interface."""
@@ -192,6 +223,8 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 if cv.slugify(user_input.get(CONF_NAME)) == cv.slugify(sensor.get(CONF_NAME)):
                     errors[CONF_NAME] = "duplicate_name"
                     break
+            if not self.hass.states.async_available("sensor."+cv.slugify(user_input.get(CONF_NAME))):
+                errors[CONF_NAME] = "duplicate_name"
             evalform = evaluate_custom_formula(user_input.get(CONF_FORMULA),self._data.get(CONF_MAX_DAYS,0))
             match evalform:
                 case 'measurement':
@@ -232,7 +265,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             vol.Required(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                             sel.SelectSelectorConfig(
                                         translation_key="sensor_class",
-                                        options=["none","humidity","precipitation","precipitation_intensity","temperature","pressure"]
+                                        options=OPTIONS_SENSOR_CLASS
                                         )
                         ),
             }
@@ -262,7 +295,8 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             return await self.async_step_menu()
         # build the list
         for selection, sensor in enumerate(self._data.get(CONF_RESOURCES)):
-            sensors.append(str(selection) + '.' + sensor.get(CONF_NAME))
+            if sensor.get('enabled',None) is None:
+                sensors.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(sensors)})
 
         return self.async_show_form(
@@ -283,7 +317,8 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             return await self.async_step_modify()
         #build the list for display
         for selection, sensor in enumerate(self._data.get(CONF_RESOURCES)):
-            items.append(str(selection) + '.' + sensor.get(CONF_NAME))
+            if sensor.get('enabled',None) is None:
+                items.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(items)})
 
         return self.async_show_form(
@@ -338,7 +373,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             vol.Required(CONF_SENSORCLASS,default=this_sensor.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                             sel.SelectSelectorConfig(
                                         translation_key="sensor_class",
-                                        options=["none","humidity","precipitation","precipitation_intensity","temperature","pressure"]
+                                        options=OPTIONS_SENSOR_CLASS
                                         )
                         ),
             }
@@ -352,9 +387,9 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
 
     async def async_step_menu(self, user_input=None):
         '''Add a group or finalise the flow.'''
-        menu_options = ["add","list_modify"]
+        menu_options = ["bulk","add"]
         if len(self._data.get(CONF_RESOURCES)) > 1:
-            menu_options.extend(["delete"])
+            menu_options.extend(["list_modify","delete"])
         menu_options.extend(["finalise"])
         return self.async_show_menu(
             step_id="menu",
@@ -383,7 +418,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
         self._name = self.config_entry.data.get(CONF_NAME)
         self.selected = {}
-        _LOGGER.warning('__init__')
         self._data = {}
         if self.config_entry.options == {}:
             self._data.update(self.config_entry.data)
@@ -396,10 +430,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         '''Initialise.'''
-        menu_options = ["update", "add", "list_modify"]
-        # only one zone so don't show delete zone option
+        menu_options = ["update","bulk", "add"]
+        # only one sensor so don't show delete option
         if len(self._data.get(CONF_RESOURCES)) > 1:
-            menu_options.extend(["delete"])
+            menu_options.extend(["list_modify","delete"])
         menu_options.extend(["finalise"])
         return self.async_show_menu(
             step_id="user",
@@ -452,7 +486,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 resources=self._data[CONF_RESOURCES]
                 options = user_input.get(CONF_CREATE_SENSORS)
                 # now process the create sensor options to build the required sensors
-                resources=process_options(options,resources,int(max(user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS])))
+                resources=process_options(self.hass,options,resources,int(max(user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS])))
                 #update the configuation
                 newdata[CONF_RESOURCES]=resources
                 newdata[CONF_CREATE_SENSORS]=options
@@ -466,16 +500,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(CONF_MAX_DAYS, default=self._data.get(CONF_MAX_DAYS)): sel.NumberSelector({"min":1,"max":30}),
             vol.Required(CONF_INTIAL_DAYS, default=self._data.get(CONF_INTIAL_DAYS)): sel.NumberSelector({"min":1,"max":30}),
             vol.Required(CONF_MAX_CALLS, default=self._data.get(CONF_MAX_CALLS,1000)): sel.NumberSelector({"min":500,"max":5000,"step":500}),
-            vol.Optional(CONF_CREATE_SENSORS, default=self._data.get(CONF_CREATE_SENSORS)): sel.SelectSelector(
-                            sel.SelectSelectorConfig(
-                                        translation_key=CONF_CREATE_SENSORS,
-                                        options=['hist_rain','hist_snow', 'hist_max','hist_min', 'current_obs',
-                                                'forecast_rain', 'forecast_snow','forecast_max',
-                                                'forecast_min', 'forecast_humidity','forecast_pop'],
-                                        multiple=True
-                                                    )
-                        )
-            }
+          }
         )
         return self.async_show_form(
             step_id="update", data_schema=schema, errors=errors
@@ -493,13 +518,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 return await self.async_step_init()
 
             selected = int(user_input.get(CONF_NAME).split(".")[0])
+            sensorname=cv.slugify(user_input.get(CONF_NAME).split(".")[1])
+            with contextlib.suppress(KeyError):
+                # remove the sensor so it does not reapear as recovered
+                er.async_get(self.hass).async_remove(f"sensor.{sensorname}".lower())
 
             newdata[CONF_RESOURCES].pop(selected)
             self._data = newdata
             return await self.async_step_init()
         # build the list
         for selection,sensor in enumerate(self._data.get(CONF_RESOURCES)):
-            sensors.append(str(selection) + '.' + sensor.get(CONF_NAME))
+            if sensor.get('enabled',None) is None:
+                sensors.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(sensors)})
 
         return self.async_show_form(
@@ -521,7 +551,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             return await self.async_step_modify()
         #build the list for display
         for selection,sensor in enumerate(self._data.get(CONF_RESOURCES)):
-            items.append(str(selection) + '.' + sensor.get(CONF_NAME))
+            if sensor.get('enabled',None) is None:
+                items.append(str(selection) + '.' + sensor.get(CONF_NAME))
         list_schema = vol.Schema({vol.Optional(CONF_NAME): vol.In(items)})
 
         return self.async_show_form(
@@ -576,7 +607,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(CONF_SENSORCLASS,default=this_sensor.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                             sel.SelectSelectorConfig(
                                         translation_key="sensor_class",
-                                        options=["none","humidity","precipitation","precipitation_intensity","temperature","pressure"]
+                                        options=OPTIONS_SENSOR_CLASS
                                         )
                         ),
             }
@@ -588,8 +619,44 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             errors=errors,
         )
 
+    async def async_step_bulk(self, user_input=None):
+        """Invoke when a user initiates a flow via the user interface."""
+        errors = {}
+        newdata = {}
+        newdata.update(self._data)
+        if user_input is not None:
+            if not errors:
+                # Input is valid, set data.
+                resources =[]
+                resources=self._data[CONF_RESOURCES]
+                options = user_input.get(CONF_CREATE_SENSORS)
+                # now process the create sensor options to build the required sensors
+                resources=process_options(self.hass,options,resources,int(max(newdata[CONF_MAX_DAYS], newdata[CONF_INTIAL_DAYS])))
+                #update the configuation
+                newdata[CONF_RESOURCES]=resources
+                newdata[CONF_CREATE_SENSORS]=options
+                self._data.update(newdata)
+                # Return the form of the next step.
+                return await self.async_step_init()
+
+        schema = vol.Schema(
+            {
+            vol.Optional(CONF_CREATE_SENSORS, default=self._data.get(CONF_CREATE_SENSORS)): sel.SelectSelector(
+                            sel.SelectSelectorConfig(
+                                        translation_key=CONF_CREATE_SENSORS,
+                                        options=OPTIONS_BULK,
+                                        multiple=True,
+                                        mode="list"
+                                                    )
+                        )
+            }
+        )
+        return self.async_show_form(
+            step_id="bulk", data_schema=schema, errors=errors
+        )
+
     async def async_step_add(self, user_input=None):
-        '''Add zone.'''
+        '''Add Sensor.'''
         errors = {}
         newdata = {}
         measurement = False
@@ -600,6 +667,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 if cv.slugify(user_input.get(CONF_NAME)) == cv.slugify(sensor.get(CONF_NAME)):
                     errors[CONF_NAME] = "duplicate_name"
                     break
+            if not self.hass.states.async_available("sensor."+cv.slugify(user_input.get(CONF_NAME))):
+                errors[CONF_NAME] = "duplicate_name"
             evalform = evaluate_custom_formula(user_input.get(CONF_FORMULA),self._data.get(CONF_MAX_DAYS,0))
             match evalform:
                 case 'measurement':
@@ -640,7 +709,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(CONF_SENSORCLASS,default=default_input.get(CONF_SENSORCLASS,'none')): sel.SelectSelector(
                             sel.SelectSelectorConfig(
                                         translation_key="sensor_class",
-                                        options=["none","humidity","precipitation","precipitation_intensity","temperature","pressure"]
+                                        options=OPTIONS_SENSOR_CLASS
                                         )
                         ),
             }
@@ -663,73 +732,78 @@ def create_formula(sensor,sensorclass,stateclass,instance="Home"):
     formula[CONF_SENSORCLASS] = sensorclass
     formula[CONF_STATECLASS]  = stateclass
     formula[CONF_UID] = str(uuid.uuid4())
+    formula['enabled']=True
     return formula
 
 def add_to_list(list, item):
     """Check if the sensor exists before adding."""
     for i in list:
         if i.get('formula',None) == item.get('formula',None):
-            #found so exit no need to add
+            #exits no need to add
             return list
+
     list.append(item)
     return list
 
-def remove_from_list(list, item):
+def remove_from_list(hass,list, item):
     """Check if the sensor exists before deleting."""
     for n,i in enumerate(list):
         if i.get('formula',None) == item.get('formula',None):
             #found remove it and return the list
+            with contextlib.suppress(KeyError):
+                # remove the sensor so it does not reapear as recovered
+                er.async_get(hass).async_remove(f"sensor.{i['name']}".lower())
             list.pop(n)
-            break
+            return list
     return list
 
 
-def process_options(options,resource_list,days):
+def process_options(hass,options,resource_list,days):
     """Process the selected aut create options."""
     resources = resource_list
     for i in range(6):
         if 'forecast_rain' in options:
             resources=add_to_list(resources,create_formula(f"forecast{i}rain", 'precipitation','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"forecast{i}rain", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"forecast{i}rain", 'precipitation','measurement'))
         if 'forecast_snow' in options:
             resources=add_to_list(create_formula(f"forecast{i}snow", 'precipitation','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"forecast{i}snow", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"forecast{i}snow", 'precipitation','measurement'))
         if 'forecast_max' in options:
             resources=add_to_list(create_formula(f"forecast{i}max", 'temperature','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"forecast{i}max", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"forecast{i}max", 'precipitation','measurement'))
         if 'forecast_min' in options:
             resources=add_to_list(create_formula(f"forecast{i}min", 'temperature','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"forecast{i}min", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"forecast{i}min", 'precipitation','measurement'))
         if 'forecast_humidity' in options:
             resources=add_to_list(create_formula(f"forecast{i}humidity", 'humidity','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"forecast{i}humidity", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"forecast{i}humidity", 'precipitation','measurement'))
         if 'forecast_pop' in options:
             resources=add_to_list(resources,create_formula(f"forecast{i}pop",'none','none'))
         else:
-            resources=remove_from_list(resources,create_formula(f"forecast{i}pop", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"forecast{i}pop", 'precipitation','measurement'))
 
     for i in range(days):
         if 'hist_rain' in options:
             resources=add_to_list(resources,create_formula(f"day{i}rain",'precipitation','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"day{i}rain", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"day{i}rain", 'precipitation','measurement'))
         if 'hist_snow' in options:
             resources=add_to_list(resources,create_formula(f"day{i}snow",'precipitation','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"day{i}snow", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"day{i}snow", 'precipitation','measurement'))
         if 'hist_max' in options:
             add_to_list(resources,create_formula(f"day{i}max",'temperature','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"day{i}max", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"day{i}max", 'precipitation','measurement'))
         if 'hist_min' in options:
             resources=add_to_list(resources,create_formula(f"day{i}min",'temperature','measurement'))
         else:
-            resources=remove_from_list(resources,create_formula(f"day{i}min", 'precipitation','measurement'))
+            resources=remove_from_list(hass,resources,create_formula(f"day{i}min", 'precipitation','measurement'))
 
     if 'current_obs' in options:
         resources=add_to_list(resources,create_formula("current_rain",'precipitation','measurement'))
@@ -738,11 +812,11 @@ def process_options(options,resource_list,days):
         resources=add_to_list(resources,create_formula("current_temp", 'temperature','measurement'))
         resources=add_to_list(resources,create_formula("current_pressure", 'pressure','measurement'))
     else:
-        resources=remove_from_list(resources,create_formula("current_rain",'precipitation','measurement'))
-        resources=remove_from_list(resources,create_formula("current_snow", 'precipitation','measurement'))
-        resources=remove_from_list(resources,create_formula("current_humidity", 'humidity','measurement'))
-        resources=remove_from_list(resources,create_formula("current_temp", 'temperature','measurement'))
-        resources=remove_from_list(resources,create_formula("current_pressure", 'pressure','measurement'))
+        resources=remove_from_list(hass,resources,create_formula("current_rain",'precipitation','measurement'))
+        resources=remove_from_list(hass,resources,create_formula("current_snow", 'precipitation','measurement'))
+        resources=remove_from_list(hass,resources,create_formula("current_humidity", 'humidity','measurement'))
+        resources=remove_from_list(hass,resources,create_formula("current_temp", 'temperature','measurement'))
+        resources=remove_from_list(hass,resources,create_formula("current_pressure", 'pressure','measurement'))
 
     return resources
 

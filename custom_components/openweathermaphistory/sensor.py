@@ -46,14 +46,15 @@ async def _async_create_entities(hass:HomeAssistant, config, weather):
     coordinator = WeatherCoordinator(hass, weather)
     #append multiple sensors using the single weather class
     for resource in config[CONF_RESOURCES]:
-        sensor = WeatherHistory(
-                    hass,
-                    config,
-                    resource,
-                    weather,
-                    coordinator
-                )
-        sensors.append(sensor)
+        if resource.get('enabled',True):
+            sensor = WeatherHistory(
+                        hass,
+                        config,
+                        resource,
+                        weather,
+                        coordinator
+                    )
+            sensors.append(sensor)
     return sensors
 
 async def async_setup_entry(
@@ -97,6 +98,7 @@ def let_weather_know_hass_has_started(weather):
     '''Let the coordinator know HA is loaded so backloading can commence.'''
     _LOGGER.debug('HA has started')
     weather.set_processing_type ('general')
+
 
 class WeatherCoordinator(DataUpdateCoordinator):
     """Weather API data coordinator. Refresh the data independantly of the sensor."""
@@ -147,6 +149,7 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         self._sensor_class       = resource.get(CONF_SENSORCLASS,None)
         self._state_class        = resource.get(CONF_STATECLASS,None)
         self._uuid               = resource.get(CONF_UID)
+        self._hidden_by          = resource.get('hidden_by')
 
     @callback
     def _handle_coordinator_update(self) -> None:

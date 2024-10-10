@@ -52,6 +52,7 @@
                 "menu_options": {
                     "user":"Location",
                     "add":"Add Sensor",
+                    "bulk":"Bulk add of sensors",
                     "list_modify":"Modify Sensor",
                     "delete":"Delete Sensor",
                     "finalise":"Save changes"
@@ -97,6 +98,7 @@
             "user": {
             "menu_options": {
                 "update":"Update API",
+                "bulk":"Bulk add of sensors",
                 "add":"Add Sensor",
                 "list_modify":"Modify Sensor",
                 "delete":"Delete Sensor",
