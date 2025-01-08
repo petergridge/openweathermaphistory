@@ -5,7 +5,7 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2024.10.04 Beta available
+## V2024.10.04
 - Fix issue with index out of sequence when updating sensors.
 - Add new feature to auto create sensors. Currently accessed from the API page.
 - Modify Naming of sensors to support multiple instances more transparently
@@ -108,11 +108,6 @@ Go to https://my.home-assistant.io/redirect/developer_statistics to fix this
 
 ### Note
 Unit of measure is not applied to attributes only to the sensor state. Attribute values are supplied as metric values
-
-## Resources
-Two files are created in the config directory:
-- One named for the instance of the integration with a '.pickle' extension
-- The other is 'owm_api_count.pickle' that retains the daily API cound across all instances of the integration
 
 ## Attribute example
 ```
