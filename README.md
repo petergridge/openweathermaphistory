@@ -1,20 +1,10 @@
 # OpenWeatherMapHistory
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?logo=homeassistantcommunitystore)](https://github.com/hacs/integration)
 [![my_badge](https://img.shields.io/badge/Home%20Assistant-Community-41BDF5.svg?logo=homeassistant)](https://community.home-assistant.io/t/custom-component-to-retrieve-five-days-of-rain-history-from-openweathermap/310153)
-![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/latest/total) ![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/V2024.10.04/total)
+![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/latest/total) ![GitHub release (latest by date)](https://img.shields.io/github/downloads/petergridge/openweathermaphistory/V2025.01.01/total)
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-## V2024.10.04
-- Fix issue with index out of sequence when updating sensors.
-- Add new feature to auto create sensors. Currently accessed from the API page.
-- Modify Naming of sensors to support multiple instances more transparently
-- Clear entity registry of unused sensors (no more unavailable sensors)
-
-## V2024.09.01 available
-- If you recently downloaded this Prior to 19th September 6pm AustralianEST you will need to redownload (only 10 downloads impacted)
-- Some improved performance
-- Handle data/option mismatch on upgrading
 
 # NEW to Version 2.0.0
 - A totally new way to access the data!
@@ -199,6 +189,13 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 Tristan created a german video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
+## V2025.01.01
+- correct bulk creation of sensors
+## V2024.10.04
+- Fix issue with index out of sequence when updating sensors.
+- Add new feature to auto create sensors. Currently accessed from the API page.
+- Modify Naming of sensors to support multiple instances more transparently
+- Clear entity registry of unused sensors (no more unavailable sensors)
 ## V2024.10.02 Beta available
 - Fix issue with index out of sequence when updating sensors.
 - Add new feature to auto create sensors. Currently accessed from the API page.
