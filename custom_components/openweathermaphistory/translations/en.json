@@ -3,21 +3,21 @@
     "services":{
 		"api_call":{
 			"name": "API call",
-			"description": "Test the api call, check the log for results.",
+			"description": "Test the api call, check the log for results",
 			"fields": {
 				"entity_id": {
-					"name": "Entity ID",
-					"description": "the OWM history instance"
+					"name": "OWMH Instance",
+					"description": "The OWM history instance to test API call for"
 				}
 			}
 		},
 		"list_vars":{
 			"name": "List Variable",
-			"description": "List available variables, check the log for results.",
+			"description": "List available variables, check the log for results",
 			"fields": {
 				"entity_id": {
-					"name": "Entity ID",
-					"description": "the OWM history instance"
+					"name": "OWMH Instance",
+					"description": "The OWM history instance to list variables for"
 				}
 			}
 		}
@@ -104,7 +104,7 @@
             "user": {
             "menu_options": {
                 "update":"Update API",
-                "bulk":"Bulk Sensors",
+                "bulk":"Bulk Sensors ",
                 "add":"Add Sensor",
                 "list_modify":"Modify Sensor",
                 "delete":"Delete Sensor",

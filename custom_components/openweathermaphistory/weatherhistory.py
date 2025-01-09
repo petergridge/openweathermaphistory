@@ -255,7 +255,6 @@ class Weather:
         await rest.async_update(log_errors=True)
         self._daily_count += 1
         _LOGGER.warning(url)
-        _LOGGER.warning(self.validate_data(rest.data))
         _LOGGER.warning(rest.data)
 
 

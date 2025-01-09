@@ -15,7 +15,6 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, CONF_RESOURCES, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -40,23 +39,6 @@ SCAN_INTERVAL = timedelta(minutes=5)
 
 _LOGGER = logging.getLogger(__name__)
 
-async def _async_create_entities(hass:HomeAssistant, config, weather):
-    """Create the Template switches."""
-    sensors = []
-    coordinator = WeatherCoordinator(hass, weather)
-    #append multiple sensors using the single weather class
-    for resource in config[CONF_RESOURCES]:
-        if resource.get('enabled',True):
-            sensor = WeatherHistory(
-                        hass,
-                        config,
-                        resource,
-                        weather,
-                        coordinator
-                    )
-            sensors.append(sensor)
-    return sensors
-
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -72,23 +54,32 @@ async def async_setup_entry(
     #initialise the weather data
     weather.set_processing_type (CONST_INITIAL)
     await weather.async_update()
-    async_add_entities(await _async_create_entities(hass, config, weather))
 
-    platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service(
-        "api_call",
-        {
+    sensors = []
+    coordinator = WeatherCoordinator(hass, weather)
+    #append multiple sensors using the single weather class
+    for resource in config[CONF_RESOURCES]:
+        if resource.get('enabled',True):
+            sensor = WeatherHistory(
+                        hass,
+                        config,
+                        resource,
+                        weather,
+                        coordinator
+                    )
+            sensors.append(sensor)
 
-        },
-        "api_call",
-    )
-    platform.async_register_entity_service(
-        "list_vars",
-        {
+    async_add_entities(sensors)
 
-        },
-        "list_vars",
-    )
+    async def handle_event(event_data):
+        if event_data.data.get('entry') == config_entry.data.get('name'):
+            if event_data.data.get('action') == 'list_variables':
+                sensors[0].list_vars()
+            if event_data.data.get('action') == 'api_call':
+                await sensors[0].api_call()
+
+    # Listen for when event is fired
+    hass.bus.async_listen("owmh_event", handle_event)
 
     done = hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, let_weather_know_hass_has_started(weather))
     done()
@@ -98,7 +89,6 @@ def let_weather_know_hass_has_started(weather):
     '''Let the coordinator know HA is loaded so backloading can commence.'''
     _LOGGER.debug('HA has started')
     weather.set_processing_type ('general')
-
 
 class WeatherCoordinator(DataUpdateCoordinator):
     """Weather API data coordinator. Refresh the data independantly of the sensor."""
@@ -172,6 +162,8 @@ class WeatherHistory(CoordinatorEntity,SensorEntity):
         self.determine_state()
         self.async_write_ha_state()
         _LOGGER.debug('async update')
+
+
 
     @property
     def name(self):

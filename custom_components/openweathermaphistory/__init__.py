@@ -9,7 +9,7 @@ from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv, storage as store
 
 from . import utils
@@ -26,6 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
     PLATFORMS: list[str] = ["sensor"]
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
@@ -41,6 +42,30 @@ async def async_setup(hass:HomeAssistant, config):
     # 2. Add card to resources
     version = getattr(hass.data["integrations"][DOMAIN], "version", 0)
     await utils.init_resource(hass, "/openweathermaphistory/www/openweathermaphistory.js", str(version))
+
+    async def list_vars(call: ServiceCall):
+        """List all available variables."""
+        for entry in hass.config_entries.async_entries('openweathermaphistory'):
+            if call.data.get('entry_id') == entry.entry_id:
+                event_data = {
+                    "action": "list_variables",
+                    "entry": entry.title
+                    }
+                hass.bus.async_fire("owmh_event", event_data)
+    hass.services.async_register(DOMAIN, "list_vars", list_vars)
+
+    async def api_call(call: ServiceCall):
+        """Test API call."""
+        for entry in hass.config_entries.async_entries('openweathermaphistory'):
+            if call.data.get('entry_id') == entry.entry_id:
+                event_data = {
+                    "action": "api_call",
+                    "entry": entry.title
+                    }
+                hass.bus.async_fire("owmh_event", event_data)
+    hass.services.async_register(DOMAIN, "api_call", api_call)
+
+
 
     return True
 
@@ -84,3 +109,5 @@ async def async_remove_entry(hass: HomeAssistant,entry: ConfigEntry):
     name = "OWMH_" + entry.title
     x = store.Store[dict[any]](hass,1,name)
     await x.async_remove()
+
+

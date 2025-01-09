@@ -767,19 +767,19 @@ def process_options(hass,options,resource_list,days):
         else:
             resources=remove_from_list(hass,resources,create_formula(f"forecast{i}rain", 'precipitation','measurement'))
         if 'forecast_snow' in options:
-            resources=add_to_list(create_formula(f"forecast{i}snow", 'precipitation','measurement'))
+            resources=add_to_list(resources,create_formula(f"forecast{i}snow", 'precipitation','measurement'))
         else:
             resources=remove_from_list(hass,resources,create_formula(f"forecast{i}snow", 'precipitation','measurement'))
         if 'forecast_max' in options:
-            resources=add_to_list(create_formula(f"forecast{i}max", 'temperature','measurement'))
+            resources=add_to_list(resources,create_formula(f"forecast{i}max", 'temperature','measurement'))
         else:
             resources=remove_from_list(hass,resources,create_formula(f"forecast{i}max", 'precipitation','measurement'))
         if 'forecast_min' in options:
-            resources=add_to_list(create_formula(f"forecast{i}min", 'temperature','measurement'))
+            resources=add_to_list(resources,create_formula(f"forecast{i}min", 'temperature','measurement'))
         else:
             resources=remove_from_list(hass,resources,create_formula(f"forecast{i}min", 'precipitation','measurement'))
         if 'forecast_humidity' in options:
-            resources=add_to_list(create_formula(f"forecast{i}humidity", 'humidity','measurement'))
+            resources=add_to_list(resources,create_formula(f"forecast{i}humidity", 'humidity','measurement'))
         else:
             resources=remove_from_list(hass,resources,create_formula(f"forecast{i}humidity", 'precipitation','measurement'))
         if 'forecast_pop' in options:
