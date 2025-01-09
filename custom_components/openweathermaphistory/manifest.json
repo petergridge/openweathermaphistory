@@ -8,5 +8,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/petergridge/openweathermaphistory/issues",
   "requirements": ["pyowm==3.2.0"],
-  "version": "2024.10.02"
+  "version": "2025.01.01"
 }
