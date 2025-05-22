@@ -5,7 +5,6 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-
 # NEW to Version 2.0.0
 - A totally new way to access the data!
 - Supports Jinja templates to provide you control over how you utilise the data.
@@ -122,7 +121,7 @@ Display current temperature
 ```
 {{current_temp}}
 ```
-Version 1 factor, verifying to an expected 10mm rainfall
+Version 1 factor, verifying to an expected 10mm rainfall. The resulting factore can be used to reduce the watering time or volume of water when there has been rain. This example could be extended to include temperature and increase the watering if it is hotter than expected.
 ```
 {{ 
   [(10 
