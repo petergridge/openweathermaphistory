@@ -121,7 +121,7 @@ Display current temperature
 ```
 {{current_temp}}
 ```
-Version 1 factor, verifying to an expected 10mm rainfall. The resulting factore can be used to reduce the watering time or volume of water when there has been rain. This example could be extended to include temperature and increase the watering if it is hotter than expected.
+Version 1 factor, verifying to an expected 10mm rainfall. The resulting factor can be used to reduce the watering time or volume  when there has been some rain but not enough to not water at all. This example could be extended to include temperature and increase the watering if it is hotter than expected.
 ```
 {{ 
   [(10 
