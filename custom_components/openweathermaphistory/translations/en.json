@@ -104,7 +104,7 @@
             "user": {
             "menu_options": {
                 "update":"Update API",
-                "bulk":"Bulk Sensors ",
+                "bulk":"Bulk Sensors",
                 "add":"Add Sensor",
                 "list_modify":"Modify Sensor",
                 "delete":"Delete Sensor",
