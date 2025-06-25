@@ -1,4 +1,5 @@
 """Utils."""
+
 import logging
 
 from aiohttp import web
@@ -22,13 +23,14 @@ def register_static_path(app: web.Application, url_path: str, path):
     elif "allow_cors" in app:
         app["allow_cors"](route)
 
+
 async def init_resource(hass: HomeAssistant, url: str, ver: str) -> bool:
     """Add extra JS module for lovelace mode YAML and new lovelace resource
     for mode GUI. It's better to add extra JS for all modes, because it has
     random url to avoid problems with the cache. But chromecast don't support
     extra JS urls and can't load custom card.
     """  # noqa: D205
-    resources: ResourceStorageCollection = hass.data["lovelace"]["resources"]
+    resources: ResourceStorageCollection = hass.data["lovelace"].resources
     # force load storage
     await resources.async_get_info()
 
@@ -53,10 +55,10 @@ async def init_resource(hass: HomeAssistant, url: str, ver: str) -> bool:
         return True
 
     if isinstance(resources, ResourceStorageCollection):
-        #_LOGGER.debug(f"Add new lovelace resource: {url2}")
+        # _LOGGER.debug(f"Add new lovelace resource: {url2}")
         await resources.async_create_item({"res_type": "module", "url": url2})
     else:
-        #_LOGGER.debug(f"Add extra JS module: {url2}")
+        # _LOGGER.debug(f"Add extra JS module: {url2}")
         add_extra_js_url(hass, url2)
 
     return True
