@@ -3,12 +3,30 @@
 import logging
 
 from aiohttp import web
+from pyopenweathermap import RequestError, create_owm_client
 
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.lovelace.resources import ResourceStorageCollection
 from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def validate_api_key(api_key, mode):
+    """Validate API key."""
+    api_key_valid = None
+    errors, description_placeholders = {}, {}
+    try:
+        owm_client = create_owm_client(api_key, mode)
+        api_key_valid = await owm_client.validate_key()
+    except RequestError as error:
+        errors["base"] = "cannot_connect"
+        description_placeholders["error"] = str(error)
+
+    if api_key_valid is False:
+        errors["base"] = "invalid_api_key"
+
+    return errors, description_placeholders
 
 
 def register_static_path(app: web.Application, url_path: str, path):

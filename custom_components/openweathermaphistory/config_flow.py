@@ -3,15 +3,10 @@
 from __future__ import annotations
 
 import contextlib
-
-# from pyowm import OWM
-from datetime import date, datetime
-import json
 import logging
 import uuid
 
 import jinja2
-from pyowm.commons.exceptions import APIRequestError, UnauthorizedError
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -23,13 +18,13 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_RESOURCES,
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
 from homeassistant.helpers import (
     config_validation as cv,
     entity_registry as er,
     selector as sel,
 )
-from homeassistant.util import location
+from homeassistant.util import location as location_util
 
 from .const import (
     CONF_ATTRIBUTES,
@@ -41,13 +36,12 @@ from .const import (
     CONF_SENSORCLASS,
     CONF_STATECLASS,
     CONF_UID,
-    CONST_API_CALL,
     CONST_PROXIMITY,
     DOMAIN,
     OPTIONS_BULK,
     OPTIONS_SENSOR_CLASS,
 )
-from .data import RestData
+from .utils import validate_api_key
 
 DEFAULT_NAME = "Home"
 _LOGGER = logging.getLogger(__name__)
@@ -72,7 +66,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             await self.async_set_unique_id(str(uuid.uuid4()))
             for data in self.hass.data.get(DOMAIN, {}).values():
                 if (
-                    location.distance(
+                    location_util.distance(
                         user_input[CONF_LOCATION][CONF_LATITUDE],
                         user_input[CONF_LOCATION][CONF_LONGITUDE],
                         data[CONF_LOCATION][CONF_LATITUDE],
@@ -91,17 +85,9 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS]
             )
 
-            lat = user_input[CONF_LOCATION][CONF_LATITUDE]
-            lon = user_input[CONF_LOCATION][CONF_LONGITUDE]
-            api_key = user_input.get(CONF_API_KEY)
-            try:
-                api_online = await _is_owm_api_online(self.hass, api_key, lat, lon)
-                if not api_online:
-                    errors[CONF_API_KEY] = "invalid_api_key"
-            except UnauthorizedError:
-                errors[CONF_API_KEY] = "invalid_api_key"
-            except APIRequestError:
-                errors[CONF_API_KEY] = "cannot_connect"
+            errors, description_placeholders = await validate_api_key(
+                user_input[CONF_API_KEY], "v3.0"
+            )
 
             if not errors:
                 # Input is valid, set data.
@@ -196,17 +182,10 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
         newdata = {}
         newdata.update(self._data)
         if user_input is not None:
-            lat = self._data[CONF_LOCATION][CONF_LATITUDE]
-            lon = self._data[CONF_LOCATION][CONF_LONGITUDE]
-            api_key = user_input.get(CONF_API_KEY)
-            try:
-                api_online = await _is_owm_api_online(self.hass, api_key, lat, lon)
-                if not api_online:
-                    errors[CONF_API_KEY] = "invalid_api_key"
-            except UnauthorizedError:
-                errors[CONF_API_KEY] = "invalid_api_key"
-            except APIRequestError:
-                errors[CONF_API_KEY] = "cannot_connect"
+            errors, description_placeholders = await validate_api_key(
+                user_input[CONF_API_KEY], "v3.0"
+            )
+
             user_input[CONF_MAX_DAYS] = max(
                 user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS]
             )
@@ -505,17 +484,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         newdata = {}
         newdata.update(self._data)
         if user_input is not None:
-            lat = self._data[CONF_LOCATION][CONF_LATITUDE]
-            lon = self._data[CONF_LOCATION][CONF_LONGITUDE]
-            api_key = user_input.get(CONF_API_KEY)
-            try:
-                api_online = await _is_owm_api_online(self.hass, api_key, lat, lon)
-                if not api_online:
-                    errors[CONF_API_KEY] = "invalid_api_key"
-            except UnauthorizedError:
-                errors[CONF_API_KEY] = "invalid_api_key"
-            except APIRequestError:
-                errors[CONF_API_KEY] = "cannot_connect"
+            errors, description_placeholders = await validate_api_key(
+                user_input[CONF_API_KEY], "v3.0"
+            )
+
             user_input[CONF_MAX_DAYS] = max(
                 user_input[CONF_MAX_DAYS], user_input[CONF_INTIAL_DAYS]
             )
@@ -530,7 +502,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 # Input is valid, set data.
                 resources = []
                 resources = self._data[CONF_RESOURCES]
-                options = user_input.get(CONF_CREATE_SENSORS)
+                options = newdata.get(CONF_CREATE_SENSORS)
                 # now process the create sensor options to build the required sensors
                 resources = process_options(
                     self.hass,
@@ -854,157 +826,166 @@ def remove_from_list(hass, list, item):
 def process_options(hass, options, resource_list, days):
     """Process the selected aut create options."""
     resources = resource_list
-    for i in range(6):
-        if "forecast_rain" in options:
-            resources = add_to_list(
-                resources,
-                create_formula(f"forecast{i}rain", "precipitation", "measurement"),
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"forecast{i}rain", "precipitation", "measurement"),
-            )
-        if "forecast_snow" in options:
-            resources = add_to_list(
-                resources,
-                create_formula(f"forecast{i}snow", "precipitation", "measurement"),
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"forecast{i}snow", "precipitation", "measurement"),
-            )
-        if "forecast_max" in options:
-            resources = add_to_list(
-                resources,
-                create_formula(f"forecast{i}max", "temperature", "measurement"),
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"forecast{i}max", "precipitation", "measurement"),
-            )
-        if "forecast_min" in options:
-            resources = add_to_list(
-                resources,
-                create_formula(f"forecast{i}min", "temperature", "measurement"),
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"forecast{i}min", "precipitation", "measurement"),
-            )
-        if "forecast_humidity" in options:
-            resources = add_to_list(
-                resources,
-                create_formula(f"forecast{i}humidity", "humidity", "measurement"),
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"forecast{i}humidity", "precipitation", "measurement"),
-            )
-        if "forecast_pop" in options:
-            resources = add_to_list(
-                resources, create_formula(f"forecast{i}pop", "none", "none")
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"forecast{i}pop", "precipitation", "measurement"),
-            )
+    if options:
+        for i in range(6):
+            if "forecast_rain" in options:
+                resources = add_to_list(
+                    resources,
+                    create_formula(f"forecast{i}rain", "precipitation", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"forecast{i}rain", "precipitation", "measurement"),
+                )
+            if "forecast_snow" in options:
+                resources = add_to_list(
+                    resources,
+                    create_formula(f"forecast{i}snow", "precipitation", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"forecast{i}snow", "precipitation", "measurement"),
+                )
+            if "forecast_max" in options:
+                resources = add_to_list(
+                    resources,
+                    create_formula(f"forecast{i}max", "temperature", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"forecast{i}max", "precipitation", "measurement"),
+                )
+            if "forecast_min" in options:
+                resources = add_to_list(
+                    resources,
+                    create_formula(f"forecast{i}min", "temperature", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"forecast{i}min", "precipitation", "measurement"),
+                )
+            if "forecast_humidity" in options:
+                resources = add_to_list(
+                    resources,
+                    create_formula(f"forecast{i}humidity", "humidity", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(
+                        f"forecast{i}humidity", "precipitation", "measurement"
+                    ),
+                )
+            if "forecast_pop" in options:
+                resources = add_to_list(
+                    resources, create_formula(f"forecast{i}pop", "none", "none")
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"forecast{i}pop", "precipitation", "measurement"),
+                )
 
-    for i in range(days):
-        if "hist_rain" in options:
-            resources = add_to_list(
-                resources, create_formula(f"day{i}rain", "precipitation", "measurement")
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"day{i}rain", "precipitation", "measurement"),
-            )
-        if "hist_snow" in options:
-            resources = add_to_list(
-                resources, create_formula(f"day{i}snow", "precipitation", "measurement")
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"day{i}snow", "precipitation", "measurement"),
-            )
-        if "hist_max" in options:
-            add_to_list(
-                resources, create_formula(f"day{i}max", "temperature", "measurement")
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"day{i}max", "precipitation", "measurement"),
-            )
-        if "hist_min" in options:
-            resources = add_to_list(
-                resources, create_formula(f"day{i}min", "temperature", "measurement")
-            )
-        else:
-            resources = remove_from_list(
-                hass,
-                resources,
-                create_formula(f"day{i}min", "precipitation", "measurement"),
-            )
+        for i in range(days):
+            if "hist_rain" in options:
+                resources = add_to_list(
+                    resources,
+                    create_formula(f"day{i}rain", "precipitation", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"day{i}rain", "precipitation", "measurement"),
+                )
+            if "hist_snow" in options:
+                resources = add_to_list(
+                    resources,
+                    create_formula(f"day{i}snow", "precipitation", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"day{i}snow", "precipitation", "measurement"),
+                )
+            if "hist_max" in options:
+                add_to_list(
+                    resources,
+                    create_formula(f"day{i}max", "temperature", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"day{i}max", "precipitation", "measurement"),
+                )
+            if "hist_min" in options:
+                resources = add_to_list(
+                    resources,
+                    create_formula(f"day{i}min", "temperature", "measurement"),
+                )
+            else:
+                resources = remove_from_list(
+                    hass,
+                    resources,
+                    create_formula(f"day{i}min", "precipitation", "measurement"),
+                )
 
-    if "current_obs" in options:
-        resources = add_to_list(
-            resources, create_formula("current_rain", "precipitation", "measurement")
-        )
-        resources = add_to_list(
-            resources, create_formula("current_snow", "precipitation", "measurement")
-        )
-        resources = add_to_list(
-            resources, create_formula("current_humidity", "humidity", "measurement")
-        )
-        resources = add_to_list(
-            resources, create_formula("current_temp", "temperature", "measurement")
-        )
-        resources = add_to_list(
-            resources, create_formula("current_pressure", "pressure", "measurement")
-        )
-    else:
-        resources = remove_from_list(
-            hass,
-            resources,
-            create_formula("current_rain", "precipitation", "measurement"),
-        )
-        resources = remove_from_list(
-            hass,
-            resources,
-            create_formula("current_snow", "precipitation", "measurement"),
-        )
-        resources = remove_from_list(
-            hass,
-            resources,
-            create_formula("current_humidity", "humidity", "measurement"),
-        )
-        resources = remove_from_list(
-            hass,
-            resources,
-            create_formula("current_temp", "temperature", "measurement"),
-        )
-        resources = remove_from_list(
-            hass,
-            resources,
-            create_formula("current_pressure", "pressure", "measurement"),
-        )
+        if "current_obs" in options:
+            resources = add_to_list(
+                resources,
+                create_formula("current_rain", "precipitation", "measurement"),
+            )
+            resources = add_to_list(
+                resources,
+                create_formula("current_snow", "precipitation", "measurement"),
+            )
+            resources = add_to_list(
+                resources, create_formula("current_humidity", "humidity", "measurement")
+            )
+            resources = add_to_list(
+                resources, create_formula("current_temp", "temperature", "measurement")
+            )
+            resources = add_to_list(
+                resources, create_formula("current_pressure", "pressure", "measurement")
+            )
+        else:
+            resources = remove_from_list(
+                hass,
+                resources,
+                create_formula("current_rain", "precipitation", "measurement"),
+            )
+            resources = remove_from_list(
+                hass,
+                resources,
+                create_formula("current_snow", "precipitation", "measurement"),
+            )
+            resources = remove_from_list(
+                hass,
+                resources,
+                create_formula("current_humidity", "humidity", "measurement"),
+            )
+            resources = remove_from_list(
+                hass,
+                resources,
+                create_formula("current_temp", "temperature", "measurement"),
+            )
+            resources = remove_from_list(
+                hass,
+                resources,
+                create_formula("current_pressure", "pressure", "measurement"),
+            )
 
     return resources
 
@@ -1063,26 +1044,3 @@ def evaluate_custom_formula(formula, max_days):
         return "string"
     else:
         return "measurement"
-
-
-async def _is_owm_api_online(hass: HomeAssistant, api_key, lat, lon):
-    """Call the api and show the result."""
-    hour = datetime(
-        date.today().year, date.today().month, date.today().day, datetime.now().hour
-    )
-    thishour = int(datetime.timestamp(hour))
-    url = CONST_API_CALL % (lat, lon, thishour, api_key)
-    rest = RestData()
-    await rest.set_resource(hass, url)
-    await rest.async_update(log_errors=True)
-    data = json.loads(rest.data)
-    try:
-        code = data["cod"]
-        message = data["message"]
-        _LOGGER.error("OpenWeatherMap call failed code: %s message: %s", code, message)
-    except TypeError:
-        return True
-    except KeyError:
-        return True
-    else:
-        return False
