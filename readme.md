@@ -5,20 +5,9 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
-# NEW to Version 2.0.0
-- A totally new way to access the data!
-- Supports Jinja templates to provide you control over how you utilise the data.
-- Current Observations
-- 8 days of forecast
-- Up to 30 days of history
-
-This is a big update, if you find an issue raise an issue on Github, If you like it give it a star.
 
 # Thanks
 A big thanks to @tsbernar for the work put into this release.
-
-# Breaking Change: V2.0.0
-- Existing yaml will no longer work, you will need to set up using the config flow.
 
 # Functionality
 A home assistant sensor that uses the OpenWeatherMap API to return:
