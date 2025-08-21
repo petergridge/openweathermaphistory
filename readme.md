@@ -6,9 +6,6 @@
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
 
-# Thanks
-A big thanks to @tsbernar for the work put into this release.
-
 # Functionality
 A home assistant sensor that uses the OpenWeatherMap API to return:
 - Up to 30 days of history data (rain, snow, min temp, max temp)
@@ -173,10 +170,42 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |remaining_backlog|Hours of data remaining to be gathered|
 |daily_count|Number of API calls for all instances of the integration, resets midnight GMT. This will not always match between instance of the integration due to the update frequency|
 
+## Using Plotty to graph rain history
+
+Plotty is a card available on HACS
+
+<img width="232" height="23" alt="image" src="https://github.com/user-attachments/assets/4eea4d6e-714d-42d8-a8eb-3d073b4fe939" />
+
+Create a sensor in OWMH with this specification:
+
+<img width="233" height="271" alt="image" src="https://github.com/user-attachments/assets/93922812-34ad-4fb5-9cf8-19379e17724d" />
+
+Define the 'Plotty' card:
+
+<img width="559" height="355" alt="image" src="https://github.com/user-attachments/assets/5e4c178f-19fe-4e22-b766-50b4a256c3e3" />
+
+There are many options available this is the simplest implementation.
+```
+type: custom:plotly-graph
+hours_to_show: 24h
+entities:
+  - entity: ""
+    x: $ex hass.states['sensor.plotty'].attributes['hourly_time']
+    "y": $ex hass.states['sensor.plotty'].attributes['hourly_rain']
+```
+
 ## Tutorial
-Tristan created a german video about this integration: https://youtu.be/cXtVMJZU_ho
+Tristan created a German language video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
+## V2025.08.01
+Add aggregate day data, data for a calendar day (uses an additional 24 call per day)
+Action to run each of the 4 calls available through the onecall API
+- API details and result displayed to Notifications
+Action to list available attributes and values to Notifications
+Delay the collection of data until 5 minutes after the hour.
+- This is to allow corrections to be applied prior to gathering the data as there are some collection stations that are reporting incorrect precipitation readings that are corrected within a few minutes
+- Add attribute to store list of times and rain, can be used to graph the data using 'plotty' a custom card. 
 ## V2025.01.01
 - correct bulk creation of sensors
 ## V2024.10.04
