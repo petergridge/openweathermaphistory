@@ -11,6 +11,7 @@ A home assistant sensor that uses the OpenWeatherMap API to return:
 - Up to 30 days of history data (rain, snow, min temp, max temp)
 - 7 days of forecast (pop, rain, snow, humidity, min temp, max temp)
 - Current observations (rain, snow, humidity, current temp, current pressure)
+- Aggrgate daily data by date (precipitation, min temp, max temp, date)
 - Status information (remaining backlog to load, current days API count)
 
 Any number of sensors can be created using templates.
