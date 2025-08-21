@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import logging
-import os
-from os.path import exists
 from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, Platform
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv, storage as store
 
@@ -64,7 +62,7 @@ async def async_setup(hass: HomeAssistant, config):
         """Test API call."""
         for entry in hass.config_entries.async_entries("openweathermaphistory"):
             if call.data.get("entry_id") == entry.entry_id:
-                event_data = {"action": "api_call", "entry": entry.title}
+                event_data = {"action": "api_call", "entry": entry.title, "api": call.data.get("api")}
                 hass.bus.async_fire("owmh_event", event_data)
 
     hass.services.async_register(DOMAIN, "api_call", api_call)

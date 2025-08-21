@@ -29,14 +29,14 @@ class RestData:
         self._resource = url
         self._timeout  = timeout
 
-    async def async_update(self, log_errors=True):
+    async def async_update(self, log_errors=False):
         """Get the latest data from REST service with provided method."""
         if not self._async_client:
             self._async_client = get_async_client(
                 self._hass, verify_ssl=self._verify_ssl
             )
 
-        _LOGGER.debug("Updating from %s", self._resource)
+        # _LOGGER.debug("Updating from %s", self._resource)
         try:
             response = await self._async_client.request(
                 "GET",
