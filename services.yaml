@@ -1,0 +1,34 @@
+api_call:
+  description: Test the api call, check the log for results
+  fields:
+    entry_id:
+      name: Entity ID
+      description: The OWM history instance
+      required: true
+      selector:
+        config_entry:
+          integration: openweathermaphistory
+    api:
+      name: API
+      description: API call
+      required: true
+      selector:
+        select:
+          translation_key: "api"
+          options:
+            - timemachine
+            - day_summary
+            - forecast
+            - overview
+
+list_vars:
+  description: list available variables, check the log for results
+  fields:
+    entry_id:
+      name: Entity ID
+      description: The OWM history instance
+      required: true
+      selector:
+         config_entry:
+            integration: openweathermaphistory
+
