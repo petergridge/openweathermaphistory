@@ -80,3 +80,5 @@ async def init_resource(hass: HomeAssistant, url: str, ver: str) -> bool:
         add_extra_js_url(hass, url2)
 
     return True
+
+

@@ -33,6 +33,7 @@ from .const import (
     CONF_FORMULA,
     CONF_INTIAL_DAYS,
     CONF_MAX_DAYS,
+    CONF_PRECISION,
     CONF_SENSORCLASS,
     CONF_STATECLASS,
     CONF_UID,
@@ -145,6 +146,7 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
         self._maxdays = config.get(CONF_MAX_DAYS)
         self._sensor_class = resource.get(CONF_SENSORCLASS, None)
         self._state_class = resource.get(CONF_STATECLASS, None)
+        self._precision = resource.get(CONF_PRECISION, None)
         self._uuid = resource.get(CONF_UID)
         self._hidden_by = resource.get("hidden_by")
 
@@ -174,6 +176,11 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
         return self._name
 
     @property
+    def suggested_display_precision(self):
+        """Return the precision of the sensor."""
+        return self._precision
+
+    @property
     def unique_id(self):
         """Return a unique_id for this entity."""
         return self._uuid
@@ -184,6 +191,8 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
         match self._state_class:
             case "measurement":
                 return SensorStateClass.MEASUREMENT
+            case "measurement_angle":
+                return SensorStateClass.MEASUREMENT_ANGLE
 
     @property
     def native_unit_of_measurement(self):
@@ -199,6 +208,10 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
                 return "°C"
             case "pressure":
                 return "hPa"
+            case "wind_direction":
+                return "°"
+            case "wind_speed":
+                return "m/s"
 
     @property
     def device_class(self) -> SensorDeviceClass:
@@ -277,51 +290,43 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
         # default to initial days variable
         # need to define 'dummy' versions in the config flow as well
         for i in range(int(max(weather.max_days(), self._initdays))):
-            wvars[f"day{i}rain"] = round(weather.processed_value(i, "rain"), 2)
-            wvars[f"day{i}snow"] = round(weather.processed_value(i, "snow"), 2)
-            wvars[f"day{i}max"] = round(weather.processed_value(i, "max_temp"), 2)
-            wvars[f"day{i}min"] = round(weather.processed_value(i, "min_temp"), 2)
+            wvars[f"day{i}rain"] = weather.processed_value(i, "rain")
+            wvars[f"day{i}snow"] = weather.processed_value(i, "snow")
+            wvars[f"day{i}max"] = weather.processed_value(i, "max_temp")
+            wvars[f"day{i}min"] = weather.processed_value(i, "min_temp")
 
         for i in range(int(max(weather.max_days(), self._initdays))):
             wvars[f"aggregate{i}date"] = weather.processed_value(f"a{i}", "date")
-            wvars[f"aggregate{i}precipitation"] = round(
-                weather.processed_value(f"a{i}", "precipitation"), 2
-            )
-            wvars[f"aggregate{i}max"] = round(
-                weather.processed_value(f"a{i}", "max_temp"), 2
-            )
-            wvars[f"aggregate{i}min"] = round(
-                weather.processed_value(f"a{i}", "min_temp"), 2
-            )
+            wvars[f"aggregate{i}precipitation"] = weather.processed_value(f"a{i}", "precipitation")
+            wvars[f"aggregate{i}max"] = weather.processed_value(f"a{i}", "max_temp")
+            wvars[f"aggregate{i}min"] = weather.processed_value(f"a{i}", "min_temp")
 
         # forecast provides 7 days of data
         for i in range(0, 6):  # noqa: PIE808
-            wvars[f"forecast{i}pop"] = round(weather.processed_value(f"f{i}", "pop"), 2)
-            wvars[f"forecast{i}rain"] = round(
-                weather.processed_value(f"f{i}", "rain"), 2
-            )
-            wvars[f"forecast{i}snow"] = round(
-                weather.processed_value(f"f{i}", "snow"), 2
-            )
-            wvars[f"forecast{i}humidity"] = round(
-                weather.processed_value(f"f{i}", "humidity"), 2
-            )
-            wvars[f"forecast{i}max"] = round(
-                weather.processed_value(f"f{i}", "max_temp"), 2
-            )
-            wvars[f"forecast{i}min"] = round(
-                weather.processed_value(f"f{i}", "min_temp"), 2
-            )
+            wvars[f"forecast{i}pop"] =weather.processed_value(f"f{i}", "pop")
+            wvars[f"forecast{i}rain"] = weather.processed_value(f"f{i}", "rain")
+            wvars[f"forecast{i}snow"] = weather.processed_value(f"f{i}", "snow")
+            wvars[f"forecast{i}humidity"] = weather.processed_value(f"f{i}", "humidity")
+            wvars[f"forecast{i}max"] = weather.processed_value(f"f{i}", "max_temp")
+            wvars[f"forecast{i}min"] = weather.processed_value(f"f{i}", "min_temp")
+            wvars[f"forecast{i}wind_deg"] = weather.processed_value(f"f{i}", "wind_deg")
+            wvars[f"forecast{i}wind_speed"] = weather.processed_value(f"f{i}", "wind_speed")
+            wvars[f"forecast{i}uvi"] = weather.processed_value(f"f{i}", "uvi")
+            wvars[f"forecast{i}clouds"] = weather.processed_value(f"f{i}", "clouds")
+            wvars[f"forecast{i}description"] = weather.processed_value(f"f{i}", "description")
+
         # current observations
-        wvars["current_rain"] = round(weather.processed_value("current", "rain"), 2)
-        wvars["current_snow"] = round(weather.processed_value("current", "snow"), 2)
-        wvars["current_humidity"] = round(
-            weather.processed_value("current", "humidity"), 2
-        )
-        wvars["current_temp"] = round(weather.processed_value("current", "temp"), 2)
-        wvars["current_pressure"] = round(
-            weather.processed_value("current", "pressure"), 2
-        )
+        wvars["current_rain"] = weather.processed_value("current", "rain")
+        wvars["current_snow"] = weather.processed_value("current", "snow")
+        wvars["current_humidity"] = weather.processed_value("current", "humidity")
+        wvars["current_temp"] = weather.processed_value("current", "temp")
+        wvars["current_pressure"] = weather.processed_value("current", "pressure")
+        wvars["current_wind_deg"] =  weather.processed_value("current", "wind_deg")
+        wvars["current_wind_speed"] = weather.processed_value("current", "wind_speed")
+        wvars["current_uvi"] = weather.processed_value("current", "uvi")
+        wvars["current_clouds"] = weather.processed_value("current", "clouds")
+        wvars["current_description"] = weather.processed_value("current", "description")
+
         # special values
         wvars["remaining_backlog"] = weather.remaining_backlog()
         wvars["daily_count"] = weather.daily_count()
@@ -337,10 +342,7 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
         card = "```" + chr(10)
         card += f"Configured max days: {self._maxdays}" + chr(10)
         card += f"Configured initial days: {self._initdays}" + chr(10)
-        # _LOGGER.warning("Configured max days : %s", self._maxdays)
-        # _LOGGER.warning("Configured initial days: %s", self._initdays)
         for name, value in wvars.items():
-            # _LOGGER.warning("%s : %s", name, value)
             card += f"{name}: {value}" + chr(10)
         card += "```" + chr(10)
 

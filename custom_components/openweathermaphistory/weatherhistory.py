@@ -199,6 +199,11 @@ class Weather:
         if result:
             days = result.get("daily")
             current = result.get("current")
+            weather = current.get("weather")
+            description = ""
+            if weather:
+                for instance in weather:
+                    description += instance.get("description","")
 
         # current observations
         currentdata = {
@@ -207,11 +212,21 @@ class Weather:
             "temp": current.get("temp", 0),
             "humidity": current.get("humidity", 0),
             "pressure": current.get("pressure", 0),
+            "wind_speed": current.get("wind_speed",0),
+            "wind_deg": current.get("wind_deg",0),
+            "uvi": current.get("uvi",0),
+            "clouds": current.get("clouds",0),
+            "description": description,
         }
         # build forecast
         forecastdaily = {}
         for day in days:
             temp = day.get("temp", {})
+            weather = day.get("weather")
+            description = ""
+            if weather:
+                for instance in weather:
+                    description += instance.get("description","")
             daydata = {
                 "max_temp": temp.get("max", 0),
                 "min_temp": temp.get("min", 0),
@@ -220,6 +235,11 @@ class Weather:
                 "pop": day.get("pop", 0),
                 "rain": day.get("rain", 0),
                 "snow": day.get("snow", 0),
+                "wind_speed": day.get("wind_speed",0),
+                "wind_deg": day.get("wind_deg",0),
+                "uvi": day.get("uvi",0),
+                "clouds": day.get("clouds",0),
+                "description": description,
             }
             forecastdaily.update({day.get("dt"): daydata})
 
@@ -227,6 +247,7 @@ class Weather:
 
     async def processcurrent(self, current):
         """Process the currrent data."""
+
         return {
             "current": {
                 "rain": current.get("rain"),
@@ -234,6 +255,11 @@ class Weather:
                 "humidity": current.get("humidity"),
                 "temp": current.get("temp"),
                 "pressure": current.get("pressure"),
+                "wind_speed": current.get("wind_speed"),
+                "wind_deg": current.get("wind_deg"),
+                "uvi": current.get("uvi"),
+                "clouds": current.get("clouds"),
+                "description": current.get("description"),
             }
         }
 
@@ -251,6 +277,11 @@ class Weather:
             day.update({"max_temp": data.get("max_temp", 0)})
             day.update({"humidity": data.get("humidity", 0)})
             day.update({"pressure": data.get("pressure", 0)})
+            day.update({"wind_speed": data.get("wind_speed", 0)})
+            day.update({"wind_deg": data.get("wind_deg", 0)})
+            day.update({"uvi": data.get("uvi", 0)})
+            day.update({"clouds": data.get("clouds", 0)})
+            day.update({"description": data.get("description", 0)})
             processed_data.update({f"f{i}": day})
         return processed_data
 

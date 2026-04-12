@@ -17,6 +17,8 @@
         "precipitation_intensity": "Precipitation Intensity",
         "temperature": "Temperature",
         "pressure": "Pressure",
+        "wind_speed": "Wind Speed",
+        "wind_direction": "Wind Direction",
         "none": "None"
       }
     },
@@ -32,7 +34,12 @@
         "forecast_max": "Forecast max temperature",
         "forecast_min": "Forecast min temperature",
         "forecast_humidity": "Forecast humidity",
-        "forecast_pop": "Forecast probability"
+        "forecast_pop": "Forecast probability",
+        "forecast_wind_speed": "Forecast wind speed",
+        "forecast_wind_deg": "Forecast wing degrees",
+        "forecast_uvi": "Forecast UVI",
+        "forecast_clouds": "Forecast clouds",
+        "forecast_description": "Forecast description"
       }
     }
   },
@@ -77,7 +84,7 @@
     "step": {
       "user": {
         "title": "New Location",
-        "description": "To generate API key go to https://openweathermap.org/api and subscribe to 'One Call API 3.0'. You need to enter billing info to get 1,000 free calls per day. Configure your account to never go over the free limit here: https://home.openweathermap.org/subscriptions",
+        "description": "To generate API key go to {url} and subscribe to 'One Call API 3.0'. You need to enter billing info to get 1,000 free calls per day. Configure your account to never go over the free limit here: {subscriptionurl}",
         "data": {
           "name": "Location Name",
           "api_key": "API key",
