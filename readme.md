@@ -199,6 +199,9 @@ entities:
 Tristan created a German language video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
+## V2026.04.01
+- Add wind direction, wind speed, UVI, clouds and description to Current observations and forecast data.
+- Sensor processing to ensure deleted sensors are correctly removed from HA when removed from configuration.
 ## V2025.08.01
 Add aggregate day data, data for a calendar day (uses an additional 24 call per day)
 Action to run each of the 4 calls available through the onecall API
