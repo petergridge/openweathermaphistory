@@ -111,7 +111,6 @@ class WeatherCoordinator(DataUpdateCoordinator):
         self._weather = weather
 
     async def _async_update_data(self):
-        _LOGGER.error(1)
         """Fetch data from API endpoint."""
         # process n records every cycle
         await self._weather.async_update()
