@@ -85,13 +85,13 @@ async def async_setup_entry(
     hass.bus.async_listen("owmh_event", handle_event)
 
     done = hass.bus.async_listen_once(
-        EVENT_HOMEASSISTANT_STARTED, let_weather_know_hass_has_started(weather)
+        EVENT_HOMEASSISTANT_STARTED, await let_weather_know_hass_has_started(weather)
     )
     done()
     return True
 
 
-def let_weather_know_hass_has_started(weather):
+async def let_weather_know_hass_has_started(weather):
     """Let the coordinator know HA is loaded so backloading can commence."""
     weather.set_processing_type("general")
 
@@ -111,6 +111,7 @@ class WeatherCoordinator(DataUpdateCoordinator):
         self._weather = weather
 
     async def _async_update_data(self):
+        _LOGGER.error(1)
         """Fetch data from API endpoint."""
         # process n records every cycle
         await self._weather.async_update()
@@ -136,7 +137,7 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
 
         self._hass = hass
-        self._state = 1
+        self._state = 0
         self._weather = weather
         self._extra_attributes = None
         self._name = resource[CONF_NAME]
@@ -150,6 +151,7 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
         self._uuid = resource.get(CONF_UID)
         self._hidden_by = resource.get("hidden_by")
 
+
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
@@ -158,15 +160,22 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
 
     async def async_added_to_hass(self):
         """Add to Hass."""
-        self._hass.async_create_task(self.async_update())
+        self._hass.async_create_task(self.async_update1())
         await super().async_added_to_hass()
 
     async def api_call(self, api):
         """Call API."""
         await self._weather.show_call_data(api)
 
+    async def async_update1(self):
+        """Update the sensor."""
+        self.determine_state()
+        self.async_write_ha_state()
+
+
     async def async_update(self):
         """Update the sensor."""
+        #return
         self.determine_state()
         self.async_write_ha_state()
 
@@ -201,7 +210,7 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
             case "humidity":
                 return "%"
             case "precipitation":
-                return "mm"
+               return "mm"
             case "precipitation_intensity":
                 return "mm/h"
             case "temperature":
@@ -240,6 +249,7 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
 
     def determine_state(self):
         """Determine the sensor state."""
+
         try:
             self._state = float(
                 self._evaluate_custom_formula(

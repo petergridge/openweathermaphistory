@@ -247,19 +247,18 @@ class Weather:
 
     async def processcurrent(self, current):
         """Process the currrent data."""
-
         return {
             "current": {
-                "rain": current.get("rain"),
-                "snow": current.get("snow"),
-                "humidity": current.get("humidity"),
-                "temp": current.get("temp"),
-                "pressure": current.get("pressure"),
-                "wind_speed": current.get("wind_speed"),
-                "wind_deg": current.get("wind_deg"),
-                "uvi": current.get("uvi"),
-                "clouds": current.get("clouds"),
-                "description": current.get("description"),
+                "rain": current.get("rain",0),
+                "snow": current.get("snow",0),
+                "humidity": current.get("humidity",0),
+                "temp": current.get("temp",0),
+                "pressure": current.get("pressure",0),
+                "wind_speed": current.get("wind_speed",0),
+                "wind_deg": current.get("wind_deg",0),
+                "uvi": current.get("uvi",0),
+                "clouds": current.get("clouds",0),
+                "description": current.get("description",""),
             }
         }
 
