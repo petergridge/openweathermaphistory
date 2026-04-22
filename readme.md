@@ -152,6 +152,11 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |forecast{i}humidity||Average humidity|
 |forecast{i}max||Maximum temperature in the 24 hour period|
 |forecast{i}min||Minimum temperature in the 24 hour period|
+|forecast{i}wind_deg||Wind direction|
+|forecast{i}wind_speed||Winf speed|
+|forecast{i}UVI||UV index|
+|forecast{i}clouds||Cloud coverage|
+|forecast{i}description||Weather description|
 ### Current observations
 |Variable|Description|
 |---|---|
@@ -160,11 +165,17 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |current_humidity|Current hours humidity|
 |current_temp|Current hours temperature|
 |current_pressure|Current hours pressure|
-### Cumulative totals (under development)
+|current_wind_deg|Wind direction|
+|current_wind_speed|Winf speed|
+|current_UVI|UV index|
+|current_clouds|Cloud coverage|
+|current_description|Weather description|
+### Plotty Support
 |Variable|Description|
 |---|---|
-|cumulative_rain|Continually increasing total of all rainfall recorded|
-|cumulative_snow|Continually increasing total of all snowfall recorded|
+|hourly_time|Time axis for plotty|
+|hourly_rain|Rainfall axis|
+
 ### Status values
 |Variable|Description|
 |---|---|
