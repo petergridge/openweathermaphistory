@@ -390,10 +390,10 @@ class Weather:
             plotly_snow.append(round(data["snow"], 2))
             plotly_temp.append(round(data["temp"], 2))
             plotly_pressure.append(round(data["pressure"], 2))
-            plotly_clouds.append(round(data["clouds"], 0))
-            plotly_humidity.append(round(data["humidity"], 2))
-            plotly_wind_speed.append(round(data["wind_speed"], 2))
-            plotly_uvi.append(round(data["uvi"], 0))
+            plotly_clouds.append(round(data.get("clouds",0), 0))
+            plotly_humidity.append(round(data.get("humidity",0), 2))
+            plotly_wind_speed.append(round(data.get("wind_speed",0), 2))
+            plotly_uvi.append(round(data.get("uvi",0), 0))
 
         # age out old data
         for hour in removehours:
