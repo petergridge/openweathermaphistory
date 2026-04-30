@@ -13,6 +13,7 @@ A home assistant sensor that uses the OpenWeatherMap API to return:
 - Current observations (rain, snow, humidity, current temp, current pressure)
 - Aggrgate daily data by date (precipitation, min temp, max temp, date)
 - Status information (remaining backlog to load, current days API count)
+- creates a weather entity exposing captured data
 
 Any number of sensors can be created using templates.
 
@@ -210,6 +211,9 @@ entities:
 Tristan created a German language video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
+## V2026.05.01
+- add weather entity to utilise data already captured
+- add tests
 ## V2026.04.01
 - Add wind direction, wind speed, UVI, clouds and description to Current observations and forecast data.
 - Sensor processing to ensure deleted sensors are correctly removed from HA when removed from configuration.
