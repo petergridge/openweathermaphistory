@@ -16,6 +16,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import storage as store
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 # from homeassistant.helpers import config_validation as cv, storage as store
 from .const import (
@@ -28,12 +29,32 @@ from .const import (
     CONST_API_OVERVIEW,
     CONST_CALLS,
     CONST_INITIAL,
+    DOMAIN,
 )
 from .data import RestData
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "OpenWeatherMap History"
+
+
+class WeatherCoordinator(DataUpdateCoordinator):
+    """DataUpdateCoordinator for shared weather updates."""
+
+    def __init__(self, hass: HomeAssistant, weather: Weather) -> None:
+        """Initialize the coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(minutes=5),
+        )
+        self._weather = weather
+
+    async def _async_update_data(self):
+        """Fetch data from API endpoint."""
+        await self._weather.async_update()
+        return self._weather
 
 
 class Weather:
@@ -194,16 +215,16 @@ class Weather:
 
         url = CONST_API_FORECAST % (self._lat, self._lon, self._key)
         result = await self.get_rest(url)
-        days = {}
+        days = []
         current = {}
         if result:
-            days = result.get("daily")
-            current = result.get("current")
+            days = result.get("daily", [])
+            current = result.get("current", {})
             weather = current.get("weather")
             description = ""
             if weather:
                 for instance in weather:
-                    description += instance.get("description","")
+                    description += instance.get("description", "")
 
         # current observations
         currentdata = {
@@ -212,10 +233,10 @@ class Weather:
             "temp": current.get("temp", 0),
             "humidity": current.get("humidity", 0),
             "pressure": current.get("pressure", 0),
-            "wind_speed": current.get("wind_speed",0),
-            "wind_deg": current.get("wind_deg",0),
-            "uvi": current.get("uvi",0),
-            "clouds": current.get("clouds",0),
+            "wind_speed": current.get("wind_speed", 0),
+            "wind_deg": current.get("wind_deg", 0),
+            "uvi": current.get("uvi", 0),
+            "clouds": current.get("clouds", 0),
             "description": description,
         }
         # build forecast
@@ -226,7 +247,7 @@ class Weather:
             description = ""
             if weather:
                 for instance in weather:
-                    description += instance.get("description","")
+                    description += instance.get("description", "")
             daydata = {
                 "max_temp": temp.get("max", 0),
                 "min_temp": temp.get("min", 0),
@@ -235,10 +256,10 @@ class Weather:
                 "pop": day.get("pop", 0),
                 "rain": day.get("rain", 0),
                 "snow": day.get("snow", 0),
-                "wind_speed": day.get("wind_speed",0),
-                "wind_deg": day.get("wind_deg",0),
-                "uvi": day.get("uvi",0),
-                "clouds": day.get("clouds",0),
+                "wind_speed": day.get("wind_speed", 0),
+                "wind_deg": day.get("wind_deg", 0),
+                "uvi": day.get("uvi", 0),
+                "clouds": day.get("clouds", 0),
                 "description": description,
             }
             forecastdaily.update({day.get("dt"): daydata})
@@ -249,23 +270,25 @@ class Weather:
         """Process the currrent data."""
         return {
             "current": {
-                "rain": current.get("rain",0),
-                "snow": current.get("snow",0),
-                "humidity": current.get("humidity",0),
-                "temp": current.get("temp",0),
-                "pressure": current.get("pressure",0),
-                "wind_speed": current.get("wind_speed",0),
-                "wind_deg": current.get("wind_deg",0),
-                "uvi": current.get("uvi",0),
-                "clouds": current.get("clouds",0),
-                "description": current.get("description",""),
+                "rain": current.get("rain", 0),
+                "snow": current.get("snow", 0),
+                "humidity": current.get("humidity", 0),
+                "temp": current.get("temp", 0),
+                "pressure": current.get("pressure", 0),
+                "wind_speed": current.get("wind_speed", 0),
+                "wind_deg": current.get("wind_deg", 0),
+                "uvi": current.get("uvi", 0),
+                "clouds": current.get("clouds", 0),
+                "description": current.get("description", ""),
             }
         }
 
     async def processdailyforecast(self, dailydata):
         "Process daily forecast data."
         processed_data = {}
-        for i, data in enumerate(dailydata.values()):
+        for i, (timestamp, data) in enumerate(
+            sorted(dailydata.items(), key=lambda item: int(item[0]))
+        ):
             # get the days data
             day = {}
             # update the days data
@@ -280,7 +303,14 @@ class Weather:
             day.update({"wind_deg": data.get("wind_deg", 0)})
             day.update({"uvi": data.get("uvi", 0)})
             day.update({"clouds": data.get("clouds", 0)})
-            day.update({"description": data.get("description", 0)})
+            day.update({"description": data.get("description", "")})
+            day.update(
+                {
+                    "datetime": datetime.fromtimestamp(
+                        int(timestamp), tz=ZoneInfo(self._timezone)
+                    ).isoformat()
+                }
+            )
             processed_data.update({f"f{i}": day})
         return processed_data
 
@@ -316,8 +346,17 @@ class Weather:
         removehours = []
         processed_data = {}
         day = {}
-        x = []
-        y = []
+        # x = []
+        # y = []
+        time = []
+        plotly_rain = []
+        plotly_snow = []
+        plotly_temp = []
+        plotly_pressure = []
+        plotly_clouds = []
+        plotly_humidity = []
+        plotly_wind_speed = []
+        plotly_uvi = []
 
         for hour, data in sorted(
             historydata.items(), key=lambda x: int(x[0])
@@ -346,14 +385,31 @@ class Weather:
             day.update({"max_temp": maxtemp})
             processed_data.update({localdaynum: day})
 
-            x.append(localday.strftime("%Y-%m-%dT%H:%M"))
-            y.append(round(data["rain"], 2))
+            time.append(localday.strftime("%Y-%m-%dT%H:%M"))
+            plotly_rain.append(round(data["rain"], 2))
+            plotly_snow.append(round(data["snow"], 2))
+            plotly_temp.append(round(data["temp"], 2))
+            plotly_pressure.append(round(data["pressure"], 2))
+            plotly_clouds.append(round(data["clouds"], 0))
+            plotly_humidity.append(round(data["humidity"], 2))
+            plotly_wind_speed.append(round(data["wind_speed"], 2))
+            plotly_uvi.append(round(data["uvi"], 0))
 
         # age out old data
         for hour in removehours:
             historydata.pop(hour)
-
-        return historydata, processed_data, {"x": x, "y": y}
+        plotly = {
+            "plotly_time": time,
+            "plotly_rain": plotly_rain,
+            "plotly_snow": plotly_snow,
+            "plotly_temp": plotly_temp,
+            "plotly_pressure": plotly_pressure,
+            "plotly_clouds": plotly_clouds,
+            "plotly_humidity": plotly_humidity,
+            "plotly_wind_speed": plotly_wind_speed,
+            "plotly_uvi": plotly_uvi,
+        }
+        return historydata, processed_data, plotly
 
     def set_processing_type(self, option):
         """Allow setting of the processing type."""
@@ -427,7 +483,6 @@ class Weather:
 
     async def async_update(self):
         """Update the weather stats."""
-
         hour = datetime(
             date.today().year, date.today().month, date.today().day, datetime.now().hour
         )
@@ -502,7 +557,7 @@ class Weather:
         data = await self.processhistory(historydata)
         historydata = data[0]
         processedweather = data[1]
-        plotty = {"plotty": data[2]}
+        plotly = {"plotly": data[2]}
         data = await self.processdailyaggregate(aggregate_data)
         aggregate_data = data[0]
         processed_aggregate = data[1]
@@ -512,7 +567,7 @@ class Weather:
             **processedcurrent,
             **processedweather,
             **processed_aggregate,
-            **plotty,
+            **plotly,
         }
 
         dailycalls = {
@@ -640,4 +695,8 @@ class Weather:
             "temp": current.get("temp", 0),
             "humidity": current.get("humidity", 0),
             "pressure": current.get("pressure", 0),
+            "wind_speed": current.get("wind_speed", 0),
+            "wind_deg": current.get("wind_deg", 0),
+            "uvi": current.get("uvi", 0),
+            "clouds": current.get("clouds", 0),
         }

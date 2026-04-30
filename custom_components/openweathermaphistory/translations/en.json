@@ -39,7 +39,9 @@
         "forecast_wind_deg": "Forecast wing degrees",
         "forecast_uvi": "Forecast UVI",
         "forecast_clouds": "Forecast clouds",
-        "forecast_description": "Forecast description"
+        "forecast_description": "Forecast description",
+        "plotly": "Expose data for easy integration with plotly graph card"
+
       }
     }
   },

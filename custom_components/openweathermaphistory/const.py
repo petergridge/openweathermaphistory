@@ -16,7 +16,6 @@ CONF_STATECLASS = "state_class"
 CONF_SENSORCLASS = "sensor_class"
 CONF_UID = "unique_id"
 
-
 # prevent accidental duplicate instances
 CONST_PROXIMITY = 1000
 # max calls in a single refresh
@@ -55,4 +54,5 @@ OPTIONS_BULK = [
     "forecast_uvi",
     "forecast_clouds",
     "forecast_description",
+    # "plotly"
 ]

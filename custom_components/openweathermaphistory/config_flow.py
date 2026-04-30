@@ -792,12 +792,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
 # ---- Helpers ----
 
-def create_formula(sensor, sensorclass, stateclass,precision=2,instance="Home"):
+def create_formula(sensor, sensorclass, stateclass,precision=2,instance="Home",attributes=""):
     """Create formula dictionary."""
     formula = {}
     formula[CONF_NAME] = "OWMH_" + instance + "_" + sensor
     formula[CONF_FORMULA] = "{{ " + sensor + " }}"
-    formula[CONF_ATTRIBUTES] = ""
+    formula[CONF_ATTRIBUTES] = attributes
     formula[CONF_SENSORCLASS] = sensorclass
     formula[CONF_STATECLASS] = stateclass
     formula[CONF_UID] = str(uuid.uuid4())
@@ -999,6 +999,20 @@ def process_options(hass, name ,options, resource_list, days):
                 create_formula(f"day{i}min", "precipitation", "measurement",precision,name),
             )
 
+    if "plotly" in options:
+        attributes = "{{ hourly_time }},{{ hourly_temp }},{{ hourly_rain }},{{ hourly_snow }},{{ hourly_humidity }},{{ hourly_pressure }},{{ hourly_wind_speed }},{{ hourly_wind_deg }},{{ hourly_uvi }},{{ hourly_clouds }}"
+        resources = add_to_list(
+            resources,
+            create_formula("plotly", "none", "string",None,name,attributes),
+        )
+    else:
+        resources = remove_from_list(
+            hass,
+            resources,
+            create_formula("plotly", "none", "string",None,name),
+        )
+
+
     if "current_obs" in options:
         resources = add_to_list(
             resources,
@@ -1124,13 +1138,21 @@ def evaluate_custom_formula(formula, max_days):
     wvars["current_pressure"] = 0
     wvars["remaining_backlog"] = 0
     wvars["daily_count"] = 0
-    wvars["hourly_time"] = []
-    wvars["hourly_rain"] = []
     wvars["wind_speed"] = 0
     wvars["wind_deg"] = 0
     wvars["uvi"] = 0
     wvars["clouds"] = 0
     wvars["description"] = 0
+    #Plotty variables
+    wvars["hourly_time"] = []
+    wvars["hourly_rain"] = []
+    wvars["hourly_snow"] = []
+    wvars["hourly_temp"] = []
+    wvars["hourly_clouds"] = []
+    wvars["hourly_pressure"] = []
+    wvars["hourly_humidity"] = []
+    wvars["hourly_wind_speed"] = []
+    wvars["hourly_uvi"] = []
 
     environment = jinja2.Environment()
     template = environment.from_string(formula)

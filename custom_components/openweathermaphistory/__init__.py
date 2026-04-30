@@ -6,12 +6,13 @@ import logging
 from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv, storage as store
 
 from . import utils
-from .const import DOMAIN
+from .const import CONST_INITIAL, DOMAIN
+from .weatherhistory import Weather, WeatherCoordinator
 
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
@@ -20,13 +21,28 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up irrigtest from a config entry."""
-    # store an object for your platforms to access
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = entry.data
+    config = entry.options or entry.data
 
-    PLATFORMS: list[str] = ["sensor"]
+    weather = Weather(hass, config)
+    weather.set_processing_type(CONST_INITIAL)
+    coordinator = WeatherCoordinator(hass, weather)
+    await coordinator.async_config_entry_first_refresh()
+
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][entry.entry_id] = {
+        "weather": weather,
+        "coordinator": coordinator,
+        "config": config,
+    }
+
+    PLATFORMS: list[str] = ["sensor", "weather"]
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    def _set_processing_type(event):
+        weather.set_processing_type("general")
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _set_processing_type)
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
@@ -62,7 +78,11 @@ async def async_setup(hass: HomeAssistant, config):
         """Test API call."""
         for entry in hass.config_entries.async_entries("openweathermaphistory"):
             if call.data.get("entry_id") == entry.entry_id:
-                event_data = {"action": "api_call", "entry": entry.title, "api": call.data.get("api")}
+                event_data = {
+                    "action": "api_call",
+                    "entry": entry.title,
+                    "api": call.data.get("api"),
+                }
                 hass.bus.async_fire("owmh_event", event_data)
 
     hass.services.async_register(DOMAIN, "api_call", api_call)
@@ -78,10 +98,9 @@ async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(
-        entry, (Platform.SENSOR,)
+        entry, (Platform.SENSOR, Platform.WEATHER)
     )
     if unload_ok:
-        # remove the instance of component
         hass.data[DOMAIN].pop(entry.entry_id)
     return unload_ok
 
