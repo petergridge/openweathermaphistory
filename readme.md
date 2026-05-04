@@ -220,7 +220,7 @@ Tristan created a German language video about this integration: https://youtu.be
 - Add additional pre defined sensors on the bulk sensor menu
   - Frost Sensor
   - Forecast and history based adjustment sensors
-- Updated documentatio of available attributes
+- Updated documentation of available attributes
 ## V2026.05.01
 - add weather entity to utilise data already captured
 - add tests
