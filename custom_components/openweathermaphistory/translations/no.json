@@ -1,0 +1,208 @@
+{
+  "title": "OWM Historikk",
+
+  "selector": {
+    "api": {
+      "options": {
+        "timemachine": "Gjeldende time",
+        "day_summary": "Gjeldende dag",
+        "forecast": "Værvarsel",
+        "overview": "Oversikt"
+      }
+    },
+    "sensor_class": {
+      "options": {
+        "humidity": "Luftfuktighet",
+        "precipitation": "Nedbør",
+        "precipitation_intensity": "Nedbørintensitet",
+        "temperature": "Temperatur",
+        "pressure": "Trykk",
+        "wind_speed": "Vindhastighet",
+        "wind_direction": "Vindretning",
+        "none": "Ingen"
+      }
+    },
+    "create_sensors": {
+      "options": {
+        "hist_rain": "Historisk regn",
+        "hist_snow": "Historisk snø",
+        "hist_max": "Historisk maksimumstemperatur",
+        "hist_min": "Historisk minimumstemperatur",
+        "current_obs": "Gjeldende observasjoner",
+        "forecast_rain": "Værvarsel regn",
+        "forecast_snow": "Værvarsel snø",
+        "forecast_max": "Værvarsel maksimumstemperatur",
+        "forecast_min": "Værvarsel minimumstemperatur",
+        "forecast_humidity": "Værvarsel luftfuktighet",
+        "forecast_pop": "Værvarsel sannsynlighet",
+        "forecast_wind_speed": "Værvarsel vindhastighet",
+        "forecast_wind_deg": "Værvarsel vindgrader",
+        "forecast_uvi": "Værvarsel UVI",
+        "forecast_clouds": "Værvarsel skyer",
+        "forecast_description": "Værvarsel beskrivelse",
+        "plotly": "Vis data for enkel integrasjon med plotly grafikkort",
+        "frost_prediction": "Frostvarslingssensorer basert på gjeldende data",
+        "hist_adjustment_factor": "Justeringsfaktor ved bruk av historisk regn",
+        "forecast_adjustment_factor": "Justeringsfaktor ved bruk av historikk og værvarsel regn"
+      }
+    }
+  },
+  "services": {
+    "api_call": {
+      "name": "API-kall",
+      "description": "Test API-kallet, resultater vises i varsler",
+      "fields": {
+        "entity_id": {
+          "name": "OWMH-instans",
+          "description": "OWM-historikk-instansen for å teste API-kall"
+        },
+        "api": {
+          "name": "API å kalle",
+          "description": "De tre API-ene som brukes av applikasjonen"
+        }
+      }
+    },
+    "list_vars": {
+      "name": "List variabel",
+      "description": "List tilgjengelige variabler, resultater vises i varsler",
+      "fields": {
+        "entity_id": {
+          "name": "OWMH-instans",
+          "description": "OWM-historikk-instansen for å liste variabler"
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "Sted er allerede konfigurert"
+    },
+    "error": {
+      "invalid_api_key": "Kan ikke koble til, mulig ugyldig API-nøkkel eller du har ikke abonnert på One Call API 3.0, sjekk loggen for detaljer",
+      "formula": "Ugyldig formel, sjekk loggen for detaljer",
+      "formula_variable": "En brukt variabel er udefinert, sjekk loggen for detaljer",
+      "duplicate_name": "Dette navnet har allerede blitt brukt til å definere en sensor",
+      "close_proximity": "Et sted er allerede konfigurert innen 1 km",
+      "cannot_connect": "Kunne ikke koble til OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "title": "Nytt sted",
+        "description": "For å generere API-nøkkel gå til {url} og abonner på 'One Call API 3.0'. Du må oppgi faktureringsinformasjon for å få 1 000 gratis kall per dag. Konfigurer kontoen din til aldri å overskride gratisgrensen her: {subscriptionurl}",
+        "data": {
+          "name": "Stedsnavn",
+          "api_key": "API-nøkkel",
+          "location": "Sted",
+          "max_days": "Dager å beholde data",
+          "initial_days": "Dager å forhåndslaste",
+          "max_calls": "Maks API-kall per dag",
+          "create_sensors": "Opprett sensorer automatisk"
+        }
+      },
+      "menu": {
+        "title": "",
+        "menu_options": {
+          "user": "Sted",
+          "bulk": "Bulk-sensorer",
+          "add": "Legg til sensor",
+          "list_modify": "Endre sensor",
+          "delete": "Slett sensor",
+          "finalise": "Lagre endringer"
+        }
+      },
+      "bulk": {
+        "title": "Bulk-sensorer",
+        "data": {
+          "create_sensors": "Velg eller avvelg sensorgrupper"
+        }
+      },
+      "add": {
+        "title": "Legg til sensor",
+        "data": {
+          "name": "Sensornavn",
+          "formula": "Jinja2-mal for å vise sensoren",
+          "attributes": "Attributter å vise på sensoren",
+          "sensor_class": "Sensortypen"
+        }
+      },
+      "modify": {
+        "title": "Endre sensor",
+        "description": "velg en sensor",
+        "data": {
+          "name": "Sensornavn",
+          "formula": "Jinja2-mal for å vise sensoren",
+          "attributes": "Attributter å vise på sensoren",
+          "sensor_class": "Sensortypen"
+        }
+      },
+      "delete": {
+        "title": "Velg sensor å slette"
+      },
+      "list_modify": {
+        "title": "Velg sensor å endre"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_api_key": "Kan ikke koble til, mulig ugyldig API-nøkkel eller du har ikke abonnert på One Call API 3.0, sjekk loggen for detaljer",
+      "formula": "Ugyldig formel, sjekk loggen for detaljer",
+      "formula_variable": "En brukt variabel er udefinert, sjekk loggen for detaljer",
+      "duplicate_name": "Dette navnet har allerede blitt brukt til å definere en sensor",
+      "close_proximity": "Et sted er allerede konfigurert innen 1 km",
+      "cannot_connect": "Kunne ikke koble til OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "menu_options": {
+          "update": "Oppdater API",
+          "bulk": "Bulk-sensorer",
+          "add": "Legg til sensor",
+          "list_modify": "Endre sensor",
+          "delete": "Slett sensor",
+          "finalise": "Lagre endringer"
+        }
+      },
+      "update": {
+        "title": "Endre API",
+        "data": {
+          "api_key": "API-nøkkel",
+          "max_days": "Dager å beholde data",
+          "initial_days": "Dager å forhåndslaste",
+          "max_calls": "Maks API-kall per dag",
+          "create_sensors": "Opprett sensorer automatisk"
+        }
+      },
+      "bulk": {
+        "title": "Bulk-sensorer",
+        "data": {
+          "create_sensors": "Velg eller avvelg sensorgrupper"
+        }
+      },
+      "add": {
+        "title": "Legg til sensor",
+        "data": {
+          "name": "Sensornavn",
+          "formula": "Jinja2-mal for å vise sensoren",
+          "attributes": "Attributter å vise på sensoren",
+          "sensor_class": "Sensortypen"
+        }
+      },
+      "modify": {
+        "title": "Endre sensor",
+        "description": "velg en sensor",
+        "data": {
+          "formula": "Jinja2-mal for å vise sensoren",
+          "attributes": "Attributter å vise på sensoren",
+          "sensor_class": "Sensortypen"
+        }
+      },
+      "delete": {
+        "title": "Velg sensor å slette"
+      },
+      "list_modify": {
+        "title": "Velg sensor å endre"
+      }
+    }
+  }
+}

@@ -177,6 +177,9 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
                 return "°"
             case "wind_speed":
                 return "m/s"
+            case "percent":
+                return "%"
+
 
     @property
     def device_class(self) -> SensorDeviceClass:
@@ -192,6 +195,8 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
                 return SensorDeviceClass.TEMPERATURE
             case "pressure":
                 return SensorDeviceClass.PRESSURE
+            case "percent":
+                return None
 
     @property
     def native_value(self):
@@ -298,7 +303,7 @@ class WeatherHistory(CoordinatorEntity, SensorEntity):
         wvars["current_uvi"] = weather.processed_value("current", "uvi")
         wvars["current_clouds"] = weather.processed_value("current", "clouds")
         wvars["current_description"] = weather.processed_value("current", "description")
-
+        wvars["current_dew_point"] = weather.processed_value("current", "dew_point")
         # special values
         wvars["remaining_backlog"] = weather.remaining_backlog()
         wvars["daily_count"] = weather.daily_count()

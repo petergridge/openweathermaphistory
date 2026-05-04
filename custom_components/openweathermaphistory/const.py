@@ -55,4 +55,7 @@ OPTIONS_BULK = [
     "forecast_clouds",
     "forecast_description",
     # "plotly"
+    "frost_prediction",
+    "hist_adjustment_factor",
+    "forecast_adjustment_factor",
 ]

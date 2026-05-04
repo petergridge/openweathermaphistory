@@ -792,6 +792,130 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
 # ---- Helpers ----
 
+def hist_adjustment_formula(name):
+    """Formula to calculate an adjustment factor for historical rain data based on past days' rain and a target water amount."""
+
+    # Equivalent Rain, past days rain have incrementally less impact
+    test = "{% set target_water = 10 %}"
+    # Equivalent Rain, past days rain have incrementally less impact
+    test += "{% set equivalent_rain = day0rain + day1rain*0.5 + day2rain*0.25 + day3rain*0.12 + day4rain*0.06 %}"
+    # (target_water - equivalent_rain)/target_water
+    test += "{% set adjustment = (target_water - equivalent_rain)/target_water %}"
+    # make 0 if negative
+    test += "{% set adjustment_factor = [adjustment,0]|max|round(2) %}"
+    test += "{{ adjustment_factor }}"
+
+    formula = {}
+    formula[CONF_NAME] = "OWMH_" + name + "_hist_adjustment_factor"
+    formula[CONF_SENSORCLASS] = "percent"
+    formula[CONF_PRECISION] = 2
+    formula[CONF_FORMULA] =  test
+    formula[CONF_ATTRIBUTES] = ""
+    formula[CONF_STATECLASS] = "measurement"
+    formula[CONF_UID] = str(uuid.uuid4())
+    formula["enabled"] = True
+    return formula
+
+def forecast_adjustment_formula(name):
+    """Formula to calculate an adjustment factor for historical rain data based on past days' rain and a target water amount."""
+
+    # Equivalent Rain, past days rain have incrementally less impact
+    test = "{% set target_water = 10 %}"
+    # Equivalent Rain, past days rain have incrementally less impact
+    test += "{% set equivalent_rain = day0rain + day1rain*0.5 + day2rain*0.25 + forecast1rain*forecast1pop*0.5 + forecast2rain*forecast2pop*0.25 %}"
+    # (target_water - equivalent_rain)/target_water
+    test += "{% set adjustment = (target_water - equivalent_rain)/target_water %}"
+    # make 0 if negative
+    test += "{% set adjustment_factor = [adjustment,0]|max|round(2) %}"
+    test += "{{ adjustment_factor }}"
+
+    formula = {}
+    formula[CONF_NAME] = "OWMH_" + name + "_forecast_adjustment_factor"
+    formula[CONF_SENSORCLASS] = "percent"
+    formula[CONF_PRECISION] = 2
+    formula[CONF_FORMULA] =  test
+    formula[CONF_ATTRIBUTES] = ""
+    formula[CONF_STATECLASS] = "measurement"
+    formula[CONF_UID] = str(uuid.uuid4())
+    formula["enabled"] = True
+    return formula
+
+def frost_formula(type,name):
+    """Formula to calculate a frost risk score and level based on multiple weather factors."""
+    # Input Variables (Replace these with your sensor states)
+    test = "{% set temp = current_temp %}"
+    test += "{% set dew_point = current_dew_point %}"
+    test += "{% set wind = current_wind_speed %}"
+    test += "{% set cloud_cover = current_clouds %}"
+    test += "{% set humidity = current_humidity %}"
+    test += "{% set pressure = current_pressure %}"
+
+    # Logic Constants
+    test += "{% set surface_temp_est = temp - 3.5 %}"
+
+    # Calculate Score Components
+
+    # 1. Temperature Risk: Higher points as air temp nears freezing
+    test += "{% if temp <= 2 %} {% set t_points = 40 %}"
+    test += "{% elif temp <= 4 %} {% set t_points = 30 %}"
+    test += "{% elif temp <= 7 %} {% set t_points = 20 %}"
+    test += "{% else %} {% set t_points = 0 %}"
+    test += "{% endif %}"
+
+    # 2. Sky Clarity Risk: Clear skies (0% cloud) are the highest risk
+    test += "{% set c_points = (100 - cloud_cover) * 0.4 %}"
+
+    # 3. Wind Risk: Calm air (< 3 km/h) allows frost to settle
+    test += "{% if wind < 3 %} {% set w_points = 20 %}"
+    test += "{% elif wind < 8 %} {% set w_points = 5 %}"
+    test += "{% else %} {% set w_points = 0 %}"
+    test += "{% endif %}"
+
+    # 4. Dew Point Alignment: High risk if air is saturated near freezing
+    test += "{% if dew_point <= 0 %} {% set d_points = 10 %}"
+    test += "{% elif (temp - dew_point) < 2 %} {% set d_points = 5 %}"
+    test += "{% else %} {% set d_points = 0 %}"
+    test += "{% endif %}"
+
+    # --- Final Totals
+    test += "{% set risk_score = t_points + c_points + w_points + d_points %}"
+
+    test += "{% if risk_score >= 80 %}"
+    test += "{% set risk_level = 'CRITICAL: Frost highly likely' %}"
+    test += "{% elif risk_score >= 50 %}"
+    test += "{% set risk_level = 'WARNING: Moderate frost risk' %}"
+    test += "{% elif risk_score >= 25 %}"
+    test += "{% set risk_level = 'LOW: Watch for clearing skies' %}"
+    test += "{% else %}"
+    test += "{% set risk_level = 'NONE: No frost expected' %}"
+    test += "{% endif %}"
+
+    # --- Output Display
+    if type == "risk_level":
+         test +=  "{{ risk_level }}"
+    else:
+        test += "{{ risk_score | round(0) }}"
+    # test += "Estimated Surface Temp: {{ surface_temp_est }}°C"
+    # return test
+
+    formula = {}
+    if type == "risk_level":
+        formula[CONF_NAME] = "OWMH_" + name + "_frost_risk_level"
+        formula[CONF_SENSORCLASS] = "none"
+        formula[CONF_PRECISION] = None
+
+    else:
+        formula[CONF_NAME] = "OWMH_" + name + "_frost_risk_score"
+        formula[CONF_SENSORCLASS] = "percent"
+        formula[CONF_PRECISION] = 2
+    formula[CONF_FORMULA] =  test
+    formula[CONF_ATTRIBUTES] = "{{ risk_level }}"
+    formula[CONF_STATECLASS] = "string"
+    formula[CONF_UID] = str(uuid.uuid4())
+    formula["enabled"] = True
+    return formula
+
+
 def create_formula(sensor, sensorclass, stateclass,precision=2,instance="Home",attributes=""):
     """Create formula dictionary."""
     formula = {}
@@ -804,6 +928,7 @@ def create_formula(sensor, sensorclass, stateclass,precision=2,instance="Home",a
     formula[CONF_PRECISION] = precision
     formula["enabled"] = True
     return formula
+
 
 def add_to_list(list, item):
     """Check if the sensor exists before adding."""
@@ -1012,6 +1137,52 @@ def process_options(hass, name ,options, resource_list, days):
             create_formula("plotly", "none", "string",None,name),
         )
 
+    if "frost_prediction" in options:
+        resources = add_to_list(
+            resources,
+            frost_formula("risk_level",name),
+        )
+        resources = add_to_list(
+            resources,
+            frost_formula("risk_score",name),
+        )
+    else:
+        resources = remove_from_list(
+            hass,
+            resources,
+            frost_formula("risk_level",name),
+        )
+        resources = remove_from_list(
+            hass,
+            resources,
+            frost_formula("risk_score",name),
+        )
+
+    if "hist_adjustment_factor" in options:
+        resources = add_to_list(
+            resources,
+            hist_adjustment_formula(name),
+        )
+    else:
+        resources = remove_from_list(
+            hass,
+            resources,
+            hist_adjustment_formula(name),
+        )
+
+    if "forecast_adjustment_factor" in options:
+        resources = add_to_list(
+            resources,
+            forecast_adjustment_formula(name),
+        )
+    else:
+        resources = remove_from_list(
+            hass,
+            resources,
+            forecast_adjustment_formula(name),
+        )
+
+
 
     if "current_obs" in options:
         resources = add_to_list(
@@ -1138,10 +1309,11 @@ def evaluate_custom_formula(formula, max_days):
     wvars["current_pressure"] = 0
     wvars["remaining_backlog"] = 0
     wvars["daily_count"] = 0
-    wvars["wind_speed"] = 0
-    wvars["wind_deg"] = 0
-    wvars["uvi"] = 0
-    wvars["clouds"] = 0
+    wvars["current_wind_speed"] = 0
+    wvars["current_wind_deg"] = 0
+    wvars["current_uvi"] = 0
+    wvars["current_clouds"] = 0
+    wvars["current_dew_point"] = 0
     wvars["description"] = 0
     #Plotty variables
     wvars["hourly_time"] = []

@@ -1,0 +1,208 @@
+{
+  "title": "OWM Geschiedenis",
+
+  "selector": {
+    "api": {
+      "options": {
+        "timemachine": "Huidig uur",
+        "day_summary": "Huidige dag",
+        "forecast": "Voorspelling",
+        "overview": "Overzicht"
+      }
+    },
+    "sensor_class": {
+      "options": {
+        "humidity": "Luchtvochtigheid",
+        "precipitation": "Neerslag",
+        "precipitation_intensity": "Neerslagintensiteit",
+        "temperature": "Temperatuur",
+        "pressure": "Druk",
+        "wind_speed": "Windsnelheid",
+        "wind_direction": "Windrichting",
+        "none": "Geen"
+      }
+    },
+    "create_sensors": {
+      "options": {
+        "hist_rain": "Historische regen",
+        "hist_snow": "Historische sneeuw",
+        "hist_max": "Historische maximumtemperatuur",
+        "hist_min": "Historische minimumtemperatuur",
+        "current_obs": "Huidige waarnemingen",
+        "forecast_rain": "Voorspelde regen",
+        "forecast_snow": "Voorspelde sneeuw",
+        "forecast_max": "Voorspelde maximumtemperatuur",
+        "forecast_min": "Voorspelde minimumtemperatuur",
+        "forecast_humidity": "Voorspelde luchtvochtigheid",
+        "forecast_pop": "Voorspellingskans",
+        "forecast_wind_speed": "Voorspelde windsnelheid",
+        "forecast_wind_deg": "Voorspelde windgraden",
+        "forecast_uvi": "Voorspelde UVI",
+        "forecast_clouds": "Voorspelde wolken",
+        "forecast_description": "Voorspellingsbeschrijving",
+        "plotly": "Gegevens beschikbaar maken voor eenvoudige integratie met plotly grafiekkaart",
+        "frost_prediction": "Vorstvoorspellingssensoren gebaseerd op huidige gegevens",
+        "hist_adjustment_factor": "Aanpassingsfactor met historische regen",
+        "forecast_adjustment_factor": "Aanpassingsfactor met geschiedenis en voorspelde regen"
+      }
+    }
+  },
+  "services": {
+    "api_call": {
+      "name": "API-aanroep",
+      "description": "Test de API-aanroep, resultaten worden weergegeven in meldingen",
+      "fields": {
+        "entity_id": {
+          "name": "OWMH-instantie",
+          "description": "De OWM-geschiedenis-instantie om API-aanroep voor te testen"
+        },
+        "api": {
+          "name": "Aan te roepen API",
+          "description": "De drie API's die door de applicatie worden gebruikt"
+        }
+      }
+    },
+    "list_vars": {
+      "name": "Variabele weergeven",
+      "description": "Beschikbare variabelen weergeven, resultaten worden weergegeven in meldingen",
+      "fields": {
+        "entity_id": {
+          "name": "OWMH-instantie",
+          "description": "De OWM-geschiedenis-instantie om variabelen voor weer te geven"
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "Locatie is al geconfigureerd"
+    },
+    "error": {
+      "invalid_api_key": "Kan niet verbinden, mogelijk ongeldige API-sleutel of u heeft zich niet geabonneerd op One Call API 3.0, controleer het logboek voor details",
+      "formula": "Ongeldige formule, controleer het logboek voor details",
+      "formula_variable": "Een gebruikte variabele is niet gedefinieerd, controleer het logboek voor details",
+      "duplicate_name": "Deze naam is al gebruikt om een sensor te definiëren",
+      "close_proximity": "Een locatie is al geconfigureerd binnen 1 km",
+      "cannot_connect": "Kon niet verbinden met OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "title": "Nieuwe locatie",
+        "description": "Ga naar {url} om een API-sleutel te genereren en abonneer u op 'One Call API 3.0'. U moet factureringsinformatie invoeren om 1.000 gratis oproepen per dag te krijgen. Configureer uw account om de gratis limiet hier nooit te overschrijden: {subscriptionurl}",
+        "data": {
+          "name": "Locatienaam",
+          "api_key": "API-sleutel",
+          "location": "Locatie",
+          "max_days": "Dagen om gegevens te bewaren",
+          "initial_days": "Dagen om voor te laden",
+          "max_calls": "Maximaal API-oproepen per dag",
+          "create_sensors": "Automatisch sensoren aanmaken"
+        }
+      },
+      "menu": {
+        "title": "",
+        "menu_options": {
+          "user": "Locatie",
+          "bulk": "Bulk-sensoren",
+          "add": "Sensor toevoegen",
+          "list_modify": "Sensor wijzigen",
+          "delete": "Sensor verwijderen",
+          "finalise": "Wijzigingen opslaan"
+        }
+      },
+      "bulk": {
+        "title": "Bulk-sensoren",
+        "data": {
+          "create_sensors": "Sensorgroepen selecteren of deselecteren"
+        }
+      },
+      "add": {
+        "title": "Sensor toevoegen",
+        "data": {
+          "name": "Sensonnaam",
+          "formula": "Jinja2-sjabloon om de sensor weer te geven",
+          "attributes": "Attributen om op de sensor weer te geven",
+          "sensor_class": "Het type sensor"
+        }
+      },
+      "modify": {
+        "title": "Sensor wijzigen",
+        "description": "selecteer een sensor",
+        "data": {
+          "name": "Sensonnaam",
+          "formula": "Jinja2-sjabloon om de sensor weer te geven",
+          "attributes": "Attributen om op de sensor weer te geven",
+          "sensor_class": "Het type sensor"
+        }
+      },
+      "delete": {
+        "title": "Selecteer te verwijderen sensor"
+      },
+      "list_modify": {
+        "title": "Selecteer te wijzigen sensor"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_api_key": "Kan niet verbinden, mogelijk ongeldige API-sleutel of u heeft zich niet geabonneerd op One Call API 3.0, controleer het logboek voor details",
+      "formula": "Ongeldige formule, controleer het logboek voor details",
+      "formula_variable": "Een gebruikte variabele is niet gedefinieerd, controleer het logboek voor details",
+      "duplicate_name": "Deze naam is al gebruikt om een sensor te definiëren",
+      "close_proximity": "Een locatie is al geconfigureerd binnen 1 km",
+      "cannot_connect": "Kon niet verbinden met OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "menu_options": {
+          "update": "API bijwerken",
+          "bulk": "Bulk-sensoren",
+          "add": "Sensor toevoegen",
+          "list_modify": "Sensor wijzigen",
+          "delete": "Sensor verwijderen",
+          "finalise": "Wijzigingen opslaan"
+        }
+      },
+      "update": {
+        "title": "API wijzigen",
+        "data": {
+          "api_key": "API-sleutel",
+          "max_days": "Dagen om gegevens te bewaren",
+          "initial_days": "Dagen om voor te laden",
+          "max_calls": "Maximaal API-oproepen per dag",
+          "create_sensors": "Automatisch sensoren aanmaken"
+        }
+      },
+      "bulk": {
+        "title": "Bulk-sensoren",
+        "data": {
+          "create_sensors": "Sensorgroepen selecteren of deselecteren"
+        }
+      },
+      "add": {
+        "title": "Sensor toevoegen",
+        "data": {
+          "name": "Sensonnaam",
+          "formula": "Jinja2-sjabloon om de sensor weer te geven",
+          "attributes": "Attributen om op de sensor weer te geven",
+          "sensor_class": "Het type sensor"
+        }
+      },
+      "modify": {
+        "title": "Sensor wijzigen",
+        "description": "selecteer een sensor",
+        "data": {
+          "formula": "Jinja2-sjabloon om de sensor weer te geven",
+          "attributes": "Attributen om op de sensor weer te geven",
+          "sensor_class": "Het type sensor"
+        }
+      },
+      "delete": {
+        "title": "Selecteer te verwijderen sensor"
+      },
+      "list_modify": {
+        "title": "Selecteer te wijzigen sensor"
+      }
+    }
+  }
+}

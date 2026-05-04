@@ -1,0 +1,208 @@
+{
+  "title": "OWM 历史",
+
+  "selector": {
+    "api": {
+      "options": {
+        "timemachine": "当前小时",
+        "day_summary": "当前日期",
+        "forecast": "预报",
+        "overview": "概览"
+      }
+    },
+    "sensor_class": {
+      "options": {
+        "humidity": "湿度",
+        "precipitation": "降水",
+        "precipitation_intensity": "降水强度",
+        "temperature": "温度",
+        "pressure": "气压",
+        "wind_speed": "风速",
+        "wind_direction": "风向",
+        "none": "无"
+      }
+    },
+    "create_sensors": {
+      "options": {
+        "hist_rain": "历史降雨",
+        "hist_snow": "历史降雪",
+        "hist_max": "历史最高温度",
+        "hist_min": "历史最低温度",
+        "current_obs": "当前观测",
+        "forecast_rain": "预报降雨",
+        "forecast_snow": "预报降雪",
+        "forecast_max": "预报最高温度",
+        "forecast_min": "预报最低温度",
+        "forecast_humidity": "预报湿度",
+        "forecast_pop": "预报概率",
+        "forecast_wind_speed": "预报风速",
+        "forecast_wind_deg": "预报风向角度",
+        "forecast_uvi": "预报紫外线指数",
+        "forecast_clouds": "预报云量",
+        "forecast_description": "预报描述",
+        "plotly": "提供数据以便轻松集成 plotly 图表卡片",
+        "frost_prediction": "基于当前数据的霜冻预测传感器",
+        "hist_adjustment_factor": "使用历史降雨的调整因子",
+        "forecast_adjustment_factor": "使用历史和预报降雨的调整因子"
+      }
+    }
+  },
+  "services": {
+    "api_call": {
+      "name": "API 调用",
+      "description": "测试 API 调用，结果显示在通知中",
+      "fields": {
+        "entity_id": {
+          "name": "OWMH 实例",
+          "description": "用于测试 API 调用的 OWM 历史实例"
+        },
+        "api": {
+          "name": "要调用的 API",
+          "description": "应用程序使用的三个 API"
+        }
+      }
+    },
+    "list_vars": {
+      "name": "列出变量",
+      "description": "列出可用变量，结果显示在通知中",
+      "fields": {
+        "entity_id": {
+          "name": "OWMH 实例",
+          "description": "用于列出变量的 OWM 历史实例"
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "位置已配置"
+    },
+    "error": {
+      "invalid_api_key": "无法连接，可能 API 密钥无效或未订阅 One Call API 3.0，请检查日志了解详情",
+      "formula": "无效公式，请检查日志了解详情",
+      "formula_variable": "使用的变量未定义，请检查日志了解详情",
+      "duplicate_name": "此名称已被用于定义传感器",
+      "close_proximity": "1公里范围内已配置位置",
+      "cannot_connect": "无法连接到 OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "title": "新位置",
+        "description": "要生成 API 密钥，请访问 {url} 并订阅 'One Call API 3.0'。您需要输入账单信息以获得每天 1,000 次免费调用。在此处配置您的账户以不超过免费限制：{subscriptionurl}",
+        "data": {
+          "name": "位置名称",
+          "api_key": "API 密钥",
+          "location": "位置",
+          "max_days": "数据保留天数",
+          "initial_days": "预加载天数",
+          "max_calls": "每天最大 API 调用次数",
+          "create_sensors": "自动创建传感器"
+        }
+      },
+      "menu": {
+        "title": "",
+        "menu_options": {
+          "user": "位置",
+          "bulk": "批量传感器",
+          "add": "添加传感器",
+          "list_modify": "修改传感器",
+          "delete": "删除传感器",
+          "finalise": "保存更改"
+        }
+      },
+      "bulk": {
+        "title": "批量传感器",
+        "data": {
+          "create_sensors": "选择或取消选择传感器组"
+        }
+      },
+      "add": {
+        "title": "添加传感器",
+        "data": {
+          "name": "传感器名称",
+          "formula": "用于显示传感器的 Jinja2 模板",
+          "attributes": "要在传感器上显示的属性",
+          "sensor_class": "传感器类型"
+        }
+      },
+      "modify": {
+        "title": "修改传感器",
+        "description": "选择传感器",
+        "data": {
+          "name": "传感器名称",
+          "formula": "用于显示传感器的 Jinja2 模板",
+          "attributes": "要在传感器上显示的属性",
+          "sensor_class": "传感器类型"
+        }
+      },
+      "delete": {
+        "title": "选择要删除的传感器"
+      },
+      "list_modify": {
+        "title": "选择要修改的传感器"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_api_key": "无法连接，可能 API 密钥无效或未订阅 One Call API 3.0，请检查日志了解详情",
+      "formula": "无效公式，请检查日志了解详情",
+      "formula_variable": "使用的变量未定义，请检查日志了解详情",
+      "duplicate_name": "此名称已被用于定义传感器",
+      "close_proximity": "1公里范围内已配置位置",
+      "cannot_connect": "无法连接到 OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "menu_options": {
+          "update": "更新 API",
+          "bulk": "批量传感器",
+          "add": "添加传感器",
+          "list_modify": "修改传感器",
+          "delete": "删除传感器",
+          "finalise": "保存更改"
+        }
+      },
+      "update": {
+        "title": "修改 API",
+        "data": {
+          "api_key": "API 密钥",
+          "max_days": "数据保留天数",
+          "initial_days": "预加载天数",
+          "max_calls": "每天最大 API 调用次数",
+          "create_sensors": "自动创建传感器"
+        }
+      },
+      "bulk": {
+        "title": "批量传感器",
+        "data": {
+          "create_sensors": "选择或取消选择传感器组"
+        }
+      },
+      "add": {
+        "title": "添加传感器",
+        "data": {
+          "name": "传感器名称",
+          "formula": "用于显示传感器的 Jinja2 模板",
+          "attributes": "要在传感器上显示的属性",
+          "sensor_class": "传感器类型"
+        }
+      },
+      "modify": {
+        "title": "修改传感器",
+        "description": "选择传感器",
+        "data": {
+          "formula": "用于显示传感器的 Jinja2 模板",
+          "attributes": "要在传感器上显示的属性",
+          "sensor_class": "传感器类型"
+        }
+      },
+      "delete": {
+        "title": "选择要删除的传感器"
+      },
+      "list_modify": {
+        "title": "选择要修改的传感器"
+      }
+    }
+  }
+}

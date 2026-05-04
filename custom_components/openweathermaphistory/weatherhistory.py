@@ -121,9 +121,8 @@ class Weather:
         try:
             jdata = json.loads(data)
         except TypeError:
-            _LOGGER.error("OpenWeatherMap call failed, invalid json format")
+            _LOGGER.error("OpenWeatherMap call failed, invalid json format, %s", data)
             return {}
-
         try:
             code = jdata["cod"]
             message = jdata["message"]
@@ -237,6 +236,7 @@ class Weather:
             "wind_deg": current.get("wind_deg", 0),
             "uvi": current.get("uvi", 0),
             "clouds": current.get("clouds", 0),
+            "dew_point": current.get("dew_point", 0),
             "description": description,
         }
         # build forecast
@@ -280,6 +280,8 @@ class Weather:
                 "uvi": current.get("uvi", 0),
                 "clouds": current.get("clouds", 0),
                 "description": current.get("description", ""),
+                "dew_point": current.get("dew_point", 0),
+
             }
         }
 

@@ -1,0 +1,208 @@
+{
+  "title": "Historique OWM",
+
+  "selector": {
+    "api": {
+      "options": {
+        "timemachine": "Heure actuelle",
+        "day_summary": "Jour actuel",
+        "forecast": "Prévisions",
+        "overview": "Aperçu"
+      }
+    },
+    "sensor_class": {
+      "options": {
+        "humidity": "Humidité",
+        "precipitation": "Précipitations",
+        "precipitation_intensity": "Intensité des précipitations",
+        "temperature": "Température",
+        "pressure": "Pression",
+        "wind_speed": "Vitesse du vent",
+        "wind_direction": "Direction du vent",
+        "none": "Aucun"
+      }
+    },
+    "create_sensors": {
+      "options": {
+        "hist_rain": "Pluie historique",
+        "hist_snow": "Neige historique",
+        "hist_max": "Température maximale historique",
+        "hist_min": "Température minimale historique",
+        "current_obs": "Observations actuelles",
+        "forecast_rain": "Prévisions de pluie",
+        "forecast_snow": "Prévisions de neige",
+        "forecast_max": "Température maximale prévue",
+        "forecast_min": "Température minimale prévue",
+        "forecast_humidity": "Humidité prévue",
+        "forecast_pop": "Probabilité de prévision",
+        "forecast_wind_speed": "Vitesse du vent prévue",
+        "forecast_wind_deg": "Degrés de vent prévus",
+        "forecast_uvi": "UVI prévu",
+        "forecast_clouds": "Nuages prévus",
+        "forecast_description": "Description des prévisions",
+        "plotly": "Exposer les données pour une intégration facile avec la carte graphique plotly",
+        "frost_prediction": "Capteurs de prédiction de gel basés sur les données actuelles",
+        "hist_adjustment_factor": "Facteur d'ajustement utilisant la pluie historique",
+        "forecast_adjustment_factor": "Facteur d'ajustement utilisant l'historique et les prévisions de pluie"
+      }
+    }
+  },
+  "services": {
+    "api_call": {
+      "name": "Appel API",
+      "description": "Testez l'appel API, les résultats sont affichés dans les notifications",
+      "fields": {
+        "entity_id": {
+          "name": "Instance OWMH",
+          "description": "L'instance d'historique OWM pour tester l'appel API"
+        },
+        "api": {
+          "name": "API à appeler",
+          "description": "Les trois API utilisées par l'application"
+        }
+      }
+    },
+    "list_vars": {
+      "name": "Lister variable",
+      "description": "Lister les variables disponibles, les résultats sont affichés dans les notifications",
+      "fields": {
+        "entity_id": {
+          "name": "Instance OWMH",
+          "description": "L'instance d'historique OWM pour lister les variables"
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "L'emplacement est déjà configuré"
+    },
+    "error": {
+      "invalid_api_key": "Impossible de se connecter, clé API possiblement invalide ou vous n'avez pas souscrit à One Call API 3.0, vérifiez le journal pour les détails",
+      "formula": "Formule invalide, vérifiez le journal pour les détails",
+      "formula_variable": "Une variable utilisée est indéfinie, vérifiez le journal pour les détails",
+      "duplicate_name": "Ce nom a déjà été utilisé pour définir un capteur",
+      "close_proximity": "Un emplacement est déjà configuré à 1 km",
+      "cannot_connect": "Impossible de se connecter à OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "title": "Nouvel emplacement",
+        "description": "Pour générer une clé API, allez sur {url} et abonnez-vous à 'One Call API 3.0'. Vous devez saisir les informations de facturation pour obtenir 1 000 appels gratuits par jour. Configurez votre compte pour ne jamais dépasser la limite gratuite ici : {subscriptionurl}",
+        "data": {
+          "name": "Nom de l'emplacement",
+          "api_key": "Clé API",
+          "location": "Emplacement",
+          "max_days": "Jours pour conserver les données",
+          "initial_days": "Jours pour précharger",
+          "max_calls": "Maximum d'appels API par jour",
+          "create_sensors": "Créer automatiquement des capteurs"
+        }
+      },
+      "menu": {
+        "title": "",
+        "menu_options": {
+          "user": "Emplacement",
+          "bulk": "Capteurs en masse",
+          "add": "Ajouter un capteur",
+          "list_modify": "Modifier le capteur",
+          "delete": "Supprimer le capteur",
+          "finalise": "Sauvegarder les modifications"
+        }
+      },
+      "bulk": {
+        "title": "Capteurs en masse",
+        "data": {
+          "create_sensors": "Sélectionner ou désélectionner des groupes de capteurs"
+        }
+      },
+      "add": {
+        "title": "Ajouter un capteur",
+        "data": {
+          "name": "Nom du capteur",
+          "formula": "Modèle Jinja2 pour exposer le capteur",
+          "attributes": "Attributs à exposer sur le capteur",
+          "sensor_class": "Le type de capteur"
+        }
+      },
+      "modify": {
+        "title": "Modifier le capteur",
+        "description": "sélectionner un capteur",
+        "data": {
+          "name": "Nom du capteur",
+          "formula": "Modèle Jinja2 pour exposer le capteur",
+          "attributes": "Attributs à exposer sur le capteur",
+          "sensor_class": "Le type de capteur"
+        }
+      },
+      "delete": {
+        "title": "Sélectionner le capteur à supprimer"
+      },
+      "list_modify": {
+        "title": "Sélectionner le capteur à modifier"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_api_key": "Impossible de se connecter, clé API possiblement invalide ou vous n'avez pas souscrit à One Call API 3.0, vérifiez le journal pour les détails",
+      "formula": "Formule invalide, vérifiez le journal pour les détails",
+      "formula_variable": "Une variable utilisée est indéfinie, vérifiez le journal pour les détails",
+      "duplicate_name": "Ce nom a déjà été utilisé pour définir un capteur",
+      "close_proximity": "Un emplacement est déjà configuré à 1 km",
+      "cannot_connect": "Impossible de se connecter à OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "menu_options": {
+          "update": "Mettre à jour l'API",
+          "bulk": "Capteurs en masse",
+          "add": "Ajouter un capteur",
+          "list_modify": "Modifier le capteur",
+          "delete": "Supprimer le capteur",
+          "finalise": "Sauvegarder les modifications"
+        }
+      },
+      "update": {
+        "title": "Modifier l'API",
+        "data": {
+          "api_key": "Clé API",
+          "max_days": "Jours pour conserver les données",
+          "initial_days": "Jours pour précharger",
+          "max_calls": "Maximum d'appels API par jour",
+          "create_sensors": "Créer automatiquement des capteurs"
+        }
+      },
+      "bulk": {
+        "title": "Capteurs en masse",
+        "data": {
+          "create_sensors": "Sélectionner ou désélectionner des groupes de capteurs"
+        }
+      },
+      "add": {
+        "title": "Ajouter un capteur",
+        "data": {
+          "name": "Nom du capteur",
+          "formula": "Modèle Jinja2 pour exposer le capteur",
+          "attributes": "Attributs à exposer sur le capteur",
+          "sensor_class": "Le type de capteur"
+        }
+      },
+      "modify": {
+        "title": "Modifier le capteur",
+        "description": "sélectionner un capteur",
+        "data": {
+          "formula": "Modèle Jinja2 pour exposer le capteur",
+          "attributes": "Attributs à exposer sur le capteur",
+          "sensor_class": "Le type de capteur"
+        }
+      },
+      "delete": {
+        "title": "Sélectionner le capteur à supprimer"
+      },
+      "list_modify": {
+        "title": "Sélectionner le capteur à modifier"
+      }
+    }
+  }
+}

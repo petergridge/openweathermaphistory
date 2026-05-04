@@ -1,0 +1,208 @@
+{
+  "title": "OWM Verlauf",
+
+  "selector": {
+    "api": {
+      "options": {
+        "timemachine": "Aktuelle Stunde",
+        "day_summary": "Aktueller Tag",
+        "forecast": "Vorhersage",
+        "overview": "Übersicht"
+      }
+    },
+    "sensor_class": {
+      "options": {
+        "humidity": "Luftfeuchtigkeit",
+        "precipitation": "Niederschlag",
+        "precipitation_intensity": "Niederschlagsintensität",
+        "temperature": "Temperatur",
+        "pressure": "Druck",
+        "wind_speed": "Windgeschwindigkeit",
+        "wind_direction": "Windrichtung",
+        "none": "Keine"
+      }
+    },
+    "create_sensors": {
+      "options": {
+        "hist_rain": "Historischer Regen",
+        "hist_snow": "Historischer Schnee",
+        "hist_max": "Historische Höchsttemperatur",
+        "hist_min": "Historische Tiefsttemperatur",
+        "current_obs": "Aktuelle Beobachtungen",
+        "forecast_rain": "Vorhersage Regen",
+        "forecast_snow": "Vorhersage Schnee",
+        "forecast_max": "Vorhersage Höchsttemperatur",
+        "forecast_min": "Vorhersage Tiefsttemperatur",
+        "forecast_humidity": "Vorhersage Luftfeuchtigkeit",
+        "forecast_pop": "Vorhersage Wahrscheinlichkeit",
+        "forecast_wind_speed": "Vorhersage Windgeschwindigkeit",
+        "forecast_wind_deg": "Vorhersage Windgrad",
+        "forecast_uvi": "Vorhersage UVI",
+        "forecast_clouds": "Vorhersage Wolken",
+        "forecast_description": "Vorhersage Beschreibung",
+        "plotly": "Daten für einfache Integration mit Plotly-Grafikkarte freigeben",
+        "frost_prediction": "Frostvorhersage-Sensoren basierend auf aktuellen Daten",
+        "hist_adjustment_factor": "Anpassungsfaktor mit historischem Regen",
+        "forecast_adjustment_factor": "Anpassungsfaktor mit Verlauf und Vorhersage Regen"
+      }
+    }
+  },
+  "services": {
+    "api_call": {
+      "name": "API-Aufruf",
+      "description": "Testen Sie den API-Aufruf, Ergebnisse werden in Benachrichtigungen angezeigt",
+      "fields": {
+        "entity_id": {
+          "name": "OWMH-Instanz",
+          "description": "Die OWM-Verlauf-Instanz, für die der API-Aufruf getestet werden soll"
+        },
+        "api": {
+          "name": "Aufzurufende API",
+          "description": "Die drei APIs, die von der Anwendung verwendet werden"
+        }
+      }
+    },
+    "list_vars": {
+      "name": "Variable auflisten",
+      "description": "Verfügbare Variablen auflisten, Ergebnisse werden in Benachrichtigungen angezeigt",
+      "fields": {
+        "entity_id": {
+          "name": "OWMH-Instanz",
+          "description": "Die OWM-Verlauf-Instanz, für die Variablen aufgelistet werden sollen"
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "Standort ist bereits konfiguriert"
+    },
+    "error": {
+      "invalid_api_key": "Verbindung nicht möglich, möglicherweise ungültiger API-Schlüssel oder Sie haben nicht das One Call API 3.0 abonniert, Details im Protokoll prüfen",
+      "formula": "Ungültige Formel, Details im Protokoll prüfen",
+      "formula_variable": "Eine verwendete Variable ist undefiniert, Details im Protokoll prüfen",
+      "duplicate_name": "Dieser Name wurde bereits zur Definition eines Sensors verwendet",
+      "close_proximity": "Ein Standort ist bereits innerhalb von 1 km konfiguriert",
+      "cannot_connect": "Verbindung zu OpenWeatherMap konnte nicht hergestellt werden"
+    },
+    "step": {
+      "user": {
+        "title": "Neuer Standort",
+        "description": "Um einen API-Schlüssel zu generieren, gehen Sie zu {url} und abonnieren Sie 'One Call API 3.0'. Sie müssen Rechnungsinformationen eingeben, um 1.000 kostenlose Aufrufe pro Tag zu erhalten. Konfigurieren Sie Ihr Konto, um das kostenlose Limit hier niemals zu überschreiten: {subscriptionurl}",
+        "data": {
+          "name": "Standortname",
+          "api_key": "API-Schlüssel",
+          "location": "Standort",
+          "max_days": "Tage zum Speichern von Daten",
+          "initial_days": "Tage zum Nachladen",
+          "max_calls": "Maximale API-Aufrufe pro Tag",
+          "create_sensors": "Sensoren automatisch erstellen"
+        }
+      },
+      "menu": {
+        "title": "",
+        "menu_options": {
+          "user": "Standort",
+          "bulk": "Massen-Sensoren",
+          "add": "Sensor hinzufügen",
+          "list_modify": "Sensor ändern",
+          "delete": "Sensor löschen",
+          "finalise": "Änderungen speichern"
+        }
+      },
+      "bulk": {
+        "title": "Massen-Sensoren",
+        "data": {
+          "create_sensors": "Sensorgruppen auswählen oder abwählen"
+        }
+      },
+      "add": {
+        "title": "Sensor hinzufügen",
+        "data": {
+          "name": "Sensorname",
+          "formula": "Jinja2-Vorlage zur Freigabe des Sensors",
+          "attributes": "Attribute, die auf dem Sensor freigegeben werden sollen",
+          "sensor_class": "Der Sensortyp"
+        }
+      },
+      "modify": {
+        "title": "Sensor ändern",
+        "description": "einen Sensor auswählen",
+        "data": {
+          "name": "Sensorname",
+          "formula": "Jinja2-Vorlage zur Freigabe des Sensors",
+          "attributes": "Attribute, die auf dem Sensor freigegeben werden sollen",
+          "sensor_class": "Der Sensortyp"
+        }
+      },
+      "delete": {
+        "title": "Zu löschenden Sensor auswählen"
+      },
+      "list_modify": {
+        "title": "Zu ändernden Sensor auswählen"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_api_key": "Verbindung nicht möglich, möglicherweise ungültiger API-Schlüssel oder Sie haben nicht das One Call API 3.0 abonniert, Details im Protokoll prüfen",
+      "formula": "Ungültige Formel, Details im Protokoll prüfen",
+      "formula_variable": "Eine verwendete Variable ist undefiniert, Details im Protokoll prüfen",
+      "duplicate_name": "Dieser Name wurde bereits zur Definition eines Sensors verwendet",
+      "close_proximity": "Ein Standort ist bereits innerhalb von 1 km konfiguriert",
+      "cannot_connect": "Verbindung zu OpenWeatherMap konnte nicht hergestellt werden"
+    },
+    "step": {
+      "user": {
+        "menu_options": {
+          "update": "API aktualisieren",
+          "bulk": "Massen-Sensoren",
+          "add": "Sensor hinzufügen",
+          "list_modify": "Sensor ändern",
+          "delete": "Sensor löschen",
+          "finalise": "Änderungen speichern"
+        }
+      },
+      "update": {
+        "title": "API ändern",
+        "data": {
+          "api_key": "API-Schlüssel",
+          "max_days": "Tage zum Speichern von Daten",
+          "initial_days": "Tage zum Nachladen",
+          "max_calls": "Maximale API-Aufrufe pro Tag",
+          "create_sensors": "Sensoren automatisch erstellen"
+        }
+      },
+      "bulk": {
+        "title": "Massen-Sensoren",
+        "data": {
+          "create_sensors": "Sensorgruppen auswählen oder abwählen"
+        }
+      },
+      "add": {
+        "title": "Sensor hinzufügen",
+        "data": {
+          "name": "Sensorname",
+          "formula": "Jinja2-Vorlage zur Freigabe des Sensors",
+          "attributes": "Attribute, die auf dem Sensor freigegeben werden sollen",
+          "sensor_class": "Der Sensortyp"
+        }
+      },
+      "modify": {
+        "title": "Sensor ändern",
+        "description": "einen Sensor auswählen",
+        "data": {
+          "formula": "Jinja2-Vorlage zur Freigabe des Sensors",
+          "attributes": "Attribute, die auf dem Sensor freigegeben werden sollen",
+          "sensor_class": "Der Sensortyp"
+        }
+      },
+      "delete": {
+        "title": "Zu löschenden Sensor auswählen"
+      },
+      "list_modify": {
+        "title": "Zu ändernden Sensor auswählen"
+      }
+    }
+  }
+}

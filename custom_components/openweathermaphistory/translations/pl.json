@@ -1,0 +1,208 @@
+{
+  "title": "Historia OWM",
+
+  "selector": {
+    "api": {
+      "options": {
+        "timemachine": "Bieżąca godzina",
+        "day_summary": "Bieżący dzień",
+        "forecast": "Prognoza",
+        "overview": "Przegląd"
+      }
+    },
+    "sensor_class": {
+      "options": {
+        "humidity": "Wilgotność",
+        "precipitation": "Opady",
+        "precipitation_intensity": "Intensywność opadów",
+        "temperature": "Temperatura",
+        "pressure": "Ciśnienie",
+        "wind_speed": "Prędkość wiatru",
+        "wind_direction": "Kierunek wiatru",
+        "none": "Brak"
+      }
+    },
+    "create_sensors": {
+      "options": {
+        "hist_rain": "Historyczne opady deszczu",
+        "hist_snow": "Historyczne opady śniegu",
+        "hist_max": "Historyczna maksymalna temperatura",
+        "hist_min": "Historyczna minimalna temperatura",
+        "current_obs": "Bieżące obserwacje",
+        "forecast_rain": "Prognoza opadów deszczu",
+        "forecast_snow": "Prognoza opadów śniegu",
+        "forecast_max": "Prognoza maksymalnej temperatury",
+        "forecast_min": "Prognoza minimalnej temperatury",
+        "forecast_humidity": "Prognoza wilgotności",
+        "forecast_pop": "Prawdopodobieństwo prognozy",
+        "forecast_wind_speed": "Prognoza prędkości wiatru",
+        "forecast_wind_deg": "Prognoza stopni wiatru",
+        "forecast_uvi": "Prognoza UVI",
+        "forecast_clouds": "Prognoza zachmurzenia",
+        "forecast_description": "Opis prognozy",
+        "plotly": "Udostępnij dane do łatwej integracji z kartą wykresu plotly",
+        "frost_prediction": "Czujniki prognozy mrozu oparte na bieżących danych",
+        "hist_adjustment_factor": "Współczynnik korekty przy użyciu historycznych opadów",
+        "forecast_adjustment_factor": "Współczynnik korekty przy użyciu historii i prognozy opadów"
+      }
+    }
+  },
+  "services": {
+    "api_call": {
+      "name": "Wywołanie API",
+      "description": "Przetestuj wywołanie API, wyniki wyświetlane w powiadomieniach",
+      "fields": {
+        "entity_id": {
+          "name": "Instancja OWMH",
+          "description": "Instancja historii OWM do przetestowania wywołania API"
+        },
+        "api": {
+          "name": "API do wywołania",
+          "description": "Trzy API używane przez aplikację"
+        }
+      }
+    },
+    "list_vars": {
+      "name": "Lista zmiennych",
+      "description": "Lista dostępnych zmiennych, wyniki wyświetlane w powiadomieniach",
+      "fields": {
+        "entity_id": {
+          "name": "Instancja OWMH",
+          "description": "Instancja historii OWM do wyświetlenia zmiennych"
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "Lokalizacja jest już skonfigurowana"
+    },
+    "error": {
+      "invalid_api_key": "Nie można połączyć, możliwy nieprawidłowy klucz API lub nie subskrybujesz One Call API 3.0, sprawdź dziennik po szczegóły",
+      "formula": "Nieprawidłowa formuła, sprawdź dziennik po szczegóły",
+      "formula_variable": "Użyta zmienna jest niezdefiniowana, sprawdź dziennik po szczegóły",
+      "duplicate_name": "Ta nazwa została już użyta do zdefiniowania czujnika",
+      "close_proximity": "Lokalizacja jest już skonfigurowana w promieniu 1 km",
+      "cannot_connect": "Nie można połączyć się z OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "title": "Nowa lokalizacja",
+        "description": "Aby wygenerować klucz API przejdź do {url} i subskrybuj 'One Call API 3.0'. Musisz wprowadzić informacje rozliczeniowe, aby otrzymać 1 000 bezpłatnych wywołań dziennie. Skonfiguruj swoje konto, aby nigdy nie przekraczać bezpłatnego limitu tutaj: {subscriptionurl}",
+        "data": {
+          "name": "Nazwa lokalizacji",
+          "api_key": "Klucz API",
+          "location": "Lokalizacja",
+          "max_days": "Dni przechowywania danych",
+          "initial_days": "Dni wstępnego ładowania",
+          "max_calls": "Maksymalna liczba wywołań API dziennie",
+          "create_sensors": "Automatycznie twórz czujniki"
+        }
+      },
+      "menu": {
+        "title": "",
+        "menu_options": {
+          "user": "Lokalizacja",
+          "bulk": "Czujniki zbiorcze",
+          "add": "Dodaj czujnik",
+          "list_modify": "Modyfikuj czujnik",
+          "delete": "Usuń czujnik",
+          "finalise": "Zapisz zmiany"
+        }
+      },
+      "bulk": {
+        "title": "Czujniki zbiorcze",
+        "data": {
+          "create_sensors": "Wybierz lub odznacz grupy czujników"
+        }
+      },
+      "add": {
+        "title": "Dodaj czujnik",
+        "data": {
+          "name": "Nazwa czujnika",
+          "formula": "Szablon Jinja2 do wyświetlenia czujnika",
+          "attributes": "Atrybuty do wyświetlenia na czujniku",
+          "sensor_class": "Typ czujnika"
+        }
+      },
+      "modify": {
+        "title": "Modyfikuj czujnik",
+        "description": "wybierz czujnik",
+        "data": {
+          "name": "Nazwa czujnika",
+          "formula": "Szablon Jinja2 do wyświetlenia czujnika",
+          "attributes": "Atrybuty do wyświetlenia na czujniku",
+          "sensor_class": "Typ czujnika"
+        }
+      },
+      "delete": {
+        "title": "Wybierz czujnik do usunięcia"
+      },
+      "list_modify": {
+        "title": "Wybierz czujnik do modyfikacji"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_api_key": "Nie można połączyć, możliwy nieprawidłowy klucz API lub nie subskrybujesz One Call API 3.0, sprawdź dziennik po szczegóły",
+      "formula": "Nieprawidłowa formuła, sprawdź dziennik po szczegóły",
+      "formula_variable": "Użyta zmienna jest niezdefiniowana, sprawdź dziennik po szczegóły",
+      "duplicate_name": "Ta nazwa została już użyta do zdefiniowania czujnika",
+      "close_proximity": "Lokalizacja jest już skonfigurowana w promieniu 1 km",
+      "cannot_connect": "Nie można połączyć się z OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "menu_options": {
+          "update": "Aktualizuj API",
+          "bulk": "Czujniki zbiorcze",
+          "add": "Dodaj czujnik",
+          "list_modify": "Modyfikuj czujnik",
+          "delete": "Usuń czujnik",
+          "finalise": "Zapisz zmiany"
+        }
+      },
+      "update": {
+        "title": "Modyfikuj API",
+        "data": {
+          "api_key": "Klucz API",
+          "max_days": "Dni przechowywania danych",
+          "initial_days": "Dni wstępnego ładowania",
+          "max_calls": "Maksymalna liczba wywołań API dziennie",
+          "create_sensors": "Automatycznie twórz czujniki"
+        }
+      },
+      "bulk": {
+        "title": "Czujniki zbiorcze",
+        "data": {
+          "create_sensors": "Wybierz lub odznacz grupy czujników"
+        }
+      },
+      "add": {
+        "title": "Dodaj czujnik",
+        "data": {
+          "name": "Nazwa czujnika",
+          "formula": "Szablon Jinja2 do wyświetlenia czujnika",
+          "attributes": "Atrybuty do wyświetlenia na czujniku",
+          "sensor_class": "Typ czujnika"
+        }
+      },
+      "modify": {
+        "title": "Modyfikuj czujnik",
+        "description": "wybierz czujnik",
+        "data": {
+          "formula": "Szablon Jinja2 do wyświetlenia czujnika",
+          "attributes": "Atrybuty do wyświetlenia na czujniku",
+          "sensor_class": "Typ czujnika"
+        }
+      },
+      "delete": {
+        "title": "Wybierz czujnik do usunięcia"
+      },
+      "list_modify": {
+        "title": "Wybierz czujnik do modyfikacji"
+      }
+    }
+  }
+}

@@ -1,0 +1,208 @@
+{
+  "title": "Cronologia OWM",
+
+  "selector": {
+    "api": {
+      "options": {
+        "timemachine": "Ora attuale",
+        "day_summary": "Giorno attuale",
+        "forecast": "Previsioni",
+        "overview": "Panoramica"
+      }
+    },
+    "sensor_class": {
+      "options": {
+        "humidity": "Umidità",
+        "precipitation": "Precipitazioni",
+        "precipitation_intensity": "Intensità precipitazioni",
+        "temperature": "Temperatura",
+        "pressure": "Pressione",
+        "wind_speed": "Velocità vento",
+        "wind_direction": "Direzione vento",
+        "none": "Nessuno"
+      }
+    },
+    "create_sensors": {
+      "options": {
+        "hist_rain": "Pioggia storica",
+        "hist_snow": "Neve storica",
+        "hist_max": "Temperatura massima storica",
+        "hist_min": "Temperatura minima storica",
+        "current_obs": "Osservazioni attuali",
+        "forecast_rain": "Previsioni pioggia",
+        "forecast_snow": "Previsioni neve",
+        "forecast_max": "Temperatura massima prevista",
+        "forecast_min": "Temperatura minima prevista",
+        "forecast_humidity": "Umidità prevista",
+        "forecast_pop": "Probabilità previsioni",
+        "forecast_wind_speed": "Velocità vento prevista",
+        "forecast_wind_deg": "Gradi vento previsti",
+        "forecast_uvi": "UVI previsto",
+        "forecast_clouds": "Nuvole previste",
+        "forecast_description": "Descrizione previsioni",
+        "plotly": "Esporre dati per facile integrazione con scheda grafica plotly",
+        "frost_prediction": "Sensori previsione gelo basati su dati attuali",
+        "hist_adjustment_factor": "Fattore di regolazione utilizzando pioggia storica",
+        "forecast_adjustment_factor": "Fattore di regolazione utilizzando cronologia e previsioni pioggia"
+      }
+    }
+  },
+  "services": {
+    "api_call": {
+      "name": "Chiamata API",
+      "description": "Testa la chiamata API, i risultati vengono mostrati nelle notifiche",
+      "fields": {
+        "entity_id": {
+          "name": "Istanza OWMH",
+          "description": "L'istanza di cronologia OWM per testare la chiamata API"
+        },
+        "api": {
+          "name": "API da chiamare",
+          "description": "Le tre API utilizzate dall'applicazione"
+        }
+      }
+    },
+    "list_vars": {
+      "name": "Elenca variabile",
+      "description": "Elenca le variabili disponibili, i risultati vengono mostrati nelle notifiche",
+      "fields": {
+        "entity_id": {
+          "name": "Istanza OWMH",
+          "description": "L'istanza di cronologia OWM per elencare le variabili"
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "La posizione è già configurata"
+    },
+    "error": {
+      "invalid_api_key": "Impossibile connettersi, possibile chiave API non valida o non hai sottoscritto One Call API 3.0, controlla il registro per i dettagli",
+      "formula": "Formula non valida, controlla il registro per i dettagli",
+      "formula_variable": "Una variabile utilizzata è indefinita, controlla il registro per i dettagli",
+      "duplicate_name": "Questo nome è già stato utilizzato per definire un sensore",
+      "close_proximity": "Una posizione è già configurata entro 1 km",
+      "cannot_connect": "Impossibile connettersi a OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "title": "Nuova posizione",
+        "description": "Per generare la chiave API vai su {url} e sottoscrivi 'One Call API 3.0'. Devi inserire le informazioni di fatturazione per ottenere 1.000 chiamate gratuite al giorno. Configura il tuo account per non superare mai il limite gratuito qui: {subscriptionurl}",
+        "data": {
+          "name": "Nome posizione",
+          "api_key": "Chiave API",
+          "location": "Posizione",
+          "max_days": "Giorni per conservare i dati",
+          "initial_days": "Giorni per precaricare",
+          "max_calls": "Massimo chiamate API al giorno",
+          "create_sensors": "Crea sensori automaticamente"
+        }
+      },
+      "menu": {
+        "title": "",
+        "menu_options": {
+          "user": "Posizione",
+          "bulk": "Sensori bulk",
+          "add": "Aggiungi sensore",
+          "list_modify": "Modifica sensore",
+          "delete": "Elimina sensore",
+          "finalise": "Salva modifiche"
+        }
+      },
+      "bulk": {
+        "title": "Sensori bulk",
+        "data": {
+          "create_sensors": "Seleziona o deseleziona gruppi di sensori"
+        }
+      },
+      "add": {
+        "title": "Aggiungi sensore",
+        "data": {
+          "name": "Nome sensore",
+          "formula": "Template Jinja2 per esporre il sensore",
+          "attributes": "Attributi da esporre sul sensore",
+          "sensor_class": "Il tipo di sensore"
+        }
+      },
+      "modify": {
+        "title": "Modifica sensore",
+        "description": "seleziona un sensore",
+        "data": {
+          "name": "Nome sensore",
+          "formula": "Template Jinja2 per esporre il sensore",
+          "attributes": "Attributi da esporre sul sensore",
+          "sensor_class": "Il tipo di sensore"
+        }
+      },
+      "delete": {
+        "title": "Seleziona sensore da eliminare"
+      },
+      "list_modify": {
+        "title": "Seleziona sensore da modificare"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_api_key": "Impossibile connettersi, possibile chiave API non valida o non hai sottoscritto One Call API 3.0, controlla il registro per i dettagli",
+      "formula": "Formula non valida, controlla il registro per i dettagli",
+      "formula_variable": "Una variabile utilizzata è indefinita, controlla il registro per i dettagli",
+      "duplicate_name": "Questo nome è già stato utilizzato per definire un sensore",
+      "close_proximity": "Una posizione è già configurata entro 1 km",
+      "cannot_connect": "Impossibile connettersi a OpenWeatherMap"
+    },
+    "step": {
+      "user": {
+        "menu_options": {
+          "update": "Aggiorna API",
+          "bulk": "Sensori bulk",
+          "add": "Aggiungi sensore",
+          "list_modify": "Modifica sensore",
+          "delete": "Elimina sensore",
+          "finalise": "Salva modifiche"
+        }
+      },
+      "update": {
+        "title": "Modifica API",
+        "data": {
+          "api_key": "Chiave API",
+          "max_days": "Giorni per conservare i dati",
+          "initial_days": "Giorni per precaricare",
+          "max_calls": "Massimo chiamate API al giorno",
+          "create_sensors": "Crea sensori automaticamente"
+        }
+      },
+      "bulk": {
+        "title": "Sensori bulk",
+        "data": {
+          "create_sensors": "Seleziona o deseleziona gruppi di sensori"
+        }
+      },
+      "add": {
+        "title": "Aggiungi sensore",
+        "data": {
+          "name": "Nome sensore",
+          "formula": "Template Jinja2 per esporre il sensore",
+          "attributes": "Attributi da esporre sul sensore",
+          "sensor_class": "Il tipo di sensore"
+        }
+      },
+      "modify": {
+        "title": "Modifica sensore",
+        "description": "seleziona un sensore",
+        "data": {
+          "formula": "Template Jinja2 per esporre il sensore",
+          "attributes": "Attributi da esporre sul sensore",
+          "sensor_class": "Il tipo di sensore"
+        }
+      },
+      "delete": {
+        "title": "Seleziona sensore da eliminare"
+      },
+      "list_modify": {
+        "title": "Seleziona sensore da modificare"
+      }
+    }
+  }
+}

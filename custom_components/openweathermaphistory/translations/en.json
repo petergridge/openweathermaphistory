@@ -40,8 +40,10 @@
         "forecast_uvi": "Forecast UVI",
         "forecast_clouds": "Forecast clouds",
         "forecast_description": "Forecast description",
-        "plotly": "Expose data for easy integration with plotly graph card"
-
+        "plotly": "Expose data for easy integration with plotly graph card",
+        "frost_prediction": "Frost prediction sensors based on current data",
+        "hist_adjustment_factor": "Adjustment factor using historical rain",
+        "forecast_adjustment_factor": "Adjustment factor using history and forecast rain"
       }
     }
   },
