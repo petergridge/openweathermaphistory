@@ -111,27 +111,34 @@ Display current temperature
 ```
 Version 1 factor, verifying to an expected 10mm rainfall. The resulting factor can be used to reduce the watering time or volume  when there has been some rain but not enough to not water at all. This example could be extended to include temperature and increase the watering if it is hotter than expected.
 ```
-{{ 
-  [(10 
-  - day0rain 
-  - day1rain*0.5
-  - day2rain*0.25
-  - day3rain*0.12
-  - day4rain*0.06)/10
-  ,0]|max
-}}
+{% set target_water = 10 %}
+
+{# --- Equivalent Rain, past days rain have incrementally less impact --- #}
+{% set equivalent_rain = day0rain + day1rain*0.5 + day2rain*0.25 + day3rain*0.12 + day4rain*0.06 %}
+
+{# --- (target_water - equivalent_rain)/target_water --- #}
+{% set adjustment = (target_water - equivalent_rain)/target_water %}
+
+{# make 0 if negative #}
+{% set adjustment_factor = [adjustment,0]|max %}
+
+{{ adjustment_factor }}
 ```
 Factor utilising forecast rain and probability of precipitation
 ```
-{{ 
-  [(10 
-  - day0rain 
-  - day1rain*0.5
-  - day2rain*0.25
-  - forecast1rain*forecast1pop*0.5
-  - forecast2rain*forecast2pop*0.25)/10
-  ,0]|max
-}}
+{% set target_water = 10 %}
+
+{# --- Equivalent Rain, past days rain have incrementally less impact --- #}
+{% set equivalent_rain = day0rain + day1rain*0.5 + day2rain*0.25 + forecast1rain*forecast1pop*0.5 + forecast2rain*forecast2pop*0.25 %}
+
+{# --- (target_water - equivalent_rain)/target_water --- #}
+{% set adjustment = (target_water - equivalent_rain)/target_water %}
+
+{# make 0 if negative #}
+{% set adjustment_factor = [adjustment,0]|max %}
+
+{{ adjustment_factor }}
+
 ```
 ## Using the cumulative data
 A common usecase is to show daily/monthly rainfall. Using the cumulative data elements this can be achieved with the [Utility Meter sensor](https://www.home-assistant.io/integrations/utility_meter/)
