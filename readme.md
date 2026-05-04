@@ -10,10 +10,10 @@
 A home assistant sensor that uses the OpenWeatherMap API to return:
 - Up to 30 days of history data (rain, snow, min temp, max temp)
 - 7 days of forecast (pop, rain, snow, humidity, min temp, max temp)
-- Current observations (rain, snow, humidity, current temp, current pressure)
+- Current observations (rain, snow, humidity, current temp, current pressure, wind, UVI, dew point)
 - Aggrgate daily data by date (precipitation, min temp, max temp, date)
 - Status information (remaining backlog to load, current days API count)
-- creates a weather entity exposing captured data
+- Creates a weather entity exposing captured data for use in a weather card.
 
 Any number of sensors can be created using templates.
 
@@ -37,6 +37,8 @@ You need an API key, which is free, but requires a [registration](https://openwe
 
 **Note** If you have an existing key you will still need to subscribe to the One Call 3.0 API, follow the instructions above.
 
+## Please be aware defining many sensors will impact performance
+
 ## Installation
 
 HACS installation
@@ -48,6 +50,10 @@ Manual Installation
 ## Configuration Config Flow
 - Define the program using the UI. From Setting, Devices & Services choose 'ADD INTEGRATION'. Search for OpenWeatherMap History.
 - Add the integration multiple times if you want more than one location. The second location must be at least 1000m away from any previously configured location to prevent accidental creation of 'duplicate' weather monitoring. Be aware that the API limit is for each location. Locations are not aware of API usage by any other location configured.
+
+## Predefined sensors
+Easily define sensors using the bulk sensor option.
+<img width="320" height="533" alt="image" src="https://github.com/user-attachments/assets/111dd5a8-fc3a-49b0-9216-eda751d00813" />
 
 ## Location
 |Key |Type|Optional|Description|Default|
@@ -147,6 +153,13 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 ### For each day of history available, day 0 represent the past 24 hours
 |Variable|example|Description|
 |---|---|---|
+|aggregate{i}date|aggregate0date|the date of the dataset|
+|aggregate{i}precipitation|aggregate1precipitation|Rain + Snow|
+|aggregate{i}max||Maximum temperature in the 24 hour period|
+|aggregate{i}min||Minimum temperature in the 24 hour period|
+### For each day of history available, day 0 represents the current date
+|Variable|example|Description|
+|---|---|---|
 |day{i}rain|day0rain|Rainfall in the 24 hour period|
 |day{i}snow|day1snow|Snow in the 25-48 hour period|
 |day{i}max||Maximum temperature in the 24 hour period|
@@ -178,11 +191,19 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |current_UVI|UV index|
 |current_clouds|Cloud coverage|
 |current_description|Weather description|
+|current_dew_point|Dew Point|
 ### Plotty Support
 |Variable|Description|
 |---|---|
 |hourly_time|Time axis for plotty|
 |hourly_rain|Rainfall axis|
+|hourly_snow|Snow axis|
+|hourly_temp|Temperature axis|
+|hourly_clouds|Cloud Coverage axis|
+|hourly_pressure|Pressure axis|
+|hourly_humidity|Humidity axis|
+|hourly_wind_speed|Wind Speed axis|
+|hourly_uvi|Rainfall UV index|
 
 ### Status values
 |Variable|Description|
@@ -190,34 +211,16 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 |remaining_backlog|Hours of data remaining to be gathered|
 |daily_count|Number of API calls for all instances of the integration, resets midnight GMT. This will not always match between instance of the integration due to the update frequency|
 
-## Using Plotty to graph rain history
-
-Plotty is a card available on HACS
-
-<img width="232" height="23" alt="image" src="https://github.com/user-attachments/assets/4eea4d6e-714d-42d8-a8eb-3d073b4fe939" />
-
-Create a sensor in OWMH with this specification:
-
-<img width="233" height="271" alt="image" src="https://github.com/user-attachments/assets/93922812-34ad-4fb5-9cf8-19379e17724d" />
-
-Define the 'Plotty' card:
-
-<img width="559" height="355" alt="image" src="https://github.com/user-attachments/assets/5e4c178f-19fe-4e22-b766-50b4a256c3e3" />
-
-There are many options available this is the simplest implementation.
-```
-type: custom:plotly-graph
-hours_to_show: 24h
-entities:
-  - entity: ""
-    x: $ex hass.states['sensor.plotty'].attributes['hourly_time']
-    "y": $ex hass.states['sensor.plotty'].attributes['hourly_rain']
-```
-
 ## Tutorial
 Tristan created a German language video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
+##V2026.05.03
+- Add translation, AI generated
+- Add additional pre defined sensors on the bulk sensor menu
+  - Frost Sensor
+  - Forecast and history based adjustment sensors
+- Updated documentatio of available attributes
 ## V2026.05.01
 - add weather entity to utilise data already captured
 - add tests
