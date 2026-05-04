@@ -14,6 +14,7 @@ A home assistant sensor that uses the OpenWeatherMap API to return:
 - Aggrgate daily data by date (precipitation, min temp, max temp, date)
 - Status information (remaining backlog to load, current days API count)
 - Creates a weather entity exposing captured data for use in a weather card.
+<img width="302" height="151" alt="image" src="https://github.com/user-attachments/assets/951ef691-c7fd-465a-a63c-e163926009d3" />
 
 Any number of sensors can be created using templates.
 
