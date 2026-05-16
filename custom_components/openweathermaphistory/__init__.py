@@ -28,25 +28,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = WeatherCoordinator(hass, weather)
     await coordinator.async_config_entry_first_refresh()
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {
-        "weather": weather,
-        "coordinator": coordinator,
-        "config": config,
-    }
+    async def _async_finish_setup(_event=None):
 
-    PLATFORMS: list[str] = ["sensor", "weather"]
+        hass.data.setdefault(DOMAIN, {})
+        hass.data[DOMAIN][entry.entry_id] = {
+            "weather": weather,
+            "coordinator": coordinator,
+            "config": config,
+        }
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        PLATFORMS: list[str] = ["sensor", "weather"]
 
-    def _set_processing_type(event):
-        weather.set_processing_type("general")
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _set_processing_type)
+        def _set_processing_type(event):
+            weather.set_processing_type("general")
 
-    entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _set_processing_type)
+
+        entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
+
+
+    # Create background task so async_setup can return True immediately
+    # 1. Wait for HA to finish its internal startup first
+    if  hass.is_running:
+        await _async_finish_setup()
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _async_finish_setup)
     return True
-
 
 async def async_setup(hass: HomeAssistant, config):
     """Card setup."""

@@ -114,19 +114,19 @@ class Weather:
     def validate_data(self, data) -> bool:
         """Check if the call was successful."""
 
-        if data is None:
-            _LOGGER.error("OpenWeatherMap call failed, no data returned")
+        if data is None or data == {}:
+            _LOGGER.warning("OpenWeatherMap call failed, no data returned")
             return {}
 
         try:
             jdata = json.loads(data)
         except TypeError:
-            _LOGGER.error("OpenWeatherMap call failed, invalid json format, %s", data)
+            _LOGGER.warning("OpenWeatherMap call failed, invalid json format, %s", data)
             return {}
         try:
             code = jdata["cod"]
             message = jdata["message"]
-            _LOGGER.error("OpenWeatherMap call failed code: %s: %s", code, message)
+            _LOGGER.warning("OpenWeatherMap call failed code: %s: %s", code, message)
         except KeyError:
             return jdata
             # return {}
