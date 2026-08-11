@@ -43,10 +43,9 @@ You need an API key, which is free, but requires a [registration](https://openwe
 ## Installation
 
 HACS installation
-Adding as a custom repository using HACS is the simplest approach, will be published soon.
+OpenWeatherMap History is available via [HACS](https://hacs.xyz/).
 
-Manual Installation
-* Copy the openweathermaphistory folder to the ‘config/custom components/’ directory 
+Search for `openweathermaphistory`, click on it and click the download button. Restart Home Assistant.
 
 ## Configuration Config Flow
 - Define the program using the UI. From Setting, Devices & Services choose 'ADD INTEGRATION'. Search for OpenWeatherMap History.
