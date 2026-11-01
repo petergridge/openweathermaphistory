@@ -78,7 +78,7 @@
       "already_configured": "Sted er allerede konfigurert"
     },
     "error": {
-      "invalid_api_key": "Kan ikke koble til, mulig ugyldig API-nøkkel eller du har ikke abonnert på One Call API 3.0, sjekk loggen for detaljer",
+      "invalid_api_key": "Kan ikke koble til, mulig ugyldig API-nøkkel eller du har ikke abonnert på One Call API 4.0, sjekk loggen for detaljer",
       "formula": "Ugyldig formel, sjekk loggen for detaljer",
       "formula_variable": "En brukt variabel er udefinert, sjekk loggen for detaljer",
       "duplicate_name": "Dette navnet har allerede blitt brukt til å definere en sensor",
@@ -88,7 +88,7 @@
     "step": {
       "user": {
         "title": "Nytt sted",
-        "description": "For å generere API-nøkkel gå til {url} og abonner på 'One Call API 3.0'. Du må oppgi faktureringsinformasjon for å få 1 000 gratis kall per dag. Konfigurer kontoen din til aldri å overskride gratisgrensen her: {subscriptionurl}",
+        "description": "For å generere API-nøkkel gå til {url} og abonner på 'One Call API 4.0'. Du må oppgi faktureringsinformasjon for å få 1 000 gratis kall per dag. Konfigurer kontoen din til aldri å overskride gratisgrensen her: {subscriptionurl}",
         "data": {
           "name": "Stedsnavn",
           "api_key": "API-nøkkel",
@@ -145,7 +145,7 @@
   },
   "options": {
     "error": {
-      "invalid_api_key": "Kan ikke koble til, mulig ugyldig API-nøkkel eller du har ikke abonnert på One Call API 3.0, sjekk loggen for detaljer",
+      "invalid_api_key": "Kan ikke koble til, mulig ugyldig API-nøkkel eller du har ikke abonnert på One Call API 4.0, sjekk loggen for detaljer",
       "formula": "Ugyldig formel, sjekk loggen for detaljer",
       "formula_variable": "En brukt variabel er udefinert, sjekk loggen for detaljer",
       "duplicate_name": "Dette navnet har allerede blitt brukt til å definere en sensor",

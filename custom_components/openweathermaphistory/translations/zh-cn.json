@@ -78,7 +78,7 @@
       "already_configured": "位置已配置"
     },
     "error": {
-      "invalid_api_key": "无法连接，可能 API 密钥无效或未订阅 One Call API 3.0，请检查日志了解详情",
+      "invalid_api_key": "无法连接，可能 API 密钥无效或未订阅 One Call API 4.0，请检查日志了解详情",
       "formula": "无效公式，请检查日志了解详情",
       "formula_variable": "使用的变量未定义，请检查日志了解详情",
       "duplicate_name": "此名称已被用于定义传感器",
@@ -88,7 +88,7 @@
     "step": {
       "user": {
         "title": "新位置",
-        "description": "要生成 API 密钥，请访问 {url} 并订阅 'One Call API 3.0'。您需要输入账单信息以获得每天 1,000 次免费调用。在此处配置您的账户以不超过免费限制：{subscriptionurl}",
+        "description": "要生成 API 密钥，请访问 {url} 并订阅 'One Call API 4.0'。您需要输入账单信息以获得每天 1,000 次免费调用。在此处配置您的账户以不超过免费限制：{subscriptionurl}",
         "data": {
           "name": "位置名称",
           "api_key": "API 密钥",
@@ -145,7 +145,7 @@
   },
   "options": {
     "error": {
-      "invalid_api_key": "无法连接，可能 API 密钥无效或未订阅 One Call API 3.0，请检查日志了解详情",
+      "invalid_api_key": "无法连接，可能 API 密钥无效或未订阅 One Call API 4.0，请检查日志了解详情",
       "formula": "无效公式，请检查日志了解详情",
       "formula_variable": "使用的变量未定义，请检查日志了解详情",
       "duplicate_name": "此名称已被用于定义传感器",

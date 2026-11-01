@@ -46,7 +46,7 @@ async def async_setup_entry(
 ) -> None:
     """Initialize config entry. form config flow."""
 
-    config = config_entry.options or config_entry.data
+    config = {**config_entry.data, **config_entry.options}
     shared = hass.data[DOMAIN][config_entry.entry_id]
     weather = shared["weather"]
     coordinator = shared["coordinator"]

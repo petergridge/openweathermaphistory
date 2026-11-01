@@ -78,7 +78,7 @@
       "already_configured": "Locatie is al geconfigureerd"
     },
     "error": {
-      "invalid_api_key": "Kan niet verbinden, mogelijk ongeldige API-sleutel of u heeft zich niet geabonneerd op One Call API 3.0, controleer het logboek voor details",
+      "invalid_api_key": "Kan niet verbinden, mogelijk ongeldige API-sleutel of u heeft zich niet geabonneerd op One Call API 4.0, controleer het logboek voor details",
       "formula": "Ongeldige formule, controleer het logboek voor details",
       "formula_variable": "Een gebruikte variabele is niet gedefinieerd, controleer het logboek voor details",
       "duplicate_name": "Deze naam is al gebruikt om een sensor te definiëren",
@@ -88,7 +88,7 @@
     "step": {
       "user": {
         "title": "Nieuwe locatie",
-        "description": "Ga naar {url} om een API-sleutel te genereren en abonneer u op 'One Call API 3.0'. U moet factureringsinformatie invoeren om 1.000 gratis oproepen per dag te krijgen. Configureer uw account om de gratis limiet hier nooit te overschrijden: {subscriptionurl}",
+        "description": "Ga naar {url} om een API-sleutel te genereren en abonneer u op 'One Call API 4.0'. U moet factureringsinformatie invoeren om 1.000 gratis oproepen per dag te krijgen. Configureer uw account om de gratis limiet hier nooit te overschrijden: {subscriptionurl}",
         "data": {
           "name": "Locatienaam",
           "api_key": "API-sleutel",
@@ -145,7 +145,7 @@
   },
   "options": {
     "error": {
-      "invalid_api_key": "Kan niet verbinden, mogelijk ongeldige API-sleutel of u heeft zich niet geabonneerd op One Call API 3.0, controleer het logboek voor details",
+      "invalid_api_key": "Kan niet verbinden, mogelijk ongeldige API-sleutel of u heeft zich niet geabonneerd op One Call API 4.0, controleer het logboek voor details",
       "formula": "Ongeldige formule, controleer het logboek voor details",
       "formula_variable": "Een gebruikte variabele is niet gedefinieerd, controleer het logboek voor details",
       "duplicate_name": "Deze naam is al gebruikt om een sensor te definiëren",

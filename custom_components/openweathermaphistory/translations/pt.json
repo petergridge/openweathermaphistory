@@ -78,7 +78,7 @@
       "already_configured": "Localização já está configurada"
     },
     "error": {
-      "invalid_api_key": "Não é possível conectar, possível chave API inválida ou você não subscreveu One Call API 3.0, verifique o registro para detalhes",
+      "invalid_api_key": "Não é possível conectar, possível chave API inválida ou você não subscreveu One Call API 4.0, verifique o registro para detalhes",
       "formula": "Fórmula inválida, verifique o registro para detalhes",
       "formula_variable": "Uma variável usada está indefinida, verifique o registro para detalhes",
       "duplicate_name": "Este nome já foi usado para definir um sensor",
@@ -88,7 +88,7 @@
     "step": {
       "user": {
         "title": "Nova localização",
-        "description": "Para gerar chave API vá para {url} e subscreva 'One Call API 3.0'. Você precisa inserir informações de cobrança para obter 1.000 chamadas gratuitas por dia. Configure sua conta para nunca exceder o limite gratuito aqui: {subscriptionurl}",
+        "description": "Para gerar chave API vá para {url} e subscreva 'One Call API 4.0'. Você precisa inserir informações de cobrança para obter 1.000 chamadas gratuitas por dia. Configure sua conta para nunca exceder o limite gratuito aqui: {subscriptionurl}",
         "data": {
           "name": "Nome da localização",
           "api_key": "Chave API",
@@ -145,7 +145,7 @@
   },
   "options": {
     "error": {
-      "invalid_api_key": "Não é possível conectar, possível chave API inválida ou você não subscreveu One Call API 3.0, verifique o registro para detalhes",
+      "invalid_api_key": "Não é possível conectar, possível chave API inválida ou você não subscreveu One Call API 4.0, verifique o registro para detalhes",
       "formula": "Fórmula inválida, verifique o registro para detalhes",
       "formula_variable": "Uma variável usada está indefinida, verifique o registro para detalhes",
       "duplicate_name": "Este nome já foi usado para definir um sensor",

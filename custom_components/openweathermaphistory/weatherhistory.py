@@ -3,7 +3,6 @@
 from datetime import date, datetime, timedelta
 import json
 import logging
-import re
 from zoneinfo import ZoneInfo
 
 from homeassistant.components.persistent_notification import async_create, async_dismiss
@@ -25,9 +24,12 @@ from .const import (
     CONF_MAX_DAYS,
     CONST_API_AGGREGATE,
     CONST_API_CALL,
+    CONST_API_CURRENT,
     CONST_API_FORECAST,
     CONST_API_OVERVIEW,
     CONST_CALLS,
+    CONST_DAILY_RECORDS,
+    CONST_HOURLY_RECORDS,
     CONST_INITIAL,
     DOMAIN,
 )
@@ -47,7 +49,7 @@ class WeatherCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(minutes=5),
+            update_interval=timedelta(minutes=10),
         )
         self._weather = weather
 
@@ -82,6 +84,13 @@ class Weather:
         self._processing_type = None
         self._daily_count = 1
         self._warning_issued = False
+
+    @staticmethod
+    def _precipitation_amount(value):
+        """Return the precipitation amount from an API value."""
+        if isinstance(value, dict):
+            return next(iter(value.values()), 0)
+        return value or 0
 
     async def async_get_stored_data(self, key):
         """Get data from .storage."""
@@ -140,8 +149,7 @@ class Weather:
         await rest.async_update(log_errors=False)
         result = self.validate_data(rest.data)
         if result:
-            _LOGGER.debug(url)
-            _LOGGER.debug(result)
+            _LOGGER.debug("OpenWeatherMap API call succeeded")
 
         self._daily_count += 1
         return result
@@ -167,68 +175,128 @@ class Weather:
         # or exceeded the call limit
         target = min(thishour, last_data_point + hours * 3600)
         while last_data_point < target:
-            # increment last date by an hour
-            last_data_point += 3600
-            hourdata = await self.gethourdata(last_data_point)
-            if hourdata == {}:
+            first_timestamp = last_data_point + 3600
+            count = min(
+                CONST_HOURLY_RECORDS,
+                (target - last_data_point) // 3600,
+            )
+            hourdata = await self.gethourdata_range(first_timestamp, count)
+            if not hourdata:
                 break
-            data.update({last_data_point: hourdata})
+            data.update(hourdata)
+            last_data_point = max(int(timestamp) for timestamp in hourdata)
         # end rest loop
         return data
 
-    async def get_aggregatedata(self, aggregate, indate=None):
-        """Get aggregate day data."""
-        # not implemented
-        # do not process when no calls remaining
-        if self.remaining_calls() < 1:
-            # only issue a single warning each day
+    async def get_aggregatedata(self, aggregate, dates, historydata=None):
+        """Fetch missing daily data in API-sized batches."""
+        missing_dates = set(dates) - aggregate.keys()
+        if not missing_dates:
+            return aggregate
+
+        oldest_date = min(missing_dates)
+        day_start = datetime.strptime(oldest_date, "%Y-%m-%d").replace(
+            tzinfo=ZoneInfo(self._timezone)
+        )
+        start = int(day_start.timestamp())
+        remaining_dates = set(missing_dates)
+        url = CONST_API_AGGREGATE % (
+            self._lat,
+            self._lon,
+            start,
+            min(CONST_DAILY_RECORDS, len(remaining_dates)),
+            self._key,
+        )
+        while remaining_dates and self.remaining_calls() > 0:
+            result = await self.get_rest(url)
+            daily = result.get("data", []) if result else []
+            if not daily:
+                break
+
+            previous_remaining = len(remaining_dates)
+            for data in daily:
+                timestamp = data.get("dt")
+                if timestamp is None:
+                    continue
+                day = datetime.fromtimestamp(
+                    int(timestamp), tz=ZoneInfo(self._timezone)
+                ).strftime("%Y-%m-%d")
+                if day not in remaining_dates:
+                    continue
+                temperature = data.get("temp", {})
+                precipitation = self._precipitation_amount(
+                    data.get("precipitation", data.get("rain", 0))
+                )
+                if historydata:
+                    precipitation = sum(
+                        hour_data.get("rain", 0) + hour_data.get("snow", 0)
+                        for history_timestamp, hour_data in historydata.items()
+                        if datetime.fromtimestamp(
+                            int(history_timestamp), tz=ZoneInfo(self._timezone)
+                        ).strftime("%Y-%m-%d")
+                        == day
+                    )
+                aggregate[day] = {
+                    "date": day,
+                    "precipitation": precipitation,
+                    "min_temp": temperature.get("min", 0),
+                    "max_temp": temperature.get("max", 0),
+                    "humidity": data.get("humidity", 0),
+                    "pressure": data.get("pressure", 0),
+                }
+                remaining_dates.discard(day)
+
+            next_url = result.get("next")
+            if (
+                not remaining_dates
+                or not next_url
+                or len(remaining_dates) == previous_remaining
+            ):
+                break
+            url = next_url
+
+        if remaining_dates and self.remaining_calls() < 1:
             self.call_limit_warning()
-            return {}
-        today = datetime.today().strftime("%Y-%m-%d")
-        if indate:
-            today = indate
-
-        url = CONST_API_AGGREGATE % (self._lat, self._lon, today, self._key)
-        result = await self.get_rest(url)
-
-        if result:
-            day = {}
-            # update the days data
-            day.update({"date": result.get("date")})
-            day.update({"precipitation": result.get("precipitation").get("total", 0)})
-            day.update({"min_temp": result.get("temperature").get("min", 0)})
-            day.update({"max_temp": result.get("temperature").get("max", 0)})
-            day.update({"humidity": result.get("humidity").get("afternoon", 0)})
-            day.update({"pressure": result.get("pressure").get("afternoon", 0)})
-            aggregate[result.get("date")] = day
-
         return aggregate
 
     async def get_forecastdata(self):
         """Get forecast data."""
         # do not process when no calls remaining
-        if self.remaining_calls() < 1:
+        if self.remaining_calls() < 2:
             # only issue a single warning each day
             self.call_limit_warning()
             return {}
 
-        url = CONST_API_FORECAST % (self._lat, self._lon, self._key)
+        current_url = (
+            f"{CONST_API_CURRENT}?lat={self._lat}&lon={self._lon}"
+            f"&units=metric&appid={self._key}"
+        )
+        current_result = await self.get_rest(current_url)
+        current_data = current_result.get("data", []) if current_result else []
+        if not current_data:
+            return {}
+
+        current = current_data[0]
+        now = datetime.now(ZoneInfo(self._timezone))
+        day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        url = CONST_API_FORECAST % (
+            self._lat,
+            self._lon,
+            int(day_start.timestamp()),
+            CONST_DAILY_RECORDS,
+            self._key,
+        )
         result = await self.get_rest(url)
-        days = []
-        current = {}
-        if result:
-            days = result.get("daily", [])
-            current = result.get("current", {})
-            weather = current.get("weather")
-            description = ""
-            if weather:
-                for instance in weather:
-                    description += instance.get("description", "")
+        days = result.get("data", []) if result else []
+        weather = current.get("weather", [])
+        description = " ".join(
+            instance.get("description", "") for instance in weather
+        )
 
         # current observations
         currentdata = {
-            "rain": current.get("rain", {}).get("1h", 0),
-            "snow": current.get("snow", {}).get("1h", 0),
+            "rain": self._precipitation_amount(current.get("rain", {})),
+            "snow": self._precipitation_amount(current.get("snow", {})),
             "temp": current.get("temp", 0),
             "humidity": current.get("humidity", 0),
             "pressure": current.get("pressure", 0),
@@ -254,15 +322,16 @@ class Weather:
                 "pressure": day.get("pressure", 0),
                 "humidity": day.get("humidity", 0),
                 "pop": day.get("pop", 0),
-                "rain": day.get("rain", 0),
-                "snow": day.get("snow", 0),
+                "rain": self._precipitation_amount(day.get("rain", 0)),
+                "snow": self._precipitation_amount(day.get("snow", 0)),
                 "wind_speed": day.get("wind_speed", 0),
                 "wind_deg": day.get("wind_deg", 0),
                 "uvi": day.get("uvi", 0),
                 "clouds": day.get("clouds", 0),
                 "description": description,
             }
-            forecastdaily.update({day.get("dt"): daydata})
+            if timestamp := day.get("dt"):
+                forecastdaily.update({timestamp: daydata})
 
         return currentdata, forecastdaily
 
@@ -452,22 +521,43 @@ class Weather:
                 self._lat,
                 self._lon,
                 thishour,
+                1,
                 self._key,
-            )  # self._key
+            )
         elif api == "day_summary":
             today = datetime.today().strftime("%Y-%m-%d")
-            url = CONST_API_AGGREGATE % (self._lat, self._lon, today, self._key)
+            day_start = datetime.strptime(today, "%Y-%m-%d").replace(
+                tzinfo=ZoneInfo(self._timezone)
+            )
+            url = CONST_API_AGGREGATE % (
+                self._lat,
+                self._lon,
+                int(day_start.timestamp()),
+                1,
+                self._key,
+            )
         elif api == "forecast":
-            url = CONST_API_FORECAST % (self._lat, self._lon, self._key)
+            day_start = datetime.now(ZoneInfo(self._timezone)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            url = CONST_API_FORECAST % (
+                self._lat,
+                self._lon,
+                int(day_start.timestamp()),
+                CONST_DAILY_RECORDS,
+                self._key,
+            )
         elif api == "overview":
             url = CONST_API_OVERVIEW % (self._lat, self._lon, self._key)
+        else:
+            raise ValueError(f"Unknown OpenWeatherMap API: {api}")
 
         result = await self.get_rest(url)
 
         card = "" + chr(10)
         card += "**API Call**" + chr(10)
         card += "```" + chr(10)
-        card += url + chr(10)
+        card += url.replace(self._key, "[redacted]") + chr(10)
         card += "```" + chr(10)
         card += "**API Response**" + chr(10)
         card += "```" + chr(10)
@@ -507,19 +597,21 @@ class Weather:
         aggregate_data = aggregate
         dailycalls = {"time": midnight, "count": self._daily_count}
         last_data_point = self.maxdict(historydata)
+        aggregate_dates = []
         if self._processing_type == CONST_INITIAL:
             # on start up just get the latest hour
 
             if last_data_point is None:
                 last_data_point = thishour - 3600
             historydata = await self.async_backload(historydata)
-            aggregate_data = await self.get_aggregatedata(aggregate)
+            aggregate_dates.append(datetime.now(ZoneInfo(self._timezone)).date())
         elif int(datetime.today().minute) > 5:
             historydata = await self.async_backload(historydata)
             for i in range(int(self._maxdays)):
-                today = (datetime.today() - timedelta(days=i)).strftime("%Y-%m-%d")
-                if not aggregate_data.get(today):
-                    aggregate_data = await self.get_aggregatedata(aggregate, today)
+                aggregate_dates.append(
+                    datetime.now(ZoneInfo(self._timezone)).date()
+                    - timedelta(days=i)
+                )
 
         # empty file
         if last_data_point is None:
@@ -532,9 +624,22 @@ class Weather:
                 # httpx request failed
                 return
             currentdata = data[0]
-            dailydata = data[1]
+            if data[1]:
+                dailydata = data[1]
             historydata = await self.get_data(historydata)
-            aggregate_data = await self.get_aggregatedata(aggregate)
+            if not aggregate_dates:
+                aggregate_dates = [
+                    datetime.now(ZoneInfo(self._timezone)).date()
+                    - timedelta(days=i)
+                    for i in range(int(self._maxdays))
+                ]
+
+        if aggregate_dates:
+            aggregate_data = await self.get_aggregatedata(
+                aggregate,
+                [day.isoformat() for day in aggregate_dates],
+                historydata,
+            )
 
         # recaculate the backlog
         data = historydata
@@ -636,69 +741,58 @@ class Weather:
         if self._backlog < 1:
             return data
 
-        x = 1
-        while x <= hours:
-            # get the data for the hour
-            data_point_time = earliestdata - (3600 * x)
-            hourdata = await self.gethourdata(data_point_time)
-            if hourdata == {}:
-                # no data found so abort the loop
-                break
-            # Add the data collected oected to the weather history
-            data.update({str(data_point_time): hourdata})
-            # decrement the backlog
-            self._backlog -= 1
-            if self._backlog < 1:
-                break
-            x += 1
+        count = min(
+            CONST_HOURLY_RECORDS,
+            hours,
+            int(self._backlog),
+        )
+        start = earliestdata - (count * 3600)
+        hourdata = await self.gethourdata_range(start, count)
+        data.update(hourdata)
+        self._backlog = max(0, self._backlog - len(hourdata))
 
         return data
 
     async def gethourdata(self, timestamp):
         """Get one hours data."""
+        data = await self.gethourdata_range(timestamp, 1)
+        return data.get(str(timestamp), {})
+
+    async def gethourdata_range(self, timestamp, count):
+        """Get a range of hourly data in one API call."""
         # do not process when no calls remaining
         if self.remaining_calls() < 1:
             # only issue a single warning each day
             self.call_limit_warning()
             return {}
 
-        url = CONST_API_CALL % (self._lat, self._lon, timestamp, self._key)
+        url = CONST_API_CALL % (
+            self._lat,
+            self._lon,
+            timestamp,
+            min(count, CONST_HOURLY_RECORDS),
+            self._key,
+        )
 
         result = await self.get_rest(url)
-        if result:
-            current = result.get("data")[0]
-            if current is None:
-                current = {}
-        else:
+        if not result:
             return {}
 
-        # build this hours data
-        precipval = {}
-        preciptypes = ["rain", "snow"]
-        for preciptype in preciptypes:
-            if preciptype in current:
-                # get the rain/snow eg 'rain': {'1h':0.89}
-                precip = current[preciptype]
-                # get the first key eg 1h, 3h
-                key = next(iter(precip))
-                # get the number component assuming only a singe digit
-                divby = float(re.search(r"\d+", key).group())
-                try:
-                    volume = precip.get(key, 0) / divby
-                except ZeroDivisionError:
-                    volume = 0
-                precipval.update({preciptype: volume})
-
-        rain = precipval.get("rain", 0)
-        snow = precipval.get("snow", 0)
-        return {
-            "rain": rain,
-            "snow": snow,
-            "temp": current.get("temp", 0),
-            "humidity": current.get("humidity", 0),
-            "pressure": current.get("pressure", 0),
-            "wind_speed": current.get("wind_speed", 0),
-            "wind_deg": current.get("wind_deg", 0),
-            "uvi": current.get("uvi", 0),
-            "clouds": current.get("clouds", 0),
-        }
+        hourly = {}
+        end = timestamp + count * 3600
+        for record in result.get("data", []):
+            record_timestamp = int(record.get("dt", 0))
+            if not timestamp <= record_timestamp < end:
+                continue
+            hourly[str(record_timestamp)] = {
+                "rain": self._precipitation_amount(record.get("rain", {})),
+                "snow": self._precipitation_amount(record.get("snow", {})),
+                "temp": record.get("temp", 0),
+                "humidity": record.get("humidity", 0),
+                "pressure": record.get("pressure", 0),
+                "wind_speed": record.get("wind_speed", 0),
+                "wind_deg": record.get("wind_deg", 0),
+                "uvi": record.get("uvi", 0),
+                "clouds": record.get("clouds", 0),
+            }
+        return hourly

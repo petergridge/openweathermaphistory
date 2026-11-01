@@ -78,7 +78,7 @@
       "already_configured": "La posizione è già configurata"
     },
     "error": {
-      "invalid_api_key": "Impossibile connettersi, possibile chiave API non valida o non hai sottoscritto One Call API 3.0, controlla il registro per i dettagli",
+      "invalid_api_key": "Impossibile connettersi, possibile chiave API non valida o non hai sottoscritto One Call API 4.0, controlla il registro per i dettagli",
       "formula": "Formula non valida, controlla il registro per i dettagli",
       "formula_variable": "Una variabile utilizzata è indefinita, controlla il registro per i dettagli",
       "duplicate_name": "Questo nome è già stato utilizzato per definire un sensore",
@@ -88,7 +88,7 @@
     "step": {
       "user": {
         "title": "Nuova posizione",
-        "description": "Per generare la chiave API vai su {url} e sottoscrivi 'One Call API 3.0'. Devi inserire le informazioni di fatturazione per ottenere 1.000 chiamate gratuite al giorno. Configura il tuo account per non superare mai il limite gratuito qui: {subscriptionurl}",
+        "description": "Per generare la chiave API vai su {url} e sottoscrivi 'One Call API 4.0'. Devi inserire le informazioni di fatturazione per ottenere 1.000 chiamate gratuite al giorno. Configura il tuo account per non superare mai il limite gratuito qui: {subscriptionurl}",
         "data": {
           "name": "Nome posizione",
           "api_key": "Chiave API",
@@ -145,7 +145,7 @@
   },
   "options": {
     "error": {
-      "invalid_api_key": "Impossibile connettersi, possibile chiave API non valida o non hai sottoscritto One Call API 3.0, controlla il registro per i dettagli",
+      "invalid_api_key": "Impossibile connettersi, possibile chiave API non valida o non hai sottoscritto One Call API 4.0, controlla il registro per i dettagli",
       "formula": "Formula non valida, controlla il registro per i dettagli",
       "formula_variable": "Una variabile utilizzata è indefinita, controlla il registro per i dettagli",
       "duplicate_name": "Questo nome è già stato utilizzato per definire un sensore",

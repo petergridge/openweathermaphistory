@@ -9,6 +9,7 @@ import uuid
 import jinja2
 import voluptuous as vol
 
+import homeassistant as HomeAssistant
 from homeassistant import config_entries
 from homeassistant.const import (
     CONF_API_KEY,
@@ -52,7 +53,7 @@ _LOGGER = logging.getLogger(__name__)
 class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
     """FLow handler."""
 
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
+    # CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
     VERSION = 2
 
     def __init__(self) -> None:  # noqa: D107
@@ -87,7 +88,10 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
             )
 
             errors, description_placeholders = await validate_api_key(
-                user_input[CONF_API_KEY], "v3.0"
+                self.hass,
+                user_input[CONF_API_KEY],
+                user_input[CONF_LOCATION][CONF_LATITUDE],
+                user_input[CONF_LOCATION][CONF_LONGITUDE],
             )
 
             if not errors:
@@ -149,7 +153,7 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
                 # Input is valid, set data.
                 resources = []
                 resources = self._data[CONF_RESOURCES]
-                options = user_input.get(CONF_CREATE_SENSORS)
+                options = user_input.get(CONF_CREATE_SENSORS, [])
                 # now process the create sensor options to build the required sensors
                 resources = process_options(
                     self.hass,
@@ -188,7 +192,10 @@ class WeatherHistoryFlowHandler(config_entries.ConfigFlow):
         newdata.update(self._data)
         if user_input is not None:
             errors, description_placeholders = await validate_api_key(
-                user_input[CONF_API_KEY], "v3.0"
+                self.hass,
+                user_input[CONF_API_KEY],
+                self._data[CONF_LOCATION][CONF_LATITUDE],
+                self._data[CONF_LOCATION][CONF_LONGITUDE],
             )
 
             user_input[CONF_MAX_DAYS] = max(
@@ -448,11 +455,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         # self.config_entry = config_entry
         self._name = config_entry.data.get(CONF_NAME)
         self.selected = {}
-        self._data = {}
-        if config_entry.options == {}:
-            self._data.update(config_entry.data)
-        else:
-            self._data.update(config_entry.options)
+        self._data = {**config_entry.data, **config_entry.options}
 
     async def async_step_user(self, user_input=None):
         """Work around from HA v23 11."""
@@ -490,7 +493,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         newdata.update(self._data)
         if user_input is not None:
             errors, description_placeholders = await validate_api_key(
-                user_input[CONF_API_KEY], "v3.0"
+                self.hass,
+                user_input[CONF_API_KEY],
+                self._data[CONF_LOCATION][CONF_LATITUDE],
+                self._data[CONF_LOCATION][CONF_LONGITUDE],
             )
 
             user_input[CONF_MAX_DAYS] = max(
@@ -677,7 +683,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 # Input is valid, set data.
                 resources = []
                 resources = self._data[CONF_RESOURCES]
-                options = user_input.get(CONF_CREATE_SENSORS)
+                options = user_input.get(CONF_CREATE_SENSORS, [])
                 # now process the create sensor options to build the required sensors
                 resources = process_options(
                     self.hass,
@@ -940,7 +946,7 @@ def add_to_list(list, item):
     list.append(item)
     return list
 
-def remove_from_list(hass, list, item):
+def remove_from_list(hass: HomeAssistant, list, item):
     """Check if the sensor exists before deleting."""
 
     for n, i in enumerate(list):
@@ -954,9 +960,16 @@ def remove_from_list(hass, list, item):
     return list
 
 
-def process_options(hass, name ,options, resource_list, days):
+def process_options(
+    hass: HomeAssistant,
+    name: str,
+    options: list[str] | None,
+    resource_list: list[dict],
+    days: int,
+) -> list[dict]:
     """Process the selected auto create options."""
     resources = resource_list
+    options = options or []
     precision = 2
 
     for i in range(6):
@@ -1102,7 +1115,7 @@ def process_options(hass, name ,options, resource_list, days):
                 create_formula(f"day{i}snow", "precipitation", "measurement",precision,name),
             )
         if "hist_max" in options:
-            add_to_list(
+            resources = add_to_list(
                 resources,
                 create_formula(f"day{i}max", "temperature", "measurement",precision,name),
             )
@@ -1110,7 +1123,7 @@ def process_options(hass, name ,options, resource_list, days):
             resources = remove_from_list(
                 hass,
                 resources,
-                create_formula(f"day{i}max", "precipitation", "measurement",precision,name),
+                create_formula(f"day{i}max", "temperature", "measurement",precision,name),
             )
         if "hist_min" in options:
             resources = add_to_list(
@@ -1121,7 +1134,7 @@ def process_options(hass, name ,options, resource_list, days):
             resources = remove_from_list(
                 hass,
                 resources,
-                create_formula(f"day{i}min", "precipitation", "measurement",precision,name),
+                create_formula(f"day{i}min", "temperature", "measurement",precision,name),
             )
 
     if "plotly" in options:

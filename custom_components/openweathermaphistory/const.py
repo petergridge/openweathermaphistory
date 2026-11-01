@@ -1,10 +1,25 @@
 """Weather history class defn constants."""
 
 DOMAIN = "openweathermaphistory"
-CONST_API_AGGREGATE = "https://api.openweathermap.org/data/3.0/onecall/day_summary?lat=%s&lon=%s&date=%s&appid=%s&units=metric"
-CONST_API_CALL      = "https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=%s&lon=%s&dt=%s&appid=%s&units=metric"
-CONST_API_FORECAST  = "https://api.openweathermap.org/data/3.0/onecall?lat=%s&lon=%s&exclude=minutely,alerts&appid=%s&units=metric"
-CONST_API_OVERVIEW  = "https://api.openweathermap.org/data/3.0/onecall/overview?lat=%s&lon=%s&appid=%s"
+CONST_API_CURRENT = "https://api.openweathermap.org/data/4.0/onecall/current"
+CONST_API_AGGREGATE = (
+    "https://api.openweathermap.org/data/4.0/onecall/timeline/1day"
+    "?lat=%s&lon=%s&start=%s&cnt=%s&appid=%s&units=metric"
+)
+CONST_API_CALL = (
+    "https://api.openweathermap.org/data/4.0/onecall/timeline/1h"
+    "?lat=%s&lon=%s&start=%s&cnt=%s&appid=%s&units=metric"
+)
+CONST_API_FORECAST = (
+    "https://api.openweathermap.org/data/4.0/onecall/timeline/1day"
+    "?lat=%s&lon=%s&start=%s&cnt=%s&appid=%s&units=metric"
+)
+CONST_API_OVERVIEW = (
+    "https://api.openweathermap.org/data/4.0/onecall/current"
+    "?lat=%s&lon=%s&appid=%s&units=metric"
+)
+
+
 CONF_CREATE_SENSORS = "create_sensors"
 CONF_FORMULA = "formula"
 CONF_DATA = "data"
@@ -20,6 +35,8 @@ CONF_UID = "unique_id"
 CONST_PROXIMITY = 1000
 # max calls in a single refresh
 CONST_CALLS = 24
+CONST_HOURLY_RECORDS = 20
+CONST_DAILY_RECORDS = 10
 CONST_INITIAL = "initial"
 # max calls in any 24 hour period
 CONF_MAX_CALLS = "max_calls"

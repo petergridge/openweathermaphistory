@@ -1,30 +1,39 @@
 """Utils."""
 
-import logging
-
 from aiohttp import web
-from pyopenweathermap import RequestError, create_owm_client
+import httpx2
 
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.lovelace.resources import ResourceStorageCollection
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.httpx_client import get_async_client
 
-_LOGGER = logging.getLogger(__name__)
+from .const import CONST_API_CURRENT
 
 
-async def validate_api_key(api_key, mode):
+async def validate_api_key(hass: HomeAssistant, api_key, latitude, longitude):
     """Validate API key."""
-    api_key_valid = None
     errors, description_placeholders = {}, {}
     try:
-        owm_client = create_owm_client(api_key, mode)
-        api_key_valid = await owm_client.validate_key()
-    except RequestError as error:
+        response = await get_async_client(hass).get(
+            CONST_API_CURRENT,
+            params={
+                "lat": latitude,
+                "lon": longitude,
+                "appid": api_key,
+                "units": "metric",
+            },
+        )
+    except httpx2.RequestError as error:
         errors["base"] = "cannot_connect"
         description_placeholders["error"] = str(error)
+        return errors, description_placeholders
 
-    if api_key_valid is False:
+    if response.status_code in (401, 403):
         errors["base"] = "invalid_api_key"
+    elif response.is_error:
+        errors["base"] = "cannot_connect"
+        description_placeholders["error"] = response.text
 
     return errors, description_placeholders
 
@@ -80,5 +89,3 @@ async def init_resource(hass: HomeAssistant, url: str, ver: str) -> bool:
         add_extra_js_url(hass, url2)
 
     return True
-
-

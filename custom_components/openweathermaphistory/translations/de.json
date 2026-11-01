@@ -78,7 +78,7 @@
       "already_configured": "Standort ist bereits konfiguriert"
     },
     "error": {
-      "invalid_api_key": "Verbindung nicht möglich, möglicherweise ungültiger API-Schlüssel oder Sie haben nicht das One Call API 3.0 abonniert, Details im Protokoll prüfen",
+      "invalid_api_key": "Verbindung nicht möglich, möglicherweise ungültiger API-Schlüssel oder Sie haben nicht das One Call API 4.0 abonniert, Details im Protokoll prüfen",
       "formula": "Ungültige Formel, Details im Protokoll prüfen",
       "formula_variable": "Eine verwendete Variable ist undefiniert, Details im Protokoll prüfen",
       "duplicate_name": "Dieser Name wurde bereits zur Definition eines Sensors verwendet",
@@ -88,7 +88,7 @@
     "step": {
       "user": {
         "title": "Neuer Standort",
-        "description": "Um einen API-Schlüssel zu generieren, gehen Sie zu {url} und abonnieren Sie 'One Call API 3.0'. Sie müssen Rechnungsinformationen eingeben, um 1.000 kostenlose Aufrufe pro Tag zu erhalten. Konfigurieren Sie Ihr Konto, um das kostenlose Limit hier niemals zu überschreiten: {subscriptionurl}",
+        "description": "Um einen API-Schlüssel zu generieren, gehen Sie zu {url} und abonnieren Sie 'One Call API 4.0'. Sie müssen Rechnungsinformationen eingeben, um 1.000 kostenlose Aufrufe pro Tag zu erhalten. Konfigurieren Sie Ihr Konto, um das kostenlose Limit hier niemals zu überschreiten: {subscriptionurl}",
         "data": {
           "name": "Standortname",
           "api_key": "API-Schlüssel",
@@ -145,7 +145,7 @@
   },
   "options": {
     "error": {
-      "invalid_api_key": "Verbindung nicht möglich, möglicherweise ungültiger API-Schlüssel oder Sie haben nicht das One Call API 3.0 abonniert, Details im Protokoll prüfen",
+      "invalid_api_key": "Verbindung nicht möglich, möglicherweise ungültiger API-Schlüssel oder Sie haben nicht das One Call API 4.0 abonniert, Details im Protokoll prüfen",
       "formula": "Ungültige Formel, Details im Protokoll prüfen",
       "formula_variable": "Eine verwendete Variable ist undefiniert, Details im Protokoll prüfen",
       "duplicate_name": "Dieser Name wurde bereits zur Definition eines Sensors verwendet",

@@ -1,6 +1,6 @@
 """__init__."""
 
-from __future__ import annotations
+# from __future__ import annotations
 
 import logging
 from pathlib import Path
@@ -21,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up irrigtest from a config entry."""
-    config = entry.options or entry.data
+    config = {**entry.data, **entry.options}
 
     weather = Weather(hass, config)
     weather.set_processing_type(CONST_INITIAL)

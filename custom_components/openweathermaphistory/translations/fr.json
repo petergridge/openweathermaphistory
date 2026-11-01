@@ -78,7 +78,7 @@
       "already_configured": "L'emplacement est déjà configuré"
     },
     "error": {
-      "invalid_api_key": "Impossible de se connecter, clé API possiblement invalide ou vous n'avez pas souscrit à One Call API 3.0, vérifiez le journal pour les détails",
+      "invalid_api_key": "Impossible de se connecter, clé API possiblement invalide ou vous n'avez pas souscrit à One Call API 4.0, vérifiez le journal pour les détails",
       "formula": "Formule invalide, vérifiez le journal pour les détails",
       "formula_variable": "Une variable utilisée est indéfinie, vérifiez le journal pour les détails",
       "duplicate_name": "Ce nom a déjà été utilisé pour définir un capteur",
@@ -88,7 +88,7 @@
     "step": {
       "user": {
         "title": "Nouvel emplacement",
-        "description": "Pour générer une clé API, allez sur {url} et abonnez-vous à 'One Call API 3.0'. Vous devez saisir les informations de facturation pour obtenir 1 000 appels gratuits par jour. Configurez votre compte pour ne jamais dépasser la limite gratuite ici : {subscriptionurl}",
+        "description": "Pour générer une clé API, allez sur {url} et abonnez-vous à 'One Call API 4.0'. Vous devez saisir les informations de facturation pour obtenir 1 000 appels gratuits par jour. Configurez votre compte pour ne jamais dépasser la limite gratuite ici : {subscriptionurl}",
         "data": {
           "name": "Nom de l'emplacement",
           "api_key": "Clé API",
@@ -145,7 +145,7 @@
   },
   "options": {
     "error": {
-      "invalid_api_key": "Impossible de se connecter, clé API possiblement invalide ou vous n'avez pas souscrit à One Call API 3.0, vérifiez le journal pour les détails",
+      "invalid_api_key": "Impossible de se connecter, clé API possiblement invalide ou vous n'avez pas souscrit à One Call API 4.0, vérifiez le journal pour les détails",
       "formula": "Formule invalide, vérifiez le journal pour les détails",
       "formula_variable": "Une variable utilisée est indéfinie, vérifiez le journal pour les détails",
       "duplicate_name": "Ce nom a déjà été utilisé pour définir un capteur",
