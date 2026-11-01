@@ -5,6 +5,8 @@
 [![Validate with hassfest](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hassfest.yml)
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
+# NOTE
+V2026.11.02 is currently available as a pre-release version supporting V4 of the Open Weather Map API. Please let me know if this has any issues.
 
 # Functionality
 A home assistant sensor that uses the OpenWeatherMap API to return:
@@ -215,7 +217,11 @@ A common usecase is to show daily/monthly rainfall. Using the cumulative data el
 Tristan created a German language video about this integration: https://youtu.be/cXtVMJZU_ho
 
 ## REVISION HISTORY
-##V2026.05.03
+## V2026.11.02
+- Update to support V4 API of Open Weather Map
+## V2026.11.01
+- Update to support 2026.11 HA release
+## V2026.05.03
 - Add translation, AI generated
 - Add additional pre defined sensors on the bulk sensor menu
   - Frost Sensor
