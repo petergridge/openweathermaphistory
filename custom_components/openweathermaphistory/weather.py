@@ -184,7 +184,6 @@ class OpenWeatherHistoryWeather(SingleCoordinatorWeatherEntity[WeatherCoordinato
 
         for i in range(7):
             forecast_time = weather.processed_value(f"f{i}", "datetime")
-            _LOGGER.error("Forecast %d: %s", i, forecast_time)
 
             if not forecast_time:
                 continue

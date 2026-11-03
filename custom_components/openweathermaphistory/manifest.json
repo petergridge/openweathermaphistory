@@ -7,5 +7,5 @@
   "documentation": "https://github.com/petergridge/openweathermaphistory",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/petergridge/openweathermaphistory/issues",
-  "version": "2026.11.04"
+  "version": "2026.11.05"
 }

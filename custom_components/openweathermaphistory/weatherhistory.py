@@ -261,7 +261,6 @@ class Weather:
 
     async def get_forecastdata(self):
         """Get forecast data."""
-        _LOGGER.error("Fetching forecast data for %s", self._name)
         # do not process when no calls remaining
         if self.remaining_calls() < 2:
             # only issue a single warning each day
