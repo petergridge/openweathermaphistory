@@ -1,6 +1,7 @@
 """Support for the OpenWeatherMap History weather entity."""
-
 from __future__ import annotations
+
+import logging
 
 from homeassistant.components.weather import (
     ATTR_CONDITION_CLEAR_NIGHT,
@@ -62,6 +63,8 @@ CONDITION_MAP: dict[str, str] = {
     "haze": ATTR_CONDITION_FOG,
     "wind": ATTR_CONDITION_WINDY,
 }
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -181,6 +184,8 @@ class OpenWeatherHistoryWeather(SingleCoordinatorWeatherEntity[WeatherCoordinato
 
         for i in range(7):
             forecast_time = weather.processed_value(f"f{i}", "datetime")
+            _LOGGER.error("Forecast %d: %s", i, forecast_time)
+
             if not forecast_time:
                 continue
 

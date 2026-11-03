@@ -261,6 +261,7 @@ class Weather:
 
     async def get_forecastdata(self):
         """Get forecast data."""
+        _LOGGER.error("Fetching forecast data for %s", self._name)
         # do not process when no calls remaining
         if self.remaining_calls() < 2:
             # only issue a single warning each day
@@ -384,6 +385,16 @@ class Weather:
             )
             processed_data.update({f"f{i}": day})
         return processed_data
+
+    def remove_past_forecasts(self, dailydata):
+        """Remove forecasts from before the current local day."""
+        timezone = ZoneInfo(self._timezone)
+        today = datetime.now(timezone).date()
+        return {
+            timestamp: data
+            for timestamp, data in dailydata.items()
+            if datetime.fromtimestamp(int(timestamp), tz=timezone).date() >= today
+        }
 
     async def processdailyaggregate(self, aggregatedata):
         "Process daily aggregate data."
@@ -583,10 +594,12 @@ class Weather:
         # GMT midnight
         midnight = int(datetime.timestamp(day))
         # restore saved data
-        storeddata = await self.async_get_stored_data("OWMH_" + self._name)
+        storage_key = "OWMH_" + self._name
+        storeddata = await self.async_get_stored_data(storage_key)
         historydata = storeddata.get("history", {})
         currentdata = storeddata.get("current", {})
-        dailydata = storeddata.get("dailyforecast", {})
+        stored_dailydata = storeddata.get("dailyforecast", {})
+        dailydata = self.remove_past_forecasts(stored_dailydata)
         aggregate = storeddata.get("aggregate", {})
         dailycalls = storeddata.get("dailycalls", {})
         self._daily_count = dailycalls.get("count", 0)
@@ -622,10 +635,13 @@ class Weather:
             data = await self.get_forecastdata()
             if data is None or data == {}:
                 # httpx request failed
+                if dailydata != stored_dailydata:
+                    storeddata["dailyforecast"] = dailydata
+                    await self.async_store_data(storeddata, storage_key)
                 return
             currentdata = data[0]
             if data[1]:
-                dailydata = data[1]
+                dailydata = self.remove_past_forecasts(data[1])
             historydata = await self.get_data(historydata)
             if not aggregate_dates:
                 aggregate_dates = [
@@ -691,7 +707,7 @@ class Weather:
             "aggregate": aggregate_data,
             "dailycalls": dailycalls,
         }
-        await self.async_store_data(zone_data, "OWMH_" + self._name)
+        await self.async_store_data(zone_data, storage_key)
 
     def mindict(self, data):
         """Find minimum dictionary key."""
