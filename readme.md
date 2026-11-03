@@ -6,7 +6,7 @@
 [![HACS Action](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml/badge.svg)](https://github.com/petergridge/openweathermaphistory/actions/workflows/hacs.yml)
 
 # NOTE
-V2026.11.02 is currently available as a pre-release version supporting V4 of the Open Weather Map API. Please let me know if this has any issues.
+V2026.11.05 supports V4 of the Open Weather Map API.
 
 # Functionality
 A home assistant sensor that uses the OpenWeatherMap API to return:
